@@ -11,7 +11,8 @@ No accounts, no server — plays are stored on the device.
 | `index.html` | The whole app: layout, styling, court drawing, pens, saving, backup |
 | `manifest.webmanifest` | Home-screen name, icon and colors |
 | `sw.js` | Service worker — keeps a copy of the app on the device for offline use |
-| `icon-180.png`, `icon-512.png` | App icons: white basketball with a penguin, on purple |
+| `icon.svg` | The icon artwork (basketball + penguin). The center-court logo copies its coordinates |
+| `icon-180.png`, `icon-512.png` | App icons, made from `icon.svg` |
 
 ## Using it
 
@@ -29,15 +30,15 @@ No accounts, no server — plays are stored on the device.
 - **Saved plays → Export backup** saves all plays to one file (iPhone: choose "Save to Files").
   **Import backup** adds them back; plays you already have are kept.
 - The court is made as big as the screen allows. PENGUINS and BURNS PARK go in the leftover border
-  (ends or sides), or faintly on the floor if the border is too thin. A penguin outline sits in the full
-  court's center circle. Turn on the iPhone's rotation lock to keep the court upright; if the phone does rotate, the
+  (ends or sides), or faintly on the floor if the border is too thin. The app-icon logo (basketball + penguin)
+  fills the full court's center circle. Turn on the iPhone's rotation lock to keep the court upright; if the phone does rotate, the
   full court stays along the long side of the screen, as big as
   the screen allows. Drawings are stored in court feet, so they follow the court.
 
 ## Common changes (all in `index.html`, section "2. SETTINGS")
 
 - Team name: `TEAM_NAME`; school name (opposite side): `SCHOOL_NAME`
-- Center-court penguin: `PENGUIN` (outline) and `drawPenguin`
+- Center-court logo: `LOGO_SEAMS`, `PENGUIN_*`, `drawPenguin` (keep in step with `icon.svg`)
 - Purple shade: `PURPLE`
 - Board-color marker: `ink` inside `THEMES`
 - Marker thickness: `PEN_WIDTHS[0]` (in feet)
