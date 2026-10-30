@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- viewport-fit=cover lets the app use the whole screen (we pad for the notch ourselves).
+     user-scalable=no stops the browser zooming the page; the app does its own zoom on the court. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Penguins Playbook</title>
+
+<!-- Home-screen app settings (iPhone/iPad) -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Penguins">
+<meta name="theme-color" content="#151319">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+
+<style>
+/* =====================================================================
+   1. COLORS AND BASIC LAYOUT
+   Change the app's look here. (Court and pen colors are in the script,
+   section "SETTINGS".)
+   ===================================================================== */
+:root {
+  --bg: #151319;          /* app background */
+  --panel: #1f1c25;       /* toolbars and sheets */
+  --btn: #2b2734;         /* button face */
+  --btn-press: #3a3446;   /* button while pressed */
+  --text: #f3f0f8;
+  --muted: #a79fb5;
+  --accent: #a784e8;      /* Penguins lavender: selected buttons, highlights */
+  --accent-strong: #5b2d91;
+  --danger: #e5605e;
+  --radius: 14px;
+  --serif: ui-serif, "New York", "Iowan Old Style", Georgia, serif;
+  --sans: -apple-system, system-ui, "Helvetica Neue", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0; height: 100%;
+  background: var(--bg); color: var(--text);
+  font-family: var(--sans);
+  overflow: hidden;                      /* no page scrolling */
+  overscroll-behavior: none;             /* no rubber-band bounce */
+  -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none;           /* no long-press popups */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;            /* no double-tap zoom */
+}
+
+/* The app fills the screen, padded so nothing hides under the notch or home bar */
+#app {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+           env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* ---------- Buttons ---------- */
+button {
+  font: inherit; color: var(--text);
+  background: var(--btn); border: 0; border-radius: var(--radius);
+  min-height: 46px; min-width: 46px; padding: 0 12px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  cursor: pointer;
+}
+button:active { background: var(--btn-press); }
+button:disabled { opacity: .35; }
+button.active { box-shadow: inset 0 0 0 2px var(--accent); background: var(--btn-press); }
+button svg { width: 22px; height: 22px; flex: none;
+  fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+button.danger { background: var(--danger); color: #fff; }
+button.primary { background: var(--accent-strong); }
+
+/* ---------- Top bar ---------- */
+.topbar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; background: var(--panel);
+}
+.title {
+  flex: 1; min-width: 0;
+  font-family: var(--serif); font-size: 19px; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.title .unsaved { color: var(--accent); }
+.seg { display: flex; background: var(--btn); border-radius: var(--radius); padding: 3px; }
+.seg button { min-height: 40px; padding: 0 10px; background: transparent; border-radius: 11px; }
+.seg button.active { background: var(--accent-strong); box-shadow: none; }
+.swatch {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: linear-gradient(135deg, #4e2a84 50%, #fff 50%);
+  border: 2px solid var(--muted);
+}
+
+/* ---------- Drawing area ---------- */
+#stage { position: relative; flex: 1; min-height: 0; }
+#board {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  touch-action: none;   /* the court gets every touch: no scrolling while drawing */
+  display: block;
+}
+#toast {
+  position: absolute; left: 50%; top: 12px; transform: translateX(-50%);
+  background: rgba(20,18,25,.92); color: var(--text);
+  padding: 10px 16px; border-radius: 999px; font-size: 15px;
+  pointer-events: none; opacity: 0; transition: opacity .25s; white-space: nowrap;
+}
+#toast.show { opacity: 1; }
+
+/* ---------- Bottom toolbar ---------- */
+.toolbar { background: var(--panel); padding: 6px 8px 8px; display: flex; flex-direction: column; gap: 6px; }
+.row { display: flex; gap: 6px; }
+.row > button { flex: 1; padding: 0 4px; }
+.row .label { display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: var(--muted); min-height: 52px; }
+.pen-dot { width: 26px; height: 26px; border-radius: 50%; box-shadow: 0 0 0 2px rgba(255,255,255,.7); }
+.width-line { width: 26px; border-radius: 4px; background: var(--text); }
+
+/* ---------- Plays sheet (the saved-plays screen) ---------- */
+.sheet {
+  position: fixed; inset: 0; z-index: 10;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+           env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+.sheet[hidden] { display: none; }
+.sheet header { display: flex; align-items: center; padding: 10px 14px; gap: 10px; }
+.sheet h1 { flex: 1; margin: 0; font-family: var(--serif); font-size: 28px; font-weight: 600; }
+.sheet .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 4px 14px 12px; }
+.sheet .note { color: var(--muted); font-size: 13px; padding: 0 16px 8px; margin: 0; }
+.scrollable { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+#playList { list-style: none; margin: 0; padding: 0 14px 20px; }
+#playList li {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--panel); border-radius: var(--radius);
+  padding: 8px 8px 8px 14px; margin-bottom: 8px;
+}
+#playList .open { flex: 1; min-width: 0; text-align: left; background: transparent; padding: 0; justify-content: flex-start; }
+#playList .name { font-family: var(--serif); font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#playList .meta { font-size: 13px; color: var(--muted); }
+#playList .open > div { min-width: 0; }
+#playList li.current { box-shadow: inset 0 0 0 2px var(--accent); }
+.empty { color: var(--muted); text-align: center; padding: 40px 20px; font-size: 16px; }
+
+/* ---------- Pop-up dialog (save name, rename, confirm delete) ---------- */
+dialog {
+  border: 0; border-radius: 20px; padding: 20px;
+  width: min(92vw, 380px);
+  background: var(--panel); color: var(--text);
+}
+dialog::backdrop { background: rgba(0,0,0,.55); }
+dialog h2 { margin: 0 0 8px; font-family: var(--serif); font-weight: 600; font-size: 22px; }
+dialog p { margin: 0 0 14px; color: var(--muted); font-size: 15px; line-height: 1.4; }
+dialog input {
+  width: 100%; font-size: 17px; /* 16px+ stops iOS zooming into the field */
+  padding: 12px; border-radius: 12px; border: 2px solid var(--btn-press);
+  background: var(--bg); color: var(--text); margin-bottom: 14px;
+  -webkit-user-select: text; user-select: text;
+}
+dialog input:focus { outline: none; border-color: var(--accent); }
+dialog .buttons { display: flex; gap: 8px; }
+dialog .buttons button { flex: 1; }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- Top: open saved plays, play name, court choice, board colors -->
+  <header class="topbar">
+    <button id="btnPlays" aria-label="Saved plays">
+      <svg viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>
+    </button>
+    <div id="title" class="title">Untitled play</div>
+    <div class="seg" role="group" aria-label="Court">
+      <button data-court="full">Full</button>
+      <button data-court="half">Half</button>
+    </div>
+    <button id="btnTheme" aria-label="Switch board colors"><span class="swatch"></span></button>
+  </header>
+
+  <!-- Middle: the court -->
+  <main id="stage">
+    <canvas id="board"></canvas>
+    <div id="toast"></div>
+  </main>
+
+  <!-- Bottom: pens on row 1, actions on row 2 -->
+  <footer class="toolbar">
+    <div class="row" id="penRow">
+      <button class="pen" data-slot="0"><span class="pen-dot"></span></button>
+      <button class="pen" data-slot="1"><span class="pen-dot"></span></button>
+      <button class="pen" data-slot="2"><span class="pen-dot"></span></button>
+      <button class="pen" data-slot="3"><span class="pen-dot"></span></button>
+      <button class="width" data-width="0" aria-label="Thin marker"><span class="width-line" style="height:3px"></span></button>
+      <button class="width" data-width="1" aria-label="Thick marker"><span class="width-line" style="height:8px"></span></button>
+      <button id="btnEraser" aria-label="Eraser">
+        <svg viewBox="0 0 24 24"><path d="M20 20H9l-5-5a2 2 0 0 1 0-3l8-8a2 2 0 0 1 3 0l5 5a2 2 0 0 1 0 3l-8 8"/><path d="m8 8 8 8"/></svg>
+      </button>
+    </div>
+    <div class="row">
+      <button id="btnUndo" class="label"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Undo</button>
+      <button id="btnRedo" class="label"><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg>Redo</button>
+      <button id="btnFit" class="label"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Fit</button>
+      <button id="btnClear" class="label"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>Clear</button>
+      <button id="btnSave" class="label"><svg viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/></svg>Save</button>
+    </div>
+  </footer>
+</div>
+
+<!-- Saved plays screen -->
+<section id="plays" class="sheet" hidden>
+  <header>
+    <h1>Playbook</h1>
+    <button id="btnClosePlays" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </header>
+  <div class="actions">
+    <button id="btnNew">New play</button>
+    <button id="btnSaveAs">Save as new</button>
+    <button id="btnExport">Export backup</button>
+    <button id="btnImport">Import backup</button>
+  </div>
+  <p class="note">Plays are stored on this device only. Export a backup now and then — iOS can clear app data.</p>
+  <div class="scrollable"><ul id="playList"></ul></div>
+</section>
+
+<!-- One reusable pop-up for names and confirmations -->
+<dialog id="modal">
+  <form id="modalForm">
+    <h2 id="modalTitle"></h2>
+    <p id="modalMsg"></p>
+    <input id="modalInput" type="text" autocomplete="off" enterkeyhint="done" maxlength="60">
+    <div class="buttons">
+      <button type="button" id="modalCancel">Cancel</button>
+      <button type="submit" id="modalOk" class="primary">OK</button>
+    </div>
+  </form>
+</dialog>
+
+<input type="file" id="importFile" accept="application/json,.json" hidden>
+
+<script>
+'use strict';
+
+/* =====================================================================
+   2. SETTINGS
+   The easiest things to change: team name, colors, marker sizes.
+   ===================================================================== */
+const TEAM_NAME = 'PENGUINS';
+const PURPLE = '#4e2a84';
+
+// Two board styles. Pens are stored by "slot" (0–3), not by color, so a
+// play drawn on one board turns into the matching colors on the other.
+const THEMES = {
+  purple: {
+    floor: PURPLE, band: '#ffffff', lines: '#ffffff', lettering: PURPLE,
+    pens: ['#ffffff', '#ffd84d', '#ff6b6b', '#7fd3ff'],
+    penNames: ['White', 'Yellow', 'Red', 'Blue'],
+  },
+  white: {
+    floor: '#fbfafd', band: PURPLE, lines: PURPLE, lettering: '#ffffff',
+    pens: [PURPLE, '#1c1b22', '#d62839', '#1f6fd1'],
+    penNames: ['Purple', 'Black', 'Red', 'Blue'],
+  },
+};
+
+const PEN_WIDTHS = [0.45, 1.0];  // marker thickness, in feet on the court
+const ZOOM_MAX = 6;              // how far you can zoom in (6× the fitted size)
+const ERASER_RADIUS_PX = 14;     // how close the eraser must come to a line, in screen points
+
+/* =====================================================================
+   3. COURT GEOMETRY  (U.S. high-school / NFHS dimensions, in feet)
+   Everything is drawn in feet; the view scales feet to screen points.
+   ===================================================================== */
+const HS = {
+  length: 84, width: 50,
+  laneWidth: 12, laneDepth: 19,        // free-throw line is 19 ft from the baseline
+  ftRadius: 6, centerRadius: 6,
+  backboardFromBaseline: 4, backboardWidth: 6,
+  rimCenter: 5.25, rimRadius: 0.75,    // rim center: 4 ft + 15 in from the baseline
+  threeRadius: 19.75,                  // 19 ft 9 in from the center of the basket
+};
+const LINE = 0.2;   // court line thickness (about 2.4 inches)
+
+// Each board = the court plus a white/purple border ("band") for the lettering.
+// W and H are the board's total size in feet.
+const COURTS = {
+  full: { W: HS.width + 6, H: HS.length + 12, label: 'Full court' },   // 3 ft sides, 6 ft baselines
+  half: { W: HS.length / 2 + 9, H: HS.width + 6, label: 'Half court' }, // basket on the left
+};
+
+/** Draws one end of the court: lane, free-throw circle, 3-point line, backboard, rim.
+ *  Local frame: baseline along y = 0, court runs toward +y, x runs 0..50 across. */
+function drawCourtEnd(ctx) {
+  const mid = HS.width / 2;
+  const laneLeft = mid - HS.laneWidth / 2, laneRight = mid + HS.laneWidth / 2;
+
+  // Lane (the "key")
+  ctx.strokeRect(laneLeft, 0, HS.laneWidth, HS.laneDepth);
+
+  // Lane marks: the solid block 7–8 ft up, then small ticks at 11 and 14 ft
+  const tick = 0.67;
+  ctx.fillRect(laneLeft - tick, 7, tick, 1);
+  ctx.fillRect(laneRight, 7, tick, 1);
+  for (const y of [11, 14]) {
+    line(ctx, laneLeft - tick, y, laneLeft, y);
+    line(ctx, laneRight, y, laneRight + tick, y);
+  }
+
+  // Free-throw circle: solid half outside the lane, dashed half inside
+  ctx.beginPath(); ctx.arc(mid, HS.laneDepth, HS.ftRadius, 0, Math.PI); ctx.stroke();
+  ctx.save(); ctx.setLineDash([1.1, 0.9]);
+  ctx.beginPath(); ctx.arc(mid, HS.laneDepth, HS.ftRadius, Math.PI, 2 * Math.PI); ctx.stroke();
+  ctx.restore();
+
+  // 3-point line: straight from the baseline to level with the rim, then the arc
+  const r = HS.threeRadius, cy = HS.rimCenter;
+  ctx.beginPath();
+  ctx.moveTo(mid - r, 0); ctx.lineTo(mid - r, cy);
+  ctx.arc(mid, cy, r, Math.PI, 0, true);   // sweeps through the court side
+  ctx.lineTo(mid + r, 0);
+  ctx.stroke();
+
+  // Backboard, the bracket to the rim, and the rim
+  ctx.save(); ctx.lineWidth = LINE * 1.8;
+  line(ctx, mid - HS.backboardWidth / 2, HS.backboardFromBaseline, mid + HS.backboardWidth / 2, HS.backboardFromBaseline);
+  ctx.restore();
+  line(ctx, mid, HS.backboardFromBaseline, mid, HS.rimCenter - HS.rimRadius);
+  ctx.beginPath(); ctx.arc(mid, HS.rimCenter, HS.rimRadius, 0, 2 * Math.PI); ctx.stroke();
+}
+
+/** Draws the whole board (border, floor, lines, team name) for the chosen court. */
+function drawBoard(ctx, courtKey, t) {
+  const b = COURTS[courtKey];
+  ctx.fillStyle = t.band;
+  ctx.fillRect(0, 0, b.W, b.H);
+
+  ctx.save();
+  // Move into "court frame": x across the width (0..50), y from a baseline.
+  // Half court is turned sideways (x and y swapped) so the basket sits on the left.
+  if (courtKey === 'full') ctx.translate(3, 6);
+  else ctx.transform(0, 1, 1, 0, 6, 3);
+
+  const len = courtKey === 'full' ? HS.length : HS.length / 2;
+  ctx.fillStyle = t.floor;
+  ctx.fillRect(0, 0, HS.width, len);
+
+  ctx.strokeStyle = t.lines; ctx.fillStyle = t.lines;
+  ctx.lineWidth = LINE; ctx.lineCap = 'butt';
+  ctx.strokeRect(LINE / 2, LINE / 2, HS.width - LINE, len - LINE);   // boundary
+  drawCourtEnd(ctx);
+
+  if (courtKey === 'full') {
+    line(ctx, 0, HS.length / 2, HS.width, HS.length / 2);           // half-court line
+    ctx.beginPath(); ctx.arc(HS.width / 2, HS.length / 2, HS.centerRadius, 0, 2 * Math.PI); ctx.stroke();
+    ctx.save(); ctx.translate(0, HS.length); ctx.scale(1, -1);     // flip for the other end
+    drawCourtEnd(ctx);
+    ctx.restore();
+  } else {
+    // Half of the center circle, at the half-court line
+    ctx.beginPath(); ctx.arc(HS.width / 2, len, HS.centerRadius, Math.PI, 2 * Math.PI); ctx.stroke();
+  }
+  ctx.restore();
+
+  // Team name on the baseline border(s)
+  if (courtKey === 'full') {
+    drawTeamName(ctx, b.W / 2, 3, 0, t.lettering);
+    drawTeamName(ctx, b.W / 2, b.H - 3, 0, t.lettering);
+  } else {
+    drawTeamName(ctx, 3, b.H / 2, -Math.PI / 2, t.lettering);
+  }
+}
+
+/** Big spaced-out letters, centered on (x, y). Drawn at 10× and scaled down,
+ *  because some browsers handle tiny font sizes badly. */
+function drawTeamName(ctx, x, y, rotation, color) {
+  ctx.save();
+  ctx.translate(x, y); ctx.rotate(rotation); ctx.scale(0.1, 0.1);
+  ctx.fillStyle = color;
+  ctx.font = '900 36px -apple-system, system-ui, "Helvetica Neue", Arial, sans-serif';
+  ctx.textBaseline = 'middle';
+  const spacing = 7;
+  const widths = [...TEAM_NAME].map(ch => ctx.measureText(ch).width);
+  const total = widths.reduce((a, w) => a + w, 0) + spacing * (TEAM_NAME.length - 1);
+  let cx = -total / 2;
+  [...TEAM_NAME].forEach((ch, i) => { ctx.fillText(ch, cx, 1); cx += widths[i] + spacing; });
+  ctx.restore();
+}
+
+function line(ctx, x1, y1, x2, y2) {
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+}
+
+/* =====================================================================
+   4. APP STATE
+   A stroke is { c: pen slot 0–3, w: width 0|1, p: [x, y, x, y, ...] in feet }.
+   ===================================================================== */
+const state = {
+  court: 'full', theme: 'purple',
+  strokes: [],
+  playId: null, name: '', created: null, dirty: false,
+  pen: 0, width: 0, tool: 'pen',        // tool: 'pen' or 'eraser'
+  undo: [], redo: [],                   // snapshots of the strokes list
+};
+
+/* =====================================================================
+   5. VIEW: fitting the court to the screen, plus zoom and pan
+   Screen point = board feet × k + (tx, ty)
+   ===================================================================== */
+const canvas = document.getElementById('board');
+const ctx = canvas.getContext('2d');
+const view = { k: 1, tx: 0, ty: 0, fitK: 1, cw: 0, ch: 0, dpr: 1 };
+
+function resizeCanvas() {
+  const r = canvas.getBoundingClientRect();
+  view.cw = r.width; view.ch = r.height;
+  view.dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.round(r.width * view.dpr);
+  canvas.height = Math.round(r.height * view.dpr);
+  fitView();
+}
+
+/** Show the whole board, as big as fits, centered. */
+function fitView() {
+  const b = COURTS[state.court], pad = 6;
+  view.fitK = Math.min((view.cw - 2 * pad) / b.W, (view.ch - 2 * pad) / b.H);
+  view.k = view.fitK;
+  view.tx = (view.cw - b.W * view.k) / 2;
+  view.ty = (view.ch - b.H * view.k) / 2;
+  requestRender();
+}
+
+function clampZoom(k) { return Math.min(Math.max(k, view.fitK), view.fitK * ZOOM_MAX); }
+
+/** Keep the board on screen: centered if smaller than the screen, otherwise no gaps at the edges. */
+function clampPan() {
+  const b = COURTS[state.court];
+  const bw = b.W * view.k, bh = b.H * view.k;
+  view.tx = bw <= view.cw ? (view.cw - bw) / 2 : Math.min(0, Math.max(view.cw - bw, view.tx));
+  view.ty = bh <= view.ch ? (view.ch - bh) / 2 : Math.min(0, Math.max(view.ch - bh, view.ty));
+}
+
+function toBoard(pt) { return [(pt.x - view.tx) / view.k, (pt.y - view.ty) / view.k]; }
+
+/* =====================================================================
+   6. RENDERING
+   The whole picture is redrawn (at most once per screen refresh) whenever
+   something changes. Fast enough for hundreds of strokes.
+   ===================================================================== */
+let renderQueued = false;
+function requestRender() {
+  if (renderQueued) return;
+  renderQueued = true;
+  requestAnimationFrame(() => { renderQueued = false; render(); });
+}
+
+function render() {
+  const d = view.dpr, t = THEMES[state.theme], b = COURTS[state.court];
+  ctx.setTransform(d, 0, 0, d, 0, 0);
+  ctx.clearRect(0, 0, view.cw, view.ch);
+
+  ctx.setTransform(d * view.k, 0, 0, d * view.k, d * view.tx, d * view.ty);
+  drawBoard(ctx, state.court, t);
+
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0, 0, b.W, b.H); ctx.clip();   // ink stays on the board
+  for (const s of state.strokes) drawStroke(ctx, s, t);
+  if (input.current) drawStroke(ctx, input.current, t);
+  ctx.restore();
+}
+
+/** Marker look: solid color, round ends, smoothed through the midpoints. */
+function drawStroke(ctx, s, t) {
+  const p = s.p, w = PEN_WIDTHS[s.w];
+  ctx.strokeStyle = ctx.fillStyle = t.pens[s.c];
+  if (p.length <= 2) {   // a single tap = a dot
+    ctx.beginPath(); ctx.arc(p[0], p[1], w * 0.75, 0, 2 * Math.PI); ctx.fill();
+    return;
+  }
+  ctx.lineWidth = w; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.beginPath(); ctx.moveTo(p[0], p[1]);
+  for (let i = 2; i < p.length - 2; i += 2) {
+    ctx.quadraticCurveTo(p[i], p[i + 1], (p[i] + p[i + 2]) / 2, (p[i + 1] + p[i + 3]) / 2);
+  }
+  ctx.lineTo(p[p.length - 2], p[p.length - 1]);
+  ctx.stroke();
+}
+
+/* =====================================================================
+   7. TOUCH, PENCIL AND MOUSE INPUT
+   • iPhone: one finger draws; two fingers pinch-zoom and pan.
+     If a second finger lands mid-stroke, that stroke is cancelled.
+   • iPad: once an Apple Pencil is seen, the Pencil draws and fingers
+     only zoom/pan (so a resting palm never leaves marks).
+   • Mouse (for testing on a computer): drag draws, scroll wheel zooms.
+   ===================================================================== */
+const input = {
+  drawId: null, drawType: null,   // the pointer currently drawing or erasing
+  current: null, lastPt: null,    // stroke in progress
+  eraseSnap: null, erased: false, lastErase: null,
+  touches: new Map(),             // fingers on the screen
+  nav: null, navLock: false,      // pinch/pan gesture in progress
+  penSeen: false,
+};
+
+function localPoint(e) {
+  const r = canvas.getBoundingClientRect();
+  return { x: e.clientX - r.left, y: e.clientY - r.top };
+}
+
+canvas.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  const pt = localPoint(e);
+  if (e.pointerType === 'touch') {
+    input.touches.set(e.pointerId, pt);
+    if (input.penSeen || input.touches.size > 1 || input.navLock) {
+      if (input.drawType === 'touch') cancelDrawing();
+      input.navLock = true;     // stays a gesture until every finger lifts
+      startNav();
+      return;
+    }
+  } else if (e.pointerType === 'pen') {
+    input.penSeen = true;
+  } else if (e.button !== 0) {
+    return;
+  }
+  if (input.drawId !== null) return;
+  try { canvas.setPointerCapture(e.pointerId); } catch { /* not critical */ }
+  beginDraw(e.pointerId, e.pointerType, pt);
+});
+
+canvas.addEventListener('pointermove', e => {
+  if (e.pointerType === 'touch' && input.touches.has(e.pointerId)) {
+    input.touches.set(e.pointerId, localPoint(e));
+    if (input.nav) { updateNav(); return; }
+  }
+  if (e.pointerId !== input.drawId) return;
+  // Pencil reports extra in-between points; use them for smoother lines
+  let events = e.getCoalescedEvents ? e.getCoalescedEvents() : [];
+  if (!events.length) events = [e];
+  for (const ev of events) extendDraw(localPoint(ev));
+});
+
+function pointerEnd(e) {
+  if (e.pointerType === 'touch' && input.touches.delete(e.pointerId) && input.nav) {
+    if (input.touches.size === 0) { input.nav = null; input.navLock = false; }
+    else startNav();   // re-anchor on the remaining finger(s)
+  }
+  if (e.pointerId === input.drawId) endDraw();
+}
+canvas.addEventListener('pointerup', pointerEnd);
+canvas.addEventListener('pointercancel', pointerEnd);
+
+// Mouse wheel / trackpad zoom, centered on the cursor (computer testing)
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const pt = localPoint(e), b = toBoard(pt);
+  view.k = clampZoom(view.k * Math.exp(-e.deltaY * 0.002));
+  view.tx = pt.x - b[0] * view.k; view.ty = pt.y - b[1] * view.k;
+  clampPan(); requestRender();
+}, { passive: false });
+
+// Stop Safari's own page pinch-zoom and any page scrolling outside lists
+document.addEventListener('gesturestart', e => e.preventDefault());
+document.addEventListener('touchmove', e => {
+  if (!e.target.closest('.scrollable')) e.preventDefault();
+}, { passive: false });
+
+/* ----- pinch / pan ----- */
+function touchCenter() {
+  const pts = [...input.touches.values()];
+  const x = pts.reduce((a, p) => a + p.x, 0) / pts.length;
+  const y = pts.reduce((a, p) => a + p.y, 0) / pts.length;
+  const spread = pts.length > 1 ? Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) : 0;
+  return { x, y, spread, count: pts.length };
+}
+function startNav() {
+  const c = touchCenter();
+  // Remember which board point is under the fingers; keep it there while moving
+  input.nav = { k0: view.k, spread0: c.spread || 1, anchor: toBoard(c), count: c.count };
+}
+function updateNav() {
+  const c = touchCenter(), n = input.nav;
+  if (c.count !== n.count) { startNav(); return; }
+  if (c.count > 1) view.k = clampZoom(n.k0 * c.spread / n.spread0);
+  view.tx = c.x - n.anchor[0] * view.k;
+  view.ty = c.y - n.anchor[1] * view.k;
+  clampPan(); requestRender();
+}
+
+/* ----- drawing and erasing ----- */
+const round2 = v => Math.round(v * 100) / 100;   // 0.01 ft is plenty precise; keeps saves small
+
+function beginDraw(id, type, pt) {
+  input.drawId = id; input.drawType = type;
+  if (state.tool === 'eraser') {
+    input.eraseSnap = state.strokes.slice(); input.erased = false; input.lastErase = null;
+    eraseAt(pt);
+  } else {
+    const [x, y] = toBoard(pt);
+    input.current = { c: state.pen, w: state.width, p: [round2(x), round2(y)] };
+    input.lastPt = pt;
+  }
+  requestRender();
+}
+
+function extendDraw(pt) {
+  if (state.tool === 'eraser') { eraseAt(pt); return; }
+  if (!input.current) return;
+  if (Math.hypot(pt.x - input.lastPt.x, pt.y - input.lastPt.y) < 1.5) return;  // skip tiny wiggles
+  const [x, y] = toBoard(pt);
+  input.current.p.push(round2(x), round2(y));
+  input.lastPt = pt;
+  requestRender();
+}
+
+function endDraw() {
+  if (state.tool === 'eraser') {
+    if (input.erased) pushHistory(input.eraseSnap);
+  } else if (input.current) {
+    pushHistory(state.strokes.slice());
+    state.strokes = [...state.strokes, input.current];
+  }
+  resetDrawing();
+}
+
+/** A second finger landed: throw away the half-drawn stroke (or undo the half-done erase). */
+function cancelDrawing() {
+  if (state.tool === 'eraser' && input.erased) state.strokes = input.eraseSnap;
+  resetDrawing();
+}
+
+function resetDrawing() {
+  input.drawId = input.drawType = input.current = input.lastPt = null;
+  input.eraseSnap = null; input.erased = false;
+  requestRender();
+}
+
+/** Remove every stroke the eraser touches (checks along the path, so fast swipes don't skip). */
+function eraseAt(pt) {
+  const from = input.lastErase || pt;
+  const steps = Math.max(1, Math.ceil(Math.hypot(pt.x - from.x, pt.y - from.y) / 4));
+  const radius = ERASER_RADIUS_PX / view.k;
+  const before = state.strokes.length;
+  for (let i = 1; i <= steps; i++) {
+    const [x, y] = toBoard({ x: from.x + (pt.x - from.x) * i / steps, y: from.y + (pt.y - from.y) * i / steps });
+    state.strokes = state.strokes.filter(s => !strokeHit(s, x, y, radius + PEN_WIDTHS[s.w] / 2));
+  }
+  if (state.strokes.length !== before) { input.erased = true; requestRender(); }
+  input.lastErase = pt;
+}
+
+function strokeHit(s, x, y, r) {
+  const p = s.p;
+  if (p.length <= 2) return Math.hypot(p[0] - x, p[1] - y) <= r;
+  for (let i = 0; i < p.length - 2; i += 2) {
+    if (segmentDistance(x, y, p[i], p[i + 1], p[i + 2], p[i + 3]) <= r) return true;
+  }
+  return false;
+}
+
+function segmentDistance(px, py, ax, ay, bx, by) {
+  const dx = bx - ax, dy = by - ay, len2 = dx * dx + dy * dy;
+  const t = len2 ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len2)) : 0;
+  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+}
+
+/* =====================================================================
+   8. UNDO / REDO / CLEAR
+   Before each change we keep a copy of the strokes list.
+   ===================================================================== */
+function pushHistory(snapshot) {
+  state.undo.push(snapshot);
+  if (state.undo.length > 200) state.undo.shift();
+  state.redo = [];
+  markDirty();
+}
+function undo() {
+  if (!state.undo.length) return;
+  state.redo.push(state.strokes);
+  state.strokes = state.undo.pop();
+  markDirty();
+}
+function redo() {
+  if (!state.redo.length) return;
+  state.undo.push(state.strokes);
+  state.strokes = state.redo.pop();
+  markDirty();
+}
+function clearAll() {
+  if (!state.strokes.length) return;
+  pushHistory(state.strokes.slice());   // Clear can be undone, so no "are you sure?"
+  state.strokes = [];
+  toast('Cleared — tap Undo to bring it back');
+}
+
+/* =====================================================================
+   9. STORAGE (IndexedDB)
+   "plays" holds saved plays; "meta" holds the work-in-progress drawing,
+   so nothing is lost if iOS closes the app in the background.
+   ===================================================================== */
+const DB = (() => {
+  let dbPromise = null;
+  function open() {
+    if (!dbPromise) dbPromise = new Promise((resolve, reject) => {
+      const req = indexedDB.open('penguins-playbook', 1);
+      req.onupgradeneeded = () => {
+        req.result.createObjectStore('plays', { keyPath: 'id' });
+        req.result.createObjectStore('meta');
+      };
+      req.onsuccess = () => {
+        const db = req.result;
+        db.onclose = () => { dbPromise = null; };   // iOS sometimes drops the connection
+        resolve(db);
+      };
+      req.onerror = () => { dbPromise = null; reject(req.error); };
+    });
+    return dbPromise;
+  }
+  async function run(storeName, mode, fn, retry = true) {
+    try {
+      const db = await open();
+      return await new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, mode);
+        const req = fn(tx.objectStore(storeName));
+        tx.oncomplete = () => resolve(req.result);
+        tx.onerror = tx.onabort = () => reject(tx.error);
+      });
+    } catch (err) {
+      if (!retry) throw err;
+      dbPromise = null;                // reconnect once and try again
+      return run(storeName, mode, fn, false);
+    }
+  }
+  return {
+    allPlays:   ()       => run('plays', 'readonly',  s => s.getAll()),
+    getPlay:    id       => run('plays', 'readonly',  s => s.get(id)),
+    putPlay:    play     => run('plays', 'readwrite', s => s.put(play)),
+    deletePlay: id       => run('plays', 'readwrite', s => s.delete(id)),
+    getMeta:    key      => run('meta',  'readonly',  s => s.get(key)),
+    setMeta:    (key, v) => run('meta',  'readwrite', s => s.put(v, key)),
+  };
+})();
+
+// Ask the browser to keep our data even when storage is low (helps, not guaranteed)
+navigator.storage?.persist?.().catch(() => {});
+
+function newId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+/** Save the work in progress (called shortly after every change). */
+let draftTimer = null;
+function scheduleDraftSave() {
+  clearTimeout(draftTimer);
+  draftTimer = setTimeout(() => {
+    const { court, theme, strokes, playId, name, created, dirty } = state;
+    DB.setMeta('draft', { court, theme, strokes, playId, name, created, dirty }).catch(() => {});
+  }, 400);
+}
+
+/* =====================================================================
+   10. PLAYS: new, save, save as, open, rename, delete
+   ===================================================================== */
+function markDirty() { state.dirty = true; updateUI(); scheduleDraftSave(); requestRender(); }
+
+/** OK to throw away the current drawing? Only asks if there are unsaved changes. */
+async function okToDiscard(what) {
+  if (!state.dirty || !state.strokes.length) return true;
+  return !!(await ask({
+    title: 'Discard changes?',
+    message: `This drawing has unsaved changes. ${what}`,
+    okText: 'Discard', danger: true,
+  }));
+}
+
+function loadIntoState(p) {
+  Object.assign(state, {
+    court: p.court, theme: p.theme || state.theme, strokes: p.strokes || [],
+    playId: p.playId ?? p.id ?? null, name: p.name || '', created: p.created || null,
+    dirty: !!p.dirty, undo: [], redo: [],
+  });
+  fitView(); updateUI(); scheduleDraftSave();
+}
+
+async function newPlay(court = state.court) {
+  if (!(await okToDiscard('Start a new play anyway?'))) return false;
+  loadIntoState({ court, strokes: [], dirty: false });
+  return true;
+}
+
+async function save() {
+  if (!state.playId) return saveAsNew();
+  await writePlay(state.playId, state.name);
+}
+
+async function saveAsNew() {
+  const name = await ask({
+    title: state.playId ? 'Save as new play' : 'Save play',
+    message: 'Give this play a name.',
+    input: state.playId ? `${state.name} copy` : '',
+    placeholder: 'e.g. Box inbound',
+    okText: 'Save',
+  });
+  if (name == null) return;
+  state.created = null;
+  await writePlay(newId(), name.trim() || 'Untitled play');
+  closePlays();
+}
+
+async function writePlay(id, name) {
+  const now = Date.now();
+  const play = {
+    id, name, court: state.court, theme: state.theme, strokes: state.strokes,
+    created: state.created || now, updated: now,
+  };
+  try {
+    await DB.putPlay(play);
+  } catch (err) {
+    ask({ title: 'Could not save', message: String(err && err.message || err), okText: 'OK', noCancel: true });
+    return;
+  }
+  Object.assign(state, { playId: id, name, created: play.created, dirty: false });
+  updateUI(); scheduleDraftSave();
+  toast(`Saved “${name}”`);
+}
+
+async function openPlay(id) {
+  if (id === state.playId) { closePlays(); return; }
+  if (!(await okToDiscard('Open the other play anyway?'))) return;
+  const p = await DB.getPlay(id);
+  if (!p) return;
+  loadIntoState({ ...p, dirty: false });
+  closePlays();
+}
+
+async function renamePlay(id) {
+  const p = await DB.getPlay(id);
+  const name = await ask({ title: 'Rename play', input: p.name, okText: 'Rename' });
+  if (name == null || !name.trim()) return;
+  p.name = name.trim(); p.updated = Date.now();
+  await DB.putPlay(p);
+  if (state.playId === id) { state.name = p.name; updateUI(); scheduleDraftSave(); }
+  renderPlayList();
+}
+
+async function deletePlay(id) {
+  const p = await DB.getPlay(id);
+  const ok = await ask({
+    title: 'Delete play?',
+    message: `“${p.name}” will be permanently deleted. This can't be undone.`,
+    okText: 'Delete', danger: true,
+  });
+  if (!ok) return;
+  await DB.deletePlay(id);
+  if (state.playId === id) {   // keep the drawing on screen, but as an unsaved play
+    Object.assign(state, { playId: null, created: null, dirty: true });
+    updateUI(); scheduleDraftSave();
+  }
+  renderPlayList();
+}
+
+/* ----- the Playbook screen ----- */
+const playsSheet = document.getElementById('plays');
+function openPlays() { renderPlayList(); playsSheet.hidden = false; }
+function closePlays() { playsSheet.hidden = true; }
+
+async function renderPlayList() {
+  const list = document.getElementById('playList');
+  const plays = (await DB.allPlays()).sort((a, b) => b.updated - a.updated);
+  list.innerHTML = '';
+  if (!plays.length) {
+    list.innerHTML = '<li class="empty" style="background:none">No saved plays yet.<br>Draw something and tap Save.</li>';
+    return;
+  }
+  for (const p of plays) {
+    const li = document.createElement('li');
+    if (p.id === state.playId) li.className = 'current';
+    const date = new Date(p.updated).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    li.innerHTML = `
+      <button class="open"><div><div class="name"></div><div class="meta"></div></div></button>
+      <button class="rename">Rename</button>
+      <button class="delete" aria-label="Delete">
+        <svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>
+      </button>`;
+    li.querySelector('.name').textContent = p.name;   // textContent: names are shown as plain text
+    li.querySelector('.meta').textContent = `${COURTS[p.court]?.label || ''} · ${date}`;
+    li.querySelector('.open').onclick = () => openPlay(p.id);
+    li.querySelector('.rename').onclick = () => renamePlay(p.id);
+    li.querySelector('.delete').onclick = () => deletePlay(p.id);
+    list.appendChild(li);
+  }
+}
+
+/* =====================================================================
+   11. BACKUP: export all plays to one file, import them back
+   ===================================================================== */
+async function exportBackup() {
+  const plays = await DB.allPlays();
+  if (!plays.length) { toast('No saved plays to back up yet'); return; }
+  const data = { app: 'penguins-playbook', version: 1, exported: new Date().toISOString(), plays };
+  const fileName = `penguins-playbook-${new Date().toISOString().slice(0, 10)}.json`;
+  const file = new File([JSON.stringify(data)], fileName, { type: 'application/json' });
+
+  // On iPhone/iPad, the share sheet ("Save to Files", AirDrop…) is the reliable way to save a file
+  const isTouchDevice = navigator.maxTouchPoints > 0;
+  if (isTouchDevice && navigator.canShare?.({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: 'Penguins Playbook backup' }); }
+    catch (err) { if (err.name !== 'AbortError') toast('Sharing failed: ' + err.message); }
+    return;
+  }
+  const url = URL.createObjectURL(file);
+  const a = Object.assign(document.createElement('a'), { href: url, download: fileName });
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  toast(`Exported ${plays.length} play${plays.length === 1 ? '' : 's'}`);
+}
+
+/** Import merges: new plays are added; a play already here is replaced only if the backup's copy is newer. */
+async function importBackup(file) {
+  let data;
+  try { data = JSON.parse(await file.text()); } catch { data = null; }
+  if (!data || !Array.isArray(data.plays)) {
+    ask({ title: 'Not a backup file', message: 'That file isn’t a Penguins Playbook backup.', okText: 'OK', noCancel: true });
+    return;
+  }
+  const existing = new Map((await DB.allPlays()).map(p => [p.id, p]));
+  let added = 0, updated = 0;
+  for (const p of data.plays) {
+    if (!p || typeof p.id !== 'string' || !COURTS[p.court] || !Array.isArray(p.strokes)) continue;
+    const mine = existing.get(p.id);
+    if (!mine) { await DB.putPlay(p); added++; }
+    else if ((p.updated || 0) > (mine.updated || 0)) { await DB.putPlay(p); updated++; }
+  }
+  renderPlayList();
+  ask({
+    title: 'Backup imported',
+    message: `${added} new play${added === 1 ? '' : 's'} added, ${updated} updated. Plays you already had were kept.`,
+    okText: 'OK', noCancel: true,
+  });
+}
+
+/* =====================================================================
+   12. SCREEN UPDATES, POP-UPS, BUTTON WIRING
+   ===================================================================== */
+const $ = id => document.getElementById(id);
+
+function updateUI() {
+  const t = THEMES[state.theme];
+  const title = $('title');
+  title.textContent = state.name || 'Untitled play';
+  if (state.dirty && state.strokes.length) {
+    const dot = document.createElement('span');
+    dot.className = 'unsaved'; dot.textContent = ' •';
+    title.appendChild(dot);
+  }
+  document.querySelectorAll('.seg button').forEach(b => b.classList.toggle('active', b.dataset.court === state.court));
+  document.querySelectorAll('.pen').forEach(b => {
+    const slot = +b.dataset.slot;
+    b.querySelector('.pen-dot').style.background = t.pens[slot];
+    b.setAttribute('aria-label', t.penNames[slot] + ' marker');
+    b.classList.toggle('active', state.tool === 'pen' && state.pen === slot);
+  });
+  document.querySelectorAll('.width').forEach(b => {
+    b.classList.toggle('active', state.width === +b.dataset.width);
+    b.querySelector('.width-line').style.background = t.pens[state.pen];
+  });
+  $('btnEraser').classList.toggle('active', state.tool === 'eraser');
+  $('btnUndo').disabled = !state.undo.length;
+  $('btnRedo').disabled = !state.redo.length;
+  requestRender();
+}
+
+let toastTimer = null;
+function toast(msg) {
+  const el = $('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+/** One pop-up for everything. Resolves to: the typed text (if input), true (OK), or null (Cancel). */
+function ask({ title, message = '', input, placeholder = '', okText = 'OK', danger = false, noCancel = false }) {
+  const dlg = $('modal'), inp = $('modalInput'), okBtn = $('modalOk'), cancelBtn = $('modalCancel');
+  $('modalTitle').textContent = title;
+  $('modalMsg').textContent = message;
+  $('modalMsg').hidden = !message;
+  inp.hidden = input === undefined;
+  inp.value = input || ''; inp.placeholder = placeholder;
+  okBtn.textContent = okText;
+  okBtn.className = danger ? 'danger' : 'primary';
+  cancelBtn.hidden = noCancel;
+  return new Promise(resolve => {
+    const finish = result => {
+      $('modalForm').onsubmit = cancelBtn.onclick = dlg.oncancel = null;
+      dlg.close();
+      resolve(result);
+    };
+    $('modalForm').onsubmit = e => { e.preventDefault(); finish(input === undefined ? true : inp.value); };
+    cancelBtn.onclick = () => finish(null);
+    dlg.oncancel = e => { e.preventDefault(); finish(null); };
+    dlg.showModal();
+    if (!inp.hidden) { inp.focus(); inp.select(); }
+  });
+}
+
+// Pens, widths, eraser
+document.querySelectorAll('.pen').forEach(b => b.onclick = () => {
+  state.pen = +b.dataset.slot; state.tool = 'pen'; updateUI();
+});
+document.querySelectorAll('.width').forEach(b => b.onclick = () => {
+  state.width = +b.dataset.width; state.tool = 'pen'; updateUI();
+});
+$('btnEraser').onclick = () => { state.tool = state.tool === 'eraser' ? 'pen' : 'eraser'; updateUI(); };
+
+// Actions
+$('btnUndo').onclick = undo;
+$('btnRedo').onclick = redo;
+$('btnFit').onclick = fitView;
+$('btnClear').onclick = clearAll;
+$('btnSave').onclick = save;
+
+// Court and board color
+document.querySelectorAll('.seg button').forEach(b => b.onclick = () => {
+  if (b.dataset.court !== state.court) newPlay(b.dataset.court);
+});
+$('btnTheme').onclick = () => {
+  state.theme = state.theme === 'purple' ? 'white' : 'purple';
+  markDirty();
+};
+
+// Playbook screen
+$('btnPlays').onclick = openPlays;
+$('btnClosePlays').onclick = closePlays;
+$('btnNew').onclick = async () => { if (await newPlay()) closePlays(); };
+$('btnSaveAs').onclick = saveAsNew;
+$('btnExport').onclick = exportBackup;
+$('btnImport').onclick = () => $('importFile').click();
+$('importFile').onchange = e => {
+  const f = e.target.files[0];
+  e.target.value = '';   // so the same file can be picked again later
+  if (f) importBackup(f);
+};
+
+/* =====================================================================
+   13. START-UP
+   ===================================================================== */
+window.addEventListener('resize', resizeCanvas);
+
+(async function start() {
+  resizeCanvas();
+  updateUI();
+  try {
+    const draft = await DB.getMeta('draft');
+    if (draft && COURTS[draft.court]) loadIntoState(draft);
+    else toast('Tip: pinch with two fingers to zoom');
+  } catch { /* storage unavailable: app still works, just can't save */ }
+
+  // Offline support (only works on a real web address, not when opening the file directly)
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+})();
+</script>
+</body>
+</html>
