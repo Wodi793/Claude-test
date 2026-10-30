@@ -135,15 +135,31 @@ svg { width: 22px; height: 22px; flex: none;
 }
 .tb { width: var(--b); height: var(--b); border-radius: 50%; transition: background .15s, transform .15s; }
 .tb:active { background: rgba(255,255,255,.18); transform: scale(.92); }
-.tb.active { background: rgba(255,255,255,.24); box-shadow: inset 0 0 0 1px rgba(255,255,255,.45); }
+.tb.active {
+  background: linear-gradient(180deg, rgba(255,255,255,.40), rgba(255,255,255,.10) 55%, rgba(255,255,255,.18));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.45), inset 0 1px 1px rgba(255,255,255,.85), 0 3px 10px rgba(10,5,25,.3);
+}
 .tb:disabled { opacity: .3; }
-/* Full | Half switch at the top of the rail */
-.courtseg { display: flex; flex-direction: column; gap: 2px; padding: 2px;
-  background: rgba(0,0,0,.2); border-radius: 16px; box-shadow: inset 0 1px 2px rgba(0,0,0,.2); }
-.cs { width: calc(var(--b) - 4px); height: calc(var(--b) * .7); border-radius: 13px;
-  font-size: 12px; font-weight: 600; letter-spacing: .2px; color: rgba(255,255,255,.75); transition: background .15s; }
-.cs.active { color: #fff; background: rgba(255,255,255,.26);
-  box-shadow: inset 0 1px 1px rgba(255,255,255,.4), 0 1px 4px rgba(0,0,0,.2); }
+/* Full | Half switch at the top of the rail: a glass lens slides to the chosen court */
+.courtseg { position: relative; display: flex; flex-direction: column; gap: 2px; padding: 3px;
+  background: rgba(0,0,0,.22); border-radius: 18px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,.35), inset 0 -1px 0 rgba(255,255,255,.12); }
+.cs { position: relative; z-index: 1; width: calc(var(--b) - 6px); height: calc(var(--b) * .72);
+  border-radius: 14px; font-size: 12px; font-weight: 600; letter-spacing: .2px;
+  color: rgba(255,255,255,.6); transition: color .25s; }
+.cs.active { color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.3); }
+.courtseg .lens {
+  position: absolute; z-index: 0; left: 3px; right: 3px; top: 3px;
+  height: calc(var(--b) * .72); border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,.46), rgba(255,255,255,.12) 55%, rgba(255,255,255,.22));
+  -webkit-backdrop-filter: blur(8px) saturate(2); backdrop-filter: blur(8px) saturate(2);
+  border: 1px solid rgba(255,255,255,.45);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.9),     /* bright rim along the top */
+              inset 0 -2px 4px rgba(255,255,255,.18),   /* light pooling at the bottom */
+              0 3px 10px rgba(10,5,25,.35);
+  transition: transform .42s cubic-bezier(.25, 1.35, .4, 1);   /* springy slide */
+}
+.courtseg.half .lens { transform: translateY(calc(var(--b) * .72 + 2px)); }
 .cs .icon { display: none; width: min(20px, calc(var(--b) * .7)); height: min(20px, calc(var(--b) * .7)); }
 @media (max-height: 520px) {   /* short (sideways) screen: court icons instead of words */
   .cs .word { display: none; }
@@ -264,7 +280,8 @@ dialog .buttons button.danger { background: var(--danger); }
   <div id="drawer" class="closed">
     <button id="grab" aria-label="Show or hide tools"><span></span></button>
     <div id="rail" class="glass">
-      <div class="courtseg" role="group" aria-label="Court">
+      <div class="courtseg" id="courtSeg" role="group" aria-label="Court">
+        <span class="lens"></span>
         <button class="cs" data-court="full" aria-label="Full court"><span class="word">Full</span>
           <svg class="icon" viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="1.5"/><path d="M6 12h12"/><circle cx="12" cy="12" r="2.2"/></svg></button>
         <button class="cs" data-court="half" aria-label="Half court"><span class="word">Half</span>
@@ -358,10 +375,10 @@ const THEMES = {
 
 const PEN_WIDTHS = [0.55, 1.0];  // marker thickness in feet on the court (new lines use the first;
                                  // the second is only for thick lines saved by older versions)
-const APP_VERSION = 8;           // shown in the ••• menu; bump with each update
+const APP_VERSION = 9;           // shown in the ••• menu; bump with each update
 const ZOOM_MAX = 6;              // how far you can zoom in (6× the fitted size)
 const ERASER_RADIUS_PX = 14;     // how close the eraser must come to a line, in screen points
-const PLAIN_BAND = 1.5;          // minimum border (feet) around the court
+const PLAIN_BAND = 0.75;         // minimum border (feet) around the court: thin, but not zero
 const MIN_BORDER_LETTERS = 2;    // letter size (feet) needed to write PENGUINS in the border;
                                  // with less room, it goes on the court floor instead
 const MAX_LETTERS = 4.5;         // biggest letter size (feet) in the border
@@ -597,7 +614,7 @@ function safeInsets() {
 
 /** Show the whole board, as big as fits, clear of the clock and home bar. */
 function fitView() {
-  const ins = safeInsets(), pad = 4;
+  const ins = safeInsets(), pad = 2;
   if (bottomAlreadyCut()) ins.bottom = 0;
   const w = view.cw - ins.left - ins.right - 2 * pad;
   const h = view.ch - ins.top - ins.bottom - 2 * pad;
@@ -1189,6 +1206,7 @@ function updateUI() {
   $('playName').textContent = state.name || 'Untitled play';
   $('version').textContent = `Penguins Playbook · version ${APP_VERSION}`;
   document.querySelectorAll('[data-court]').forEach(b => b.classList.toggle('active', b.dataset.court === state.court));
+  $('courtSeg').classList.toggle('half', state.court === 'half');
   document.querySelectorAll('[data-theme]').forEach(b => b.classList.toggle('active', b.dataset.theme === state.theme));
   // Whatever peeks out around the app (rare) matches the border
   document.documentElement.style.background = document.body.style.background = t.band;
