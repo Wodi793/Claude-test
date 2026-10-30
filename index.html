@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<!-- viewport-fit=cover lets the app use the whole screen (we pad for the notch ourselves).
+<!-- viewport-fit=cover lets the app use the whole screen, under the clock and home bar.
      user-scalable=no stops the browser zooming the page; the app does its own zoom on the court. -->
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Penguins Playbook</title>
@@ -18,23 +18,23 @@
 
 <style>
 /* =====================================================================
-   1. COLORS AND BASIC LAYOUT
-   Change the app's look here. (Court and pen colors are in the script,
-   section "SETTINGS".)
+   1. LOOK AND LAYOUT
+   Court and ink colors are in the script, section "SETTINGS".
    ===================================================================== */
 :root {
-  --bg: #151319;          /* app background */
-  --panel: #1f1c25;       /* toolbars and sheets */
-  --btn: #2b2734;         /* button face */
-  --btn-press: #3a3446;   /* button while pressed */
+  --bg: #151319;
+  --panel: rgba(30, 27, 36, .94);   /* toolbar and menus (slightly see-through) */
+  --btn-press: rgba(255,255,255,.12);
   --text: #f3f0f8;
   --muted: #a79fb5;
-  --accent: #a784e8;      /* Penguins lavender: selected buttons, highlights */
+  --accent: #a784e8;                /* Penguins lavender: selected tool, unsaved dot */
   --accent-strong: #5b2d91;
   --danger: #e5605e;
-  --radius: 14px;
   --serif: ui-serif, "New York", "Iowan Old Style", Georgia, serif;
   --sans: -apple-system, system-ui, "Helvetica Neue", sans-serif;
+  /* Tool button size: 44px, smaller only if 9 won't fit across a narrow phone */
+  --b: min(44px, calc((100vw - 44px) / 9));
+  --app-h: 100%;                    /* set by the script to the true screen height */
 }
 
 * { box-sizing: border-box; }
@@ -51,97 +51,120 @@ html, body {
   touch-action: manipulation;            /* no double-tap zoom */
 }
 
-/* Reads the notch / home-bar margins so the script can keep the court clear of them */
+/* Hidden helper: lets the script read the notch / home-bar margins */
 #safe {
   position: fixed; visibility: hidden; pointer-events: none;
   padding: env(safe-area-inset-top) env(safe-area-inset-right)
            env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
-/* ---------- Buttons ---------- */
-button {
-  font: inherit; color: var(--text);
-  background: var(--btn); border: 0; border-radius: var(--radius);
-  min-height: 46px; min-width: 46px; padding: 0 12px;
-  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  cursor: pointer;
-}
-button:active { background: var(--btn-press); }
-button:disabled { opacity: .35; }
-button.active { box-shadow: inset 0 0 0 2px var(--accent); background: var(--btn-press); }
-button svg { width: 22px; height: 22px; flex: none;
-  fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-button.danger { background: var(--danger); color: #fff; }
-button.primary { background: var(--accent-strong); }
-
-/* ---------- Tools panel (slides down from the top) ---------- */
-#btnMenu {
-  position: fixed; z-index: 5;
-  top: calc(env(safe-area-inset-top) + 8px);
-  right: calc(env(safe-area-inset-right) + 8px);
-  width: 50px; height: 50px; padding: 0; border-radius: 50%;
-  background: rgba(31, 28, 37, .88);
-  box-shadow: 0 2px 10px rgba(0,0,0,.35);
-}
-.drawer {
-  position: fixed; z-index: 6; top: 0; left: 0; right: 0;
-  max-width: 760px; margin: 0 auto;
-  background: var(--panel);
-  padding: calc(env(safe-area-inset-top) + 6px) calc(env(safe-area-inset-right) + 8px) 0
-           calc(env(safe-area-inset-left) + 8px);
-  border-radius: 0 0 24px 24px;
-  box-shadow: 0 8px 30px rgba(0,0,0,.45);
-  display: flex; flex-direction: column; gap: 6px;
-  transform: translateY(-110%);
-  transition: transform .22s ease;
-}
-.drawer.open { transform: none; }
-.grabber { min-height: 30px; background: transparent; width: 100%; }
-.grabber span { width: 44px; height: 5px; border-radius: 3px; background: var(--muted); }
-.topbar { display: flex; align-items: center; gap: 8px; }
-.title {
-  flex: 1; min-width: 0;
-  font-family: var(--serif); font-size: 19px; font-weight: 600;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.title .unsaved { color: var(--accent); }
-.seg { display: flex; background: var(--btn); border-radius: var(--radius); padding: 3px; }
-.seg button { min-height: 40px; padding: 0 10px; background: transparent; border-radius: 11px; }
-.seg button.active { background: var(--accent-strong); box-shadow: none; }
-.swatch {
-  width: 24px; height: 24px; border-radius: 50%;
-  background: linear-gradient(135deg, #4e2a84 50%, #fff 50%);
-  border: 2px solid var(--muted);
-}
-
-/* ---------- Drawing area ---------- */
-/* The court fills the whole screen below the clock/status bar */
-#stage { position: fixed; left: 0; right: 0; top: env(safe-area-inset-top); bottom: 0; }
-/* Home-screen app: iOS can report a too-short screen with "bottom: 0", leaving an empty
-   strip at the bottom. The full screen height (100vh) is reliable there. */
-html.standalone #stage { bottom: auto; height: calc(100vh - env(safe-area-inset-top)); }
+/* ---------- The court: edge to edge, top to bottom ---------- */
+#stage { position: fixed; top: 0; left: 0; right: 0; height: var(--app-h); }
 #board {
-  position: absolute; inset: 0; width: 100%; height: 100%;
+  position: absolute; inset: 0; width: 100%; height: 100%; display: block;
   touch-action: none;   /* the court gets every touch: no scrolling while drawing */
-  display: block;
 }
+/* Soft shade behind the clock/battery so they stay readable on a white border */
+#scrim {
+  position: absolute; top: 0; left: 0; right: 0;
+  height: calc(env(safe-area-inset-top) + 10px);
+  background: linear-gradient(rgba(0,0,0,.38), rgba(0,0,0,0));
+  pointer-events: none; display: none;
+}
+#scrim.show { display: block; }
 #toast {
-  position: absolute; left: 50%; top: 12px; transform: translateX(-50%);
+  position: absolute; left: 50%; top: calc(env(safe-area-inset-top) + 10px);
+  transform: translateX(-50%);
   background: rgba(20,18,25,.92); color: var(--text);
-  padding: 10px 16px; border-radius: 999px; font-size: 15px;
+  padding: 9px 16px; border-radius: 999px; font-size: 15px;
   pointer-events: none; opacity: 0; transition: opacity .25s; white-space: nowrap;
 }
 #toast.show { opacity: 1; }
 
-.row { display: flex; gap: 6px; }
-.row > button { flex: 1; padding: 0 4px; }
-.row .label { display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: var(--muted); min-height: 52px; }
-.pen-dot { width: 26px; height: 26px; border-radius: 50%; box-shadow: 0 0 0 2px rgba(255,255,255,.7); }
-.width-line { width: 26px; border-radius: 4px; background: var(--text); }
+/* ---------- Buttons ---------- */
+button, .tb {
+  font: inherit; color: var(--text);
+  background: transparent; border: 0; padding: 0; margin: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer; position: relative;
+}
+svg { width: 22px; height: 22px; flex: none;
+  fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
-/* ---------- Plays sheet (the saved-plays screen) ---------- */
+/* Round button in the bottom-right corner that opens the toolbar */
+#btnTools {
+  position: absolute; z-index: 5;
+  right: calc(env(safe-area-inset-right) + 12px);
+  bottom: calc(env(safe-area-inset-bottom) + 12px);
+  width: 48px; height: 48px; border-radius: 50%;
+  background: var(--panel);
+  box-shadow: 0 2px 12px rgba(0,0,0,.35), inset 0 0 0 3px var(--ink, #fff);
+}
+
+/* ---------- Toolbar: one slim row ---------- */
+#tools {
+  position: absolute; z-index: 6; left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + 12px);
+  display: flex; align-items: center; gap: 2px; padding: 4px;
+  background: var(--panel);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  border-radius: 999px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.4);
+  transform: translate(-50%, 0); opacity: 1;
+  transition: transform .2s ease, opacity .2s ease;
+}
+#tools.closed { transform: translate(-50%, 30px); opacity: 0; pointer-events: none; }
+.tb { width: var(--b); height: var(--b); border-radius: 50%; }
+.tb:active { background: var(--btn-press); }
+.tb.active { box-shadow: inset 0 0 0 2px var(--accent); }
+.tb:disabled { opacity: .3; }
+.sep { width: 1px; height: 22px; background: rgba(255,255,255,.15); margin: 0 2px; }
+.dot { width: 22px; height: 22px; border-radius: 50%; box-shadow: 0 0 0 1.5px rgba(255,255,255,.6); }
+/* Rainbow ring = color picker; the center shows the color you last picked */
+.rainbow .dot {
+  background: conic-gradient(#f44, #fd4, #4d6, #4cf, #66f, #d4f, #f44);
+  box-shadow: none; display: flex; align-items: center; justify-content: center;
+}
+.rainbow .dot span { width: 12px; height: 12px; border-radius: 50%; background: var(--custom, #ffd84d);
+  box-shadow: 0 0 0 1.5px rgba(30,27,36,.9); }
+.rainbow input {   /* the real color picker sits invisibly on top of the rainbow button */
+  position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; border: 0; padding: 0; cursor: pointer;
+}
+#btnSave.unsaved::after {   /* small dot = unsaved changes */
+  content: ""; position: absolute; top: 7px; right: 7px;
+  width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+}
+
+/* ---------- "More" menu: the rarely used settings ---------- */
+#more {
+  position: absolute; z-index: 7;
+  right: calc(env(safe-area-inset-right) + 12px);
+  bottom: calc(env(safe-area-inset-bottom) + 12px + var(--b) + 18px);
+  width: min(300px, calc(100vw - 24px));
+  background: var(--panel);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  border-radius: 20px; padding: 14px;
+  box-shadow: 0 8px 30px rgba(0,0,0,.45);
+  display: flex; flex-direction: column; gap: 10px;
+}
+#more[hidden] { display: none; }
+#playName {
+  font-family: var(--serif); font-size: 20px; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.setting { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 15px; color: var(--muted); }
+.seg { display: flex; background: rgba(255,255,255,.07); border-radius: 12px; padding: 3px; }
+.seg button { min-height: 36px; padding: 0 12px; border-radius: 9px; font-size: 15px; }
+.seg button.active { background: var(--accent-strong); }
+.menu-btn {
+  justify-content: flex-start; gap: 10px; width: 100%; min-height: 44px;
+  padding: 0 10px; border-radius: 12px; background: rgba(255,255,255,.07); font-size: 16px;
+}
+.menu-btn:active { background: var(--btn-press); }
+
+/* ---------- Saved plays screen ---------- */
 .sheet {
-  position: fixed; inset: 0; z-index: 10;
+  position: fixed; top: 0; left: 0; right: 0; height: var(--app-h); z-index: 10;
   background: var(--bg);
   display: flex; flex-direction: column;
   padding: env(safe-area-inset-top) env(safe-area-inset-right)
@@ -152,103 +175,110 @@ html.standalone #stage { bottom: auto; height: calc(100vh - env(safe-area-inset-
 .sheet h1 { flex: 1; margin: 0; font-family: var(--serif); font-size: 28px; font-weight: 600; }
 .sheet .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 4px 14px 12px; }
 .sheet .note { color: var(--muted); font-size: 13px; padding: 0 16px 8px; margin: 0; }
+.pill-btn { min-height: 46px; padding: 0 14px; border-radius: 14px; background: #2b2734; }
+.pill-btn:active { background: #3a3446; }
 .scrollable { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
 #playList { list-style: none; margin: 0; padding: 0 14px 20px; }
 #playList li {
   display: flex; align-items: center; gap: 8px;
-  background: var(--panel); border-radius: var(--radius);
+  background: #1f1c25; border-radius: 14px;
   padding: 8px 8px 8px 14px; margin-bottom: 8px;
 }
-#playList .open { flex: 1; min-width: 0; text-align: left; background: transparent; padding: 0; justify-content: flex-start; }
+#playList .open { flex: 1; min-width: 0; text-align: left; justify-content: flex-start; min-height: 46px; }
 #playList .name { font-family: var(--serif); font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #playList .meta { font-size: 13px; color: var(--muted); }
 #playList .open > div { min-width: 0; }
 #playList li.current { box-shadow: inset 0 0 0 2px var(--accent); }
 .empty { color: var(--muted); text-align: center; padding: 40px 20px; font-size: 16px; }
 
-/* ---------- Pop-up dialog (save name, rename, confirm delete) ---------- */
+/* ---------- Pop-up dialog (name a play, rename, confirm delete) ---------- */
 dialog {
   border: 0; border-radius: 20px; padding: 20px;
   width: min(92vw, 380px);
-  background: var(--panel); color: var(--text);
+  background: #1f1c25; color: var(--text);
 }
 dialog::backdrop { background: rgba(0,0,0,.55); }
 dialog h2 { margin: 0 0 8px; font-family: var(--serif); font-weight: 600; font-size: 22px; }
 dialog p { margin: 0 0 14px; color: var(--muted); font-size: 15px; line-height: 1.4; }
 dialog input {
   width: 100%; font-size: 17px; /* 16px+ stops iOS zooming into the field */
-  padding: 12px; border-radius: 12px; border: 2px solid var(--btn-press);
+  padding: 12px; border-radius: 12px; border: 2px solid #3a3446;
   background: var(--bg); color: var(--text); margin-bottom: 14px;
   -webkit-user-select: text; user-select: text;
 }
 dialog input:focus { outline: none; border-color: var(--accent); }
 dialog .buttons { display: flex; gap: 8px; }
-dialog .buttons button { flex: 1; }
+dialog .buttons button { flex: 1; min-height: 46px; border-radius: 14px; background: #2b2734; }
+dialog .buttons button.primary { background: var(--accent-strong); }
+dialog .buttons button.danger { background: var(--danger); }
 </style>
 </head>
 <body>
 
 <div id="safe"></div>
 
-<!-- The court: fills the screen -->
 <main id="stage">
   <canvas id="board"></canvas>
+  <div id="scrim"></div>
   <div id="toast"></div>
-</main>
 
-<!-- Corner button that opens the tools panel -->
-<button id="btnMenu" aria-label="Show tools">
-  <svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
-</button>
+  <!-- Corner button: opens the toolbar -->
+  <button id="btnTools" aria-label="Show tools">
+    <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+  </button>
 
-<!-- Tools panel: hidden until the corner button is tapped; drawing on the court closes it -->
-<div id="drawer" class="drawer">
-  <!-- Saved plays, play name, court choice, board colors -->
-  <header class="topbar">
-    <button id="btnPlays" aria-label="Saved plays">
-      <svg viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>
+  <!-- Toolbar: board-color ink, color picker, eraser | undo, redo | clear, save, more, close -->
+  <div id="tools" class="closed">
+    <button class="tb" id="btnInk" aria-label="Board-color marker"><span class="dot"></span></button>
+    <label class="tb rainbow" id="btnColor" aria-label="Pick a color">
+      <span class="dot"><span></span></span>
+      <input type="color" id="colorInput" value="#ffd84d">
+    </label>
+    <button class="tb" id="btnEraser" aria-label="Eraser">
+      <svg viewBox="0 0 24 24"><path d="M20 20H9l-5-5a2 2 0 0 1 0-3l8-8a2 2 0 0 1 3 0l5 5a2 2 0 0 1 0 3l-8 8"/><path d="m8 8 8 8"/></svg>
     </button>
-    <div id="title" class="title">Untitled play</div>
-    <div class="seg" role="group" aria-label="Court">
-      <button data-court="full">Full</button>
-      <button data-court="half">Half</button>
-    </div>
-    <button id="btnTheme" aria-label="Switch board colors"><span class="swatch"></span></button>
-  </header>
+    <span class="sep"></span>
+    <button class="tb" id="btnUndo" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+    <button class="tb" id="btnRedo" aria-label="Redo"><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button>
+    <span class="sep"></span>
+    <button class="tb" id="btnClear" aria-label="Clear all"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
+    <button class="tb" id="btnSave" aria-label="Save"><svg viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/></svg></button>
+    <button class="tb" id="btnMore" aria-label="More"><svg viewBox="0 0 24 24"><path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3"/></svg></button>
+    <button class="tb" id="btnHide" aria-label="Hide tools"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+  </div>
 
-  <!-- Pens, thickness, eraser -->
-  <div class="row" id="penRow">
-      <button class="pen" data-slot="0"><span class="pen-dot"></span></button>
-      <button class="pen" data-slot="1"><span class="pen-dot"></span></button>
-      <button class="pen" data-slot="2"><span class="pen-dot"></span></button>
-      <button class="pen" data-slot="3"><span class="pen-dot"></span></button>
-      <button class="width" data-width="0" aria-label="Thin marker"><span class="width-line" style="height:3px"></span></button>
-      <button class="width" data-width="1" aria-label="Thick marker"><span class="width-line" style="height:8px"></span></button>
-      <button id="btnEraser" aria-label="Eraser">
-        <svg viewBox="0 0 24 24"><path d="M20 20H9l-5-5a2 2 0 0 1 0-3l8-8a2 2 0 0 1 3 0l5 5a2 2 0 0 1 0 3l-8 8"/><path d="m8 8 8 8"/></svg>
-      </button>
+  <!-- More: court, board color, line thickness, saved plays -->
+  <div id="more" hidden>
+    <div id="playName">Untitled play</div>
+    <div class="setting">Court
+      <div class="seg"><button data-court="full">Full</button><button data-court="half">Half</button></div>
     </div>
-    <div class="row">
-      <button id="btnUndo" class="label"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Undo</button>
-      <button id="btnRedo" class="label"><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg>Redo</button>
-      <button id="btnFit" class="label"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Fit</button>
-      <button id="btnClear" class="label"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>Clear</button>
-      <button id="btnSave" class="label"><svg viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/></svg>Save</button>
+    <div class="setting">Board
+      <div class="seg"><button data-theme="purple">Purple</button><button data-theme="white">White</button></div>
     </div>
-  <button class="grabber" id="btnCloseDrawer" aria-label="Hide tools"><span></span></button>
-</div>
+    <div class="setting">Line
+      <div class="seg"><button data-width="0">Thin</button><button data-width="1">Thick</button></div>
+    </div>
+    <button class="menu-btn" id="btnPlays">
+      <svg viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>Saved plays &amp; backup
+    </button>
+    <button class="menu-btn" id="btnFit">
+      <svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Fit court to screen
+    </button>
+  </div>
+</main>
 
 <!-- Saved plays screen -->
 <section id="plays" class="sheet" hidden>
   <header>
     <h1>Playbook</h1>
-    <button id="btnClosePlays" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    <button class="pill-btn" id="btnClosePlays" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
   </header>
   <div class="actions">
-    <button id="btnNew">New play</button>
-    <button id="btnSaveAs">Save as new</button>
-    <button id="btnExport">Export backup</button>
-    <button id="btnImport">Import backup</button>
+    <button class="pill-btn" id="btnNew">New play</button>
+    <button class="pill-btn" id="btnSaveAs">Save as new</button>
+    <button class="pill-btn" id="btnExport">Export backup</button>
+    <button class="pill-btn" id="btnImport">Import backup</button>
   </div>
   <p class="note">Plays are stored on this device only. Export a backup now and then — iOS can clear app data.</p>
   <div class="scrollable"><ul id="playList"></ul></div>
@@ -279,28 +309,27 @@ dialog .buttons button { flex: 1; }
 const TEAM_NAME = 'PENGUINS';
 const PURPLE = '#4e2a84';
 
-// Two board styles. Pens are stored by "slot" (0–3), not by color, so a
-// play drawn on one board turns into the matching colors on the other.
+// Two board styles. "ink" is the board-color marker: white on purple, purple on white.
+// Lines drawn with it switch color when you switch boards; picked colors stay as picked.
 const THEMES = {
-  purple: {
-    floor: PURPLE, band: '#ffffff', lines: '#ffffff', lettering: PURPLE,
-    pens: ['#ffffff', '#ffd84d', '#ff6b6b', '#7fd3ff'],
-    penNames: ['White', 'Yellow', 'Red', 'Blue'],
-  },
-  white: {
-    floor: '#fbfafd', band: PURPLE, lines: PURPLE, lettering: '#ffffff',
-    pens: [PURPLE, '#1c1b22', '#d62839', '#1f6fd1'],
-    penNames: ['Purple', 'Black', 'Red', 'Blue'],
-  },
+  purple: { floor: PURPLE, band: '#ffffff', lines: '#ffffff', lettering: PURPLE, ink: '#ffffff',
+            oldPens: ['#ffffff', '#ffd84d', '#ff6b6b', '#7fd3ff'] },   // for plays saved before v2
+  white:  { floor: '#fbfafd', band: PURPLE, lines: PURPLE, lettering: '#ffffff', ink: PURPLE,
+            oldPens: [PURPLE, '#1c1b22', '#d62839', '#1f6fd1'] },
 };
 
 const PEN_WIDTHS = [0.45, 1.0];  // marker thickness, in feet on the court
 const ZOOM_MAX = 6;              // how far you can zoom in (6× the fitted size)
 const ERASER_RADIUS_PX = 14;     // how close the eraser must come to a line, in screen points
+const LETTER_BAND = 6;           // border width (feet) where PENGUINS is written
+const PLAIN_BAND = 1.5;          // border width (feet) on the other sides
 
 /* =====================================================================
    3. COURT GEOMETRY  (U.S. high-school / NFHS dimensions, in feet)
-   Everything is drawn in feet; the view scales feet to screen points.
+   Drawings are stored in "court feet", measured from the court's own corner,
+   so the court can be turned or bordered differently without moving them.
+     Full court: x 0–50 across, y 0–84 from one baseline to the other.
+     Half court: x 0–42 from the baseline (basket side), y 0–50 across.
    ===================================================================== */
 const HS = {
   length: 84, width: 50,
@@ -312,21 +341,18 @@ const HS = {
 };
 const LINE = 0.2;   // court line thickness (about 2.4 inches)
 
-// Each board = the court plus a white/purple border ("band") for the lettering.
-// W and H are the board's total size in feet.
 const COURTS = {
-  full: { W: HS.width + 6, H: HS.length + 12, label: 'Full court' },   // 3 ft sides, 6 ft baselines
-  half: { W: HS.length / 2 + 9, H: HS.width + 6, label: 'Half court' }, // basket on the left
+  full: { w: HS.width, h: HS.length, label: 'Full court' },
+  half: { w: HS.length / 2, h: HS.width, label: 'Half court' },
 };
 
-/** Draws one end of the court: lane, free-throw circle, 3-point line, backboard, rim.
+/** One end of the court: lane, free-throw circle, 3-point line, backboard, rim.
  *  Local frame: baseline along y = 0, court runs toward +y, x runs 0..50 across. */
 function drawCourtEnd(ctx) {
   const mid = HS.width / 2;
   const laneLeft = mid - HS.laneWidth / 2, laneRight = mid + HS.laneWidth / 2;
 
-  // Lane (the "key")
-  ctx.strokeRect(laneLeft, 0, HS.laneWidth, HS.laneDepth);
+  ctx.strokeRect(laneLeft, 0, HS.laneWidth, HS.laneDepth);   // lane (the "key")
 
   // Lane marks: the solid block 7–8 ft up, then small ticks at 11 and 14 ft
   const tick = 0.67;
@@ -347,7 +373,7 @@ function drawCourtEnd(ctx) {
   const r = HS.threeRadius, cy = HS.rimCenter;
   ctx.beginPath();
   ctx.moveTo(mid - r, 0); ctx.lineTo(mid - r, cy);
-  ctx.arc(mid, cy, r, Math.PI, 0, true);   // sweeps through the court side
+  ctx.arc(mid, cy, r, Math.PI, 0, true);
   ctx.lineTo(mid + r, 0);
   ctx.stroke();
 
@@ -359,46 +385,28 @@ function drawCourtEnd(ctx) {
   ctx.beginPath(); ctx.arc(mid, HS.rimCenter, HS.rimRadius, 0, 2 * Math.PI); ctx.stroke();
 }
 
-/** Draws the whole board (border, floor, lines, team name) for the chosen court. */
-function drawBoard(ctx, courtKey, t) {
-  const b = COURTS[courtKey];
-  ctx.fillStyle = t.band;
-  ctx.fillRect(0, 0, b.W, b.H);
-
-  ctx.save();
-  // Move into "court frame": x across the width (0..50), y from a baseline.
-  // Half court is turned sideways (x and y swapped) so the basket sits on the left.
-  if (courtKey === 'full') ctx.translate(3, 6);
-  else ctx.transform(0, 1, 1, 0, 6, 3);
-
-  const len = courtKey === 'full' ? HS.length : HS.length / 2;
+/** The court itself (floor and lines), in court feet. */
+function drawCourt(ctx, courtKey, t) {
+  const c = COURTS[courtKey];
   ctx.fillStyle = t.floor;
-  ctx.fillRect(0, 0, HS.width, len);
-
+  ctx.fillRect(0, 0, c.w, c.h);
   ctx.strokeStyle = t.lines; ctx.fillStyle = t.lines;
   ctx.lineWidth = LINE; ctx.lineCap = 'butt';
+
+  ctx.save();
+  if (courtKey === 'half') ctx.transform(0, 1, 1, 0, 0, 0);   // basket on the left
+  const len = courtKey === 'full' ? HS.length : HS.length / 2;
   ctx.strokeRect(LINE / 2, LINE / 2, HS.width - LINE, len - LINE);   // boundary
   drawCourtEnd(ctx);
-
   if (courtKey === 'full') {
     line(ctx, 0, HS.length / 2, HS.width, HS.length / 2);           // half-court line
     ctx.beginPath(); ctx.arc(HS.width / 2, HS.length / 2, HS.centerRadius, 0, 2 * Math.PI); ctx.stroke();
-    ctx.save(); ctx.translate(0, HS.length); ctx.scale(1, -1);     // flip for the other end
+    ctx.translate(0, HS.length); ctx.scale(1, -1);                 // flip for the other end
     drawCourtEnd(ctx);
-    ctx.restore();
   } else {
-    // Half of the center circle, at the half-court line
     ctx.beginPath(); ctx.arc(HS.width / 2, len, HS.centerRadius, Math.PI, 2 * Math.PI); ctx.stroke();
   }
   ctx.restore();
-
-  // Team name on the baseline border(s)
-  if (courtKey === 'full') {
-    drawTeamName(ctx, b.W / 2, 3, 0, t.lettering);
-    drawTeamName(ctx, b.W / 2, b.H - 3, 0, t.lettering);
-  } else {
-    drawTeamName(ctx, 3, b.H / 2, -Math.PI / 2, t.lettering);
-  }
 }
 
 /** Big spaced-out letters, centered on (x, y). Drawn at 10× and scaled down,
@@ -422,27 +430,70 @@ function line(ctx, x1, y1, x2, y2) {
 }
 
 /* =====================================================================
-   4. APP STATE
-   A stroke is { c: pen slot 0–3, w: width 0|1, p: [x, y, x, y, ...] in feet }.
+   4. LAYOUT: make the court as big as the screen allows
+   Tries the court upright and turned, with PENGUINS along the ends or the
+   sides, and keeps whichever arrangement gives the biggest court.
+   ===================================================================== */
+function chooseLayout(courtKey, availW, availH) {
+  const c = COURTS[courtKey];
+  let best = null;
+  for (const turned of [false, true]) {
+    const dw = turned ? c.h : c.w, dh = turned ? c.w : c.h;   // court size as shown
+    for (const lettersOn of ['ends', 'sides']) {
+      const tb = lettersOn === 'ends' ? LETTER_BAND : PLAIN_BAND;   // top/bottom border
+      const lr = lettersOn === 'ends' ? PLAIN_BAND : LETTER_BAND;   // left/right border
+      const W = dw + 2 * lr, H = dh + 2 * tb;
+      const scale = Math.min(availW / W, availH / H);
+      if (!best || scale > best.scale * 1.01) {
+        best = { scale, turned, lettersOn, W, H, ox: lr, oy: tb, ch: c.h };
+      }
+    }
+  }
+  return best;
+}
+
+/* =====================================================================
+   5. APP STATE
+   A stroke is { c: color, w: width 0|1, p: [x, y, x, y, ...] in court feet }.
+   c is 0 for the board-color marker, or a color like "#ff6b6b".
    ===================================================================== */
 const state = {
   court: 'full', theme: 'purple',
   strokes: [],
   playId: null, name: '', created: null, dirty: false,
-  pen: 0, width: 0, tool: 'pen',        // tool: 'pen' or 'eraser'
-  undo: [], redo: [],                   // snapshots of the strokes list
+  color: 0, customColor: '#ffd84d', width: 0, tool: 'pen',   // tool: 'pen' or 'eraser'
+  undo: [], redo: [],                                        // snapshots of the strokes list
 };
 
 /* =====================================================================
-   5. VIEW: fitting the court to the screen, plus zoom and pan
+   6. VIEW: fitting the board to the screen, plus zoom and pan
+   "Board feet" = the court plus its border, as shown on screen.
    Screen point = board feet × k + (tx, ty)
    ===================================================================== */
 const canvas = document.getElementById('board');
 const ctx = canvas.getContext('2d');
 const view = { k: 1, tx: 0, ty: 0, fitK: 1, cw: 0, ch: 0, dpr: 1 };
+let layout = chooseLayout('full', 1, 1);
+
+const isStandalone = navigator.standalone || matchMedia('(display-mode: standalone)').matches;
+
+/** Home-screen apps on iPhone can be told the screen is shorter than it really is
+ *  (by the height of the status bar), leaving an empty strip at the bottom.
+ *  When the app's width matches the screen, use the screen's real height. */
+function sizeApp() {
+  let h = window.innerHeight;
+  if (isStandalone && screen.width && screen.height) {
+    const portrait = window.innerHeight >= window.innerWidth;
+    const sw = portrait ? Math.min(screen.width, screen.height) : Math.max(screen.width, screen.height);
+    const sh = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+    if (Math.abs(window.innerWidth - sw) <= 2 && sh > h) h = sh;
+  }
+  document.documentElement.style.setProperty('--app-h', h + 'px');
+}
 
 function resizeCanvas() {
   const r = canvas.getBoundingClientRect();
+  if (!r.width || !r.height) return;
   view.cw = r.width; view.ch = r.height;
   view.dpr = window.devicePixelRatio || 1;
   canvas.width = Math.round(r.width * view.dpr);
@@ -458,19 +509,19 @@ new ResizeObserver(() => resizeCanvas()).observe(canvas);
 /** Notch / home-bar margins, in screen points. */
 function safeInsets() {
   const s = getComputedStyle(document.getElementById('safe'));
-  return { left: parseFloat(s.paddingLeft) || 0, right: parseFloat(s.paddingRight) || 0,
-           bottom: parseFloat(s.paddingBottom) || 0 };
+  const px = v => parseFloat(v) || 0;
+  return { top: px(s.paddingTop), right: px(s.paddingRight), bottom: px(s.paddingBottom), left: px(s.paddingLeft) };
 }
 
-/** Show the whole board, as big as fits, centered (clear of the notch and home bar). */
+/** Show the whole board, as big as fits, clear of the clock and home bar. */
 function fitView() {
-  const b = COURTS[state.court], pad = 4, ins = safeInsets();
+  const ins = safeInsets(), pad = 4;
   const w = view.cw - ins.left - ins.right - 2 * pad;
-  const h = view.ch - ins.bottom - 2 * pad;
-  view.fitK = Math.min(w / b.W, h / b.H);
-  view.k = view.fitK;
-  view.tx = ins.left + pad + (w - b.W * view.k) / 2;
-  view.ty = pad + (h - b.H * view.k) / 2;
+  const h = view.ch - ins.top - ins.bottom - 2 * pad;
+  layout = chooseLayout(state.court, w, h);
+  view.fitK = view.k = layout.scale;
+  view.tx = ins.left + pad + (w - layout.W * view.k) / 2;
+  view.ty = ins.top + pad + (h - layout.H * view.k) / 2;
   requestRender();
 }
 
@@ -478,16 +529,22 @@ function clampZoom(k) { return Math.min(Math.max(k, view.fitK), view.fitK * ZOOM
 
 /** Keep the board on screen: centered if smaller than the screen, otherwise no gaps at the edges. */
 function clampPan() {
-  const b = COURTS[state.court];
-  const bw = b.W * view.k, bh = b.H * view.k;
+  const bw = layout.W * view.k, bh = layout.H * view.k;
   view.tx = bw <= view.cw ? (view.cw - bw) / 2 : Math.min(0, Math.max(view.cw - bw, view.tx));
   view.ty = bh <= view.ch ? (view.ch - bh) / 2 : Math.min(0, Math.max(view.ch - bh, view.ty));
+  if (view.k === view.fitK) fitView();   // fully zoomed out: snap back to the fitted position
 }
 
+/** Screen point → board feet → court feet (undoing any turn of the court). */
 function toBoard(pt) { return [(pt.x - view.tx) / view.k, (pt.y - view.ty) / view.k]; }
+function toCourt(pt) {
+  const [X, Y] = toBoard(pt);
+  const bx = X - layout.ox, by = Y - layout.oy;
+  return layout.turned ? [by, layout.ch - bx] : [bx, by];
+}
 
 /* =====================================================================
-   6. RENDERING
+   7. RENDERING
    The whole picture is redrawn (at most once per screen refresh) whenever
    something changes. Fast enough for hundreds of strokes.
    ===================================================================== */
@@ -499,23 +556,40 @@ function requestRender() {
 }
 
 function render() {
-  const d = view.dpr, t = THEMES[state.theme];
+  const d = view.dpr, t = THEMES[state.theme], L = layout;
+
   // The border color fills the whole screen, so the board runs edge to edge
   ctx.setTransform(d, 0, 0, d, 0, 0);
   ctx.fillStyle = t.band;
   ctx.fillRect(0, 0, view.cw, view.ch);
 
+  // Board feet: team name in the border
   ctx.setTransform(d * view.k, 0, 0, d * view.k, d * view.tx, d * view.ty);
-  drawBoard(ctx, state.court, t);
+  if (L.lettersOn === 'ends') {
+    drawTeamName(ctx, L.W / 2, L.oy / 2, 0, t.lettering);
+    drawTeamName(ctx, L.W / 2, L.H - L.oy / 2, 0, t.lettering);
+  } else {
+    drawTeamName(ctx, L.ox / 2, L.H / 2, -Math.PI / 2, t.lettering);
+    drawTeamName(ctx, L.W - L.ox / 2, L.H / 2, Math.PI / 2, t.lettering);
+  }
 
+  // Court feet: the court and the drawings, turned if the layout says so
+  ctx.translate(L.ox, L.oy);
+  if (L.turned) ctx.transform(0, 1, -1, 0, L.ch, 0);
+  drawCourt(ctx, state.court, t);
   for (const s of state.strokes) drawStroke(ctx, s, t);
   if (input.current) drawStroke(ctx, input.current, t);
+}
+
+function strokeColor(s, t) {
+  if (typeof s.c === 'string') return s.c;
+  return s.c === 0 ? t.ink : t.oldPens[s.c] || t.ink;
 }
 
 /** Marker look: solid color, round ends, smoothed through the midpoints. */
 function drawStroke(ctx, s, t) {
   const p = s.p, w = PEN_WIDTHS[s.w];
-  ctx.strokeStyle = ctx.fillStyle = t.pens[s.c];
+  ctx.strokeStyle = ctx.fillStyle = strokeColor(s, t);
   if (p.length <= 2) {   // a single tap = a dot
     ctx.beginPath(); ctx.arc(p[0], p[1], w * 0.75, 0, 2 * Math.PI); ctx.fill();
     return;
@@ -530,7 +604,7 @@ function drawStroke(ctx, s, t) {
 }
 
 /* =====================================================================
-   7. TOUCH, PENCIL AND MOUSE INPUT
+   8. TOUCH, PENCIL AND MOUSE INPUT
    • iPhone: one finger draws; two fingers pinch-zoom and pan.
      If a second finger lands mid-stroke, that stroke is cancelled.
    • iPad: once an Apple Pencil is seen, the Pencil draws and fingers
@@ -553,7 +627,7 @@ function localPoint(e) {
 
 canvas.addEventListener('pointerdown', e => {
   e.preventDefault();
-  closeDrawer();   // touching the court puts the tools away (and still draws)
+  hideTools();   // touching the court puts the tools away (and still draws)
   const pt = localPoint(e);
   if (e.pointerType === 'touch') {
     input.touches.set(e.pointerId, pt);
@@ -641,8 +715,8 @@ function beginDraw(id, type, pt) {
     input.eraseSnap = state.strokes.slice(); input.erased = false; input.lastErase = null;
     eraseAt(pt);
   } else {
-    const [x, y] = toBoard(pt);
-    input.current = { c: state.pen, w: state.width, p: [round2(x), round2(y)] };
+    const [x, y] = toCourt(pt);
+    input.current = { c: state.color, w: state.width, p: [round2(x), round2(y)] };
     input.lastPt = pt;
   }
   requestRender();
@@ -652,7 +726,7 @@ function extendDraw(pt) {
   if (state.tool === 'eraser') { eraseAt(pt); return; }
   if (!input.current) return;
   if (Math.hypot(pt.x - input.lastPt.x, pt.y - input.lastPt.y) < 1.5) return;  // skip tiny wiggles
-  const [x, y] = toBoard(pt);
+  const [x, y] = toCourt(pt);
   input.current.p.push(round2(x), round2(y));
   input.lastPt = pt;
   requestRender();
@@ -687,7 +761,7 @@ function eraseAt(pt) {
   const radius = ERASER_RADIUS_PX / view.k;
   const before = state.strokes.length;
   for (let i = 1; i <= steps; i++) {
-    const [x, y] = toBoard({ x: from.x + (pt.x - from.x) * i / steps, y: from.y + (pt.y - from.y) * i / steps });
+    const [x, y] = toCourt({ x: from.x + (pt.x - from.x) * i / steps, y: from.y + (pt.y - from.y) * i / steps });
     state.strokes = state.strokes.filter(s => !strokeHit(s, x, y, radius + PEN_WIDTHS[s.w] / 2));
   }
   if (state.strokes.length !== before) { input.erased = true; requestRender(); }
@@ -710,7 +784,7 @@ function segmentDistance(px, py, ax, ay, bx, by) {
 }
 
 /* =====================================================================
-   8. UNDO / REDO / CLEAR
+   9. UNDO / REDO / CLEAR
    Before each change we keep a copy of the strokes list.
    ===================================================================== */
 function pushHistory(snapshot) {
@@ -735,11 +809,11 @@ function clearAll() {
   if (!state.strokes.length) return;
   pushHistory(state.strokes.slice());   // Clear can be undone, so no "are you sure?"
   state.strokes = [];
-  toast('Cleared — tap Undo to bring it back');
+  toast('Cleared — Undo brings it back');
 }
 
 /* =====================================================================
-   9. STORAGE (IndexedDB)
+   10. STORAGE (IndexedDB)
    "plays" holds saved plays; "meta" holds the work-in-progress drawing,
    so nothing is lost if iOS closes the app in the background.
    ===================================================================== */
@@ -793,18 +867,28 @@ function newId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
 
+/** Plays saved before version 2 measured from the border's corner, not the court's. */
+const FORMAT = 2;
+const OLD_OFFSETS = { full: [3, 6], half: [6, 3] };
+function upgradeStrokes(strokes, court, format) {
+  if (format >= FORMAT || !OLD_OFFSETS[court]) return strokes;
+  const [dx, dy] = OLD_OFFSETS[court];
+  return strokes.map(s => ({ ...s, p: s.p.map((v, i) => round2(v - (i % 2 ? dy : dx))) }));
+}
+
 /** Save the work in progress (called shortly after every change). */
 let draftTimer = null;
 function scheduleDraftSave() {
   clearTimeout(draftTimer);
   draftTimer = setTimeout(() => {
-    const { court, theme, strokes, playId, name, created, dirty } = state;
-    DB.setMeta('draft', { court, theme, strokes, playId, name, created, dirty }).catch(() => {});
+    const { court, theme, strokes, playId, name, created, dirty, customColor } = state;
+    DB.setMeta('draft', { v: FORMAT, court, theme, strokes, playId, name, created, dirty, customColor })
+      .catch(() => {});
   }, 400);
 }
 
 /* =====================================================================
-   10. PLAYS: new, save, save as, open, rename, delete
+   11. PLAYS: new, save, save as, open, rename, delete
    ===================================================================== */
 function markDirty() { state.dirty = true; updateUI(); scheduleDraftSave(); requestRender(); }
 
@@ -820,16 +904,18 @@ async function okToDiscard(what) {
 
 function loadIntoState(p) {
   Object.assign(state, {
-    court: p.court, theme: p.theme || state.theme, strokes: p.strokes || [],
+    court: p.court, theme: p.theme || state.theme,
+    strokes: upgradeStrokes(p.strokes || [], p.court, p.v || 1),
     playId: p.playId ?? p.id ?? null, name: p.name || '', created: p.created || null,
     dirty: !!p.dirty, undo: [], redo: [],
   });
+  if (p.customColor) state.customColor = p.customColor;
   fitView(); updateUI(); scheduleDraftSave();
 }
 
 async function newPlay(court = state.court) {
   if (!(await okToDiscard('Start a new play anyway?'))) return false;
-  loadIntoState({ court, strokes: [], dirty: false });
+  loadIntoState({ v: FORMAT, court, strokes: [], dirty: false });
   return true;
 }
 
@@ -855,7 +941,7 @@ async function saveAsNew() {
 async function writePlay(id, name) {
   const now = Date.now();
   const play = {
-    id, name, court: state.court, theme: state.theme, strokes: state.strokes,
+    v: FORMAT, id, name, court: state.court, theme: state.theme, strokes: state.strokes,
     created: state.created || now, updated: now,
   };
   try {
@@ -906,7 +992,7 @@ async function deletePlay(id) {
 
 /* ----- the Playbook screen ----- */
 const playsSheet = document.getElementById('plays');
-function openPlays() { renderPlayList(); playsSheet.hidden = false; }
+function openPlays() { hideTools(); renderPlayList(); playsSheet.hidden = false; }
 function closePlays() { playsSheet.hidden = true; }
 
 async function renderPlayList() {
@@ -923,8 +1009,8 @@ async function renderPlayList() {
     const date = new Date(p.updated).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
     li.innerHTML = `
       <button class="open"><div><div class="name"></div><div class="meta"></div></div></button>
-      <button class="rename">Rename</button>
-      <button class="delete" aria-label="Delete">
+      <button class="pill-btn rename">Rename</button>
+      <button class="pill-btn delete" aria-label="Delete">
         <svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>
       </button>`;
     li.querySelector('.name').textContent = p.name;   // textContent: names are shown as plain text
@@ -937,7 +1023,7 @@ async function renderPlayList() {
 }
 
 /* =====================================================================
-   11. BACKUP: export all plays to one file, import them back
+   12. BACKUP: export all plays to one file, import them back
    ===================================================================== */
 async function exportBackup() {
   const plays = await DB.allPlays();
@@ -985,33 +1071,32 @@ async function importBackup(file) {
 }
 
 /* =====================================================================
-   12. SCREEN UPDATES, POP-UPS, BUTTON WIRING
+   13. SCREEN UPDATES, POP-UPS, BUTTON WIRING
    ===================================================================== */
 const $ = id => document.getElementById(id);
 
+function currentInk() {
+  return state.color === 0 ? THEMES[state.theme].ink : state.color;
+}
+
 function updateUI() {
-  const t = THEMES[state.theme];
-  const title = $('title');
-  title.textContent = state.name || 'Untitled play';
-  if (state.dirty && state.strokes.length) {
-    const dot = document.createElement('span');
-    dot.className = 'unsaved'; dot.textContent = ' •';
-    title.appendChild(dot);
-  }
-  document.querySelectorAll('.seg button').forEach(b => b.classList.toggle('active', b.dataset.court === state.court));
-  document.querySelectorAll('.pen').forEach(b => {
-    const slot = +b.dataset.slot;
-    b.querySelector('.pen-dot').style.background = t.pens[slot];
-    b.setAttribute('aria-label', t.penNames[slot] + ' marker');
-    b.classList.toggle('active', state.tool === 'pen' && state.pen === slot);
-  });
-  document.querySelectorAll('.width').forEach(b => {
-    b.classList.toggle('active', state.width === +b.dataset.width);
-    b.querySelector('.width-line').style.background = t.pens[state.pen];
-  });
+  const t = THEMES[state.theme], root = document.documentElement.style;
+  root.setProperty('--ink', currentInk());
+  root.setProperty('--custom', state.customColor);
+  $('btnInk').querySelector('.dot').style.background = t.ink;
+  $('btnInk').classList.toggle('active', state.tool === 'pen' && state.color === 0);
+  $('btnColor').classList.toggle('active', state.tool === 'pen' && state.color !== 0);
   $('btnEraser').classList.toggle('active', state.tool === 'eraser');
   $('btnUndo').disabled = !state.undo.length;
   $('btnRedo').disabled = !state.redo.length;
+  $('btnSave').classList.toggle('unsaved', state.dirty && state.strokes.length > 0);
+  $('playName').textContent = state.name || 'Untitled play';
+  document.querySelectorAll('[data-court]').forEach(b => b.classList.toggle('active', b.dataset.court === state.court));
+  document.querySelectorAll('[data-theme]').forEach(b => b.classList.toggle('active', b.dataset.theme === state.theme));
+  document.querySelectorAll('[data-width]').forEach(b => b.classList.toggle('active', +b.dataset.width === state.width));
+  // Whatever peeks out around the app (rare) matches the border
+  document.documentElement.style.background = document.body.style.background = t.band;
+  $('scrim').classList.toggle('show', t.band === '#ffffff');
   requestRender();
 }
 
@@ -1048,39 +1133,45 @@ function ask({ title, message = '', input, placeholder = '', okText = 'OK', dang
   });
 }
 
-// Tools panel
-const drawer = $('drawer');
-function closeDrawer() { drawer.classList.remove('open'); }
-$('btnMenu').onclick = () => drawer.classList.add('open');
-$('btnCloseDrawer').onclick = closeDrawer;
+// Toolbar open/close
+function showTools() { $('tools').classList.remove('closed'); $('btnTools').hidden = true; }
+function hideTools() { $('tools').classList.add('closed'); $('more').hidden = true; $('btnTools').hidden = false; }
+$('btnTools').onclick = showTools;
+$('btnHide').onclick = hideTools;
+$('btnMore').onclick = () => { $('more').hidden = !$('more').hidden; };
 
-// Pens, widths, eraser
-document.querySelectorAll('.pen').forEach(b => b.onclick = () => {
-  state.pen = +b.dataset.slot; state.tool = 'pen'; updateUI();
+// Ink, color picker, eraser
+$('btnInk').onclick = () => { state.color = 0; state.tool = 'pen'; updateUI(); };
+$('colorInput').addEventListener('click', () => {   // tapping the rainbow selects the picked color too
+  state.color = state.customColor; state.tool = 'pen';
+  $('colorInput').value = state.customColor; updateUI();
 });
-document.querySelectorAll('.width').forEach(b => b.onclick = () => {
-  state.width = +b.dataset.width; state.tool = 'pen'; updateUI();
+$('colorInput').addEventListener('input', e => {
+  state.customColor = state.color = e.target.value; state.tool = 'pen';
+  updateUI(); scheduleDraftSave();
 });
 $('btnEraser').onclick = () => { state.tool = state.tool === 'eraser' ? 'pen' : 'eraser'; updateUI(); };
 
 // Actions
 $('btnUndo').onclick = undo;
 $('btnRedo').onclick = redo;
-$('btnFit').onclick = fitView;
 $('btnClear').onclick = clearAll;
 $('btnSave').onclick = save;
 
-// Court and board color
-document.querySelectorAll('.seg button').forEach(b => b.onclick = () => {
-  if (b.dataset.court !== state.court) newPlay(b.dataset.court);
+// More menu
+document.querySelectorAll('[data-court]').forEach(b => b.onclick = async () => {
+  if (b.dataset.court !== state.court) { await newPlay(b.dataset.court); }
 });
-$('btnTheme').onclick = () => {
-  state.theme = state.theme === 'purple' ? 'white' : 'purple';
-  markDirty();
-};
+document.querySelectorAll('[data-theme]').forEach(b => b.onclick = () => {
+  if (b.dataset.theme !== state.theme) { state.theme = b.dataset.theme; markDirty(); }
+});
+document.querySelectorAll('[data-width]').forEach(b => b.onclick = () => {
+  state.width = +b.dataset.width; state.tool = 'pen'; updateUI();
+});
+$('btnPlays').onclick = openPlays;
+$('btnFit').onclick = () => { fitView(); hideTools(); };
 
 // Playbook screen
-$('btnPlays').onclick = openPlays;
 $('btnClosePlays').onclick = closePlays;
 $('btnNew').onclick = async () => { if (await newPlay()) closePlays(); };
 $('btnSaveAs').onclick = saveAsNew;
@@ -1093,16 +1184,12 @@ $('importFile').onchange = e => {
 };
 
 /* =====================================================================
-   13. START-UP
+   14. START-UP
    ===================================================================== */
-window.addEventListener('resize', resizeCanvas);
-
-// Launched from the home screen? (Used by the CSS to fill the full screen height.)
-if (navigator.standalone || matchMedia('(display-mode: standalone)').matches) {
-  document.documentElement.classList.add('standalone');
-}
+window.addEventListener('resize', () => { sizeApp(); resizeCanvas(); });
 
 (async function start() {
+  sizeApp();
   resizeCanvas();
   updateUI();
   try {
