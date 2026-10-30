@@ -33,7 +33,7 @@
   --serif: ui-serif, "New York", "Iowan Old Style", Georgia, serif;
   --sans: -apple-system, system-ui, "Helvetica Neue", sans-serif;
   /* Tool button size: 44px, smaller only if the rail won't fit a short (sideways) screen */
-  --b: min(44px, calc((100vh - 110px) / 9.5));
+  --b: min(44px, calc((100vh - 110px) / 11));
   --app-h: 100%;                    /* set by the script to the true screen height */
 }
 
@@ -137,6 +137,18 @@ svg { width: 22px; height: 22px; flex: none;
 .tb:active { background: rgba(255,255,255,.18); transform: scale(.92); }
 .tb.active { background: rgba(255,255,255,.24); box-shadow: inset 0 0 0 1px rgba(255,255,255,.45); }
 .tb:disabled { opacity: .3; }
+/* Full | Half switch at the top of the rail */
+.courtseg { display: flex; flex-direction: column; gap: 2px; padding: 2px;
+  background: rgba(0,0,0,.2); border-radius: 16px; box-shadow: inset 0 1px 2px rgba(0,0,0,.2); }
+.cs { width: calc(var(--b) - 4px); height: calc(var(--b) * .7); border-radius: 13px;
+  font-size: 12px; font-weight: 600; letter-spacing: .2px; color: rgba(255,255,255,.75); transition: background .15s; }
+.cs.active { color: #fff; background: rgba(255,255,255,.26);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.4), 0 1px 4px rgba(0,0,0,.2); }
+.cs .icon { display: none; width: min(20px, calc(var(--b) * .7)); height: min(20px, calc(var(--b) * .7)); }
+@media (max-height: 520px) {   /* short (sideways) screen: court icons instead of words */
+  .cs .word { display: none; }
+  .cs .icon { display: block; }
+}
 .sep { width: 22px; height: 1px; background: rgba(255,255,255,.22); margin: 3px 0; }
 .dot { width: 22px; height: 22px; border-radius: 50%; box-shadow: 0 0 0 1.5px rgba(255,255,255,.7), 0 1px 3px rgba(0,0,0,.3); }
 /* Rainbow ring = color picker; the center shows the color you last picked */
@@ -161,8 +173,8 @@ svg { width: 22px; height: 22px; flex: none;
   right: calc(env(safe-area-inset-right) + 10px + var(--b) + 26px);
   width: min(290px, calc(100vw - var(--b) - 60px));
   transform: translateY(-50%);
-  border-radius: 26px; padding: 16px;
-  display: flex; flex-direction: column; gap: 12px;
+  border-radius: 24px; padding: 14px;
+  display: flex; flex-direction: column; gap: 10px;
 }
 #more[hidden] { display: none; }
 #version { text-align: center; font-size: 12px; color: rgba(255,255,255,.45); }
@@ -252,6 +264,13 @@ dialog .buttons button.danger { background: var(--danger); }
   <div id="drawer" class="closed">
     <button id="grab" aria-label="Show or hide tools"><span></span></button>
     <div id="rail" class="glass">
+      <div class="courtseg" role="group" aria-label="Court">
+        <button class="cs" data-court="full" aria-label="Full court"><span class="word">Full</span>
+          <svg class="icon" viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="1.5"/><path d="M6 12h12"/><circle cx="12" cy="12" r="2.2"/></svg></button>
+        <button class="cs" data-court="half" aria-label="Half court"><span class="word">Half</span>
+          <svg class="icon" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="1.5"/><path d="M6.5 5a5.5 5.5 0 0 0 11 0"/><circle cx="12" cy="7" r="1"/></svg></button>
+      </div>
+      <span class="sep"></span>
       <button class="tb" id="btnInk" aria-label="Board-color marker"><span class="dot"></span></button>
       <label class="tb rainbow" id="btnColor" aria-label="Pick a color">
         <span class="dot"><span></span></span>
@@ -273,9 +292,6 @@ dialog .buttons button.danger { background: var(--danger); }
   <!-- More: court, board color, line thickness, saved plays -->
   <div id="more" class="glass" hidden>
     <div id="playName">Untitled play</div>
-    <div class="setting">Court
-      <div class="seg"><button data-court="full">Full</button><button data-court="half">Half</button></div>
-    </div>
     <div class="setting">Board
       <div class="seg"><button data-theme="purple">Purple</button><button data-theme="white">White</button></div>
     </div>
@@ -342,7 +358,7 @@ const THEMES = {
 
 const PEN_WIDTHS = [0.55, 1.0];  // marker thickness in feet on the court (new lines use the first;
                                  // the second is only for thick lines saved by older versions)
-const APP_VERSION = 7;           // shown in the ••• menu; bump with each update
+const APP_VERSION = 8;           // shown in the ••• menu; bump with each update
 const ZOOM_MAX = 6;              // how far you can zoom in (6× the fitted size)
 const ERASER_RADIUS_PX = 14;     // how close the eraser must come to a line, in screen points
 const PLAIN_BAND = 1.5;          // minimum border (feet) around the court

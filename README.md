@@ -20,8 +20,9 @@ No accounts, no server — plays are stored on the device.
   fingers only zoom and move — so your palm never leaves marks.
 - **Tools:** swipe in from the right edge (or tap the glass tab there); swipe back to hide.
   The rail has: board-color marker,
-  rainbow color picker, eraser, undo, redo, clear, save, and ••• for the rest
-  (full/half court, purple/white board, saved plays, fit to screen, version number).
+  Full | Half switch at the top, then rainbow color picker, eraser, undo, redo, clear, save,
+  and ••• for the rest
+  (purple/white board, saved plays, fit to screen, version number).
   Touching the court also puts it away.
 - **Save** asks for a name the first time, then saves quietly. A dot on it means unsaved changes.
   **Saved plays → Save as new** makes a copy.
