@@ -166,6 +166,7 @@ svg { width: 22px; height: 22px; flex: none;
 }
 #more[hidden] { display: none; }
 #version { text-align: center; font-size: 12px; color: rgba(255,255,255,.45); }
+#screenCheck { text-align: center; font-size: 12px; color: rgba(255,255,255,.6); margin-top: -6px; }
 #playName {
   font-family: var(--serif); font-size: 21px; font-weight: 600;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -285,6 +286,7 @@ dialog .buttons button.danger { background: var(--danger); }
       <svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Fit court to screen
     </button>
     <div id="version"></div>
+    <a id="screenCheck" href="screen-check.html">Screen check</a>
   </div>
 </main>
 
@@ -340,7 +342,7 @@ const THEMES = {
 
 const PEN_WIDTHS = [0.55, 1.0];  // marker thickness in feet on the court (new lines use the first;
                                  // the second is only for thick lines saved by older versions)
-const APP_VERSION = 6;           // shown in the ••• menu; bump with each update
+const APP_VERSION = 7;           // shown in the ••• menu; bump with each update
 const ZOOM_MAX = 6;              // how far you can zoom in (6× the fitted size)
 const ERASER_RADIUS_PX = 14;     // how close the eraser must come to a line, in screen points
 const PLAIN_BAND = 1.5;          // minimum border (feet) around the court

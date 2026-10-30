@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Screen check</title>
+<!--
+  Diagnostic page: shows how much of the screen iOS lets this home-screen app use.
+  Each colored outline is drawn a different way; whichever reaches the true screen
+  edges tells us which method the app should use. Opened from the ••• menu.
+-->
+<style>
+  html { background: #ffe14d; }   /* yellow = the whole area iOS paints for the app */
+  body { margin: 0; font: 13px/1.35 -apple-system, system-ui, sans-serif; color: #111; }
+  .box { position: absolute; left: 0; right: 0; top: 0; pointer-events: none; box-sizing: border-box; }
+  #fixed  { position: fixed; inset: 0; border: 8px solid #e53935; }          /* red */
+  #screenH { border: 6px dashed #1e63d6; margin: 12px; }                     /* blue: JS screen height */
+  #lvh    { height: calc(100lvh - 48px); border: 6px dotted #1a9c4a; margin: 24px; }       /* green: 100lvh */
+  #vh     { height: calc(100vh - 72px); border: 4px solid #8e24aa; margin: 36px; }         /* purple: 100vh */
+  #info {
+    position: absolute; left: 50%; top: 45%; transform: translate(-50%, -50%);
+    background: rgba(255,255,255,.93); border-radius: 14px; padding: 12px 14px;
+    width: min(320px, 80vw); box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  }
+  #info b { font-size: 15px; }
+  #info a { display: block; margin-top: 10px; text-align: center; padding: 10px;
+    background: #4e2a84; color: #fff; border-radius: 10px; text-decoration: none; font-size: 15px; }
+  #probe { position: fixed; visibility: hidden;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+  .m { position: fixed; visibility: hidden; top: 0; width: 1px; }
+</style>
+</head>
+<body>
+<div id="fixed" class="box"></div>
+<div id="screenH" class="box"></div>
+<div id="lvh" class="box"></div>
+<div id="vh" class="box"></div>
+<div id="probe"></div>
+<div class="m" id="m-vh" style="height:100vh"></div>
+<div class="m" id="m-lvh" style="height:100lvh"></div>
+<div class="m" id="m-svh" style="height:100svh"></div>
+<div class="m" id="m-dvh" style="height:100dvh"></div>
+<div id="info">
+  <b>Screen check</b><br>
+  Please screenshot this whole screen and send it to Claude.<br><br>
+  <span id="out"></span>
+  <a href="./">Back to the court</a>
+</div>
+<script>
+  function measure() {
+    const s = getComputedStyle(document.getElementById('probe'));
+    const h = id => Math.round(document.getElementById(id).getBoundingClientRect().height);
+    const portrait = innerHeight >= innerWidth;
+    const screenH = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+    document.getElementById('screenH').style.height = (screenH - 24) + 'px';
+    const vv = window.visualViewport;
+    document.getElementById('out').innerHTML = [
+      `inner: ${innerWidth} × ${innerHeight}`,
+      `screen: ${screen.width} × ${screen.height} · dpr ${devicePixelRatio}`,
+      `client: ${document.documentElement.clientWidth} × ${document.documentElement.clientHeight}`,
+      vv ? `visual: ${Math.round(vv.width)} × ${Math.round(vv.height)} @${Math.round(vv.offsetTop)}` : 'visual: n/a',
+      `vh ${h('m-vh')} · lvh ${h('m-lvh')} · svh ${h('m-svh')} · dvh ${h('m-dvh')}`,
+      `safe T${s.paddingTop} R${s.paddingRight} B${s.paddingBottom} L${s.paddingLeft}`.replace(/px/g, ''),
+      `standalone: ${!!(navigator.standalone || matchMedia('(display-mode: standalone)').matches)}`,
+      '<span style="color:#e53935">red</span> fixed · <span style="color:#1e63d6">blue</span> screen ·'
+        + ' <span style="color:#1a9c4a">green</span> lvh · <span style="color:#8e24aa">purple</span> vh',
+    ].join('<br>');
+  }
+  measure();
+  addEventListener('resize', measure);
+  setTimeout(measure, 500);
+</script>
+</body>
+</html>
