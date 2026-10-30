@@ -5,7 +5,7 @@
    refreshed at the same time. With no internet, the saved copy is used.
 
    If you add a new file to the app, add it to FILES below and bump VERSION. */
-const VERSION = 'penguins-v14';
+const VERSION = 'penguins-v15';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-512.png'];
 const NETWORK_WAIT_MS = 3000;   // on a very slow connection, fall back to the saved copy after this
 

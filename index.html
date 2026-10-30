@@ -375,7 +375,7 @@ const THEMES = {
 
 const PEN_WIDTHS = [0.55, 1.0];  // marker thickness in feet on the court (new lines use the first;
                                  // the second is only for thick lines saved by older versions)
-const APP_VERSION = 14;           // shown in the ••• menu; bump with each update
+const APP_VERSION = 15;           // shown in the ••• menu; bump with each update
 const ZOOM_MAX = 6;              // how far you can zoom in (6× the fitted size)
 const ERASER_RADIUS_PX = 14;     // how close the eraser must come to a line, in screen points
 const PLAIN_BAND = 0.75;         // minimum border (feet) around the court: thin, but not zero
@@ -510,12 +510,10 @@ function drawFloorNames(ctx, courtKey, t) {
     drawTeamName(ctx, HS.width / 2, mid, 0, t.lines, FLOOR_LETTERS, SCHOOL_NAME);
     drawTeamName(ctx, HS.width / 2, HS.length - mid, 0, t.lines, FLOOR_LETTERS, TEAM_NAME);
   } else {
-    // Along each sideline, between the top of the 3-point arc and the half-court line
-    const x0 = HS.threeRadius + HS.rimCenter, x1 = HS.length / 2;
-    const size = Math.min(FLOOR_LETTERS, (x1 - x0 - 2) / longestName());
-    const cx = (x0 + x1) / 2;
-    drawTeamName(ctx, cx, 1 + size / 2 + 1, 0, t.lines, size, SCHOOL_NAME);
-    drawTeamName(ctx, cx, HS.width - 1 - size / 2 - 1, 0, t.lines, size, TEAM_NAME);
+    // Centered along each sideline, in the open strip outside the 3-point line
+    const size = 2.2, cx = HS.length / 4;
+    drawTeamName(ctx, cx, 0.9 + size / 2, 0, t.lines, size, SCHOOL_NAME);
+    drawTeamName(ctx, cx, HS.width - 0.9 - size / 2, 0, t.lines, size, TEAM_NAME);
   }
   ctx.restore();
 }
@@ -627,14 +625,14 @@ function sizeApp() {
   root.setProperty('--b', Math.max(20, Math.min(44, (h - 80) / 9.5)) + 'px');
 }
 
-/** True when iOS has cut the bottom off (see sizeApp): the home bar is then already
- *  below the visible area, so there's no need to keep the court clear of it. */
-function bottomAlreadyCut() {
-  if (!isStandalone || !screen.width || !screen.height) return false;
+/** The phone's real screen height, if iOS has cut the bottom off the app's area
+ *  (see sizeApp); otherwise null. */
+function physicalHeight() {
+  if (!isStandalone || !screen.width || !screen.height) return null;
   const portrait = window.innerHeight >= window.innerWidth;
   const sw = portrait ? Math.min(screen.width, screen.height) : Math.max(screen.width, screen.height);
   const sh = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
-  return Math.abs(window.innerWidth - sw) <= 2 && sh - window.innerHeight >= 20;
+  return Math.abs(window.innerWidth - sw) <= 2 && sh - window.innerHeight >= 20 ? sh : null;
 }
 
 function resizeCanvas() {
@@ -662,16 +660,22 @@ function safeInsets() {
 /** Show the whole board, as big as fits, clear of the clock and home bar. */
 function fitView() {
   const ins = safeInsets(), pad = 2;
-  if (bottomAlreadyCut()) ins.bottom = 0;
-  // The full court is limited by height, so it also uses the strip under the clock
-  // (about 10% bigger). The clock then sits over the court's top corner.
-  if (state.court === 'full') ins.top = 0;
-  const w = view.cw - ins.left - ins.right - 2 * pad;
-  const h = view.ch - ins.top - ins.bottom - 2 * pad;
+  const physH = physicalHeight();
+  if (physH) ins.bottom = 0;   // the home bar is already below the area iOS shows
+  let top = ins.top + pad, bottom = view.ch - ins.bottom - pad;
+  // Center on the real screen, not just the area iOS shows: with the bottom cut off,
+  // that means matching the gap under the clock at the top. Upright the two gaps are
+  // nearly equal, so this costs almost nothing; skip it if it would shrink the court
+  // more than 10% (sideways, where the cut-off is much bigger than the top gap).
+  if (physH) {
+    const mid = physH / 2, half = Math.min(mid - top, bottom - mid);
+    if (2 * half >= 0.9 * (bottom - top)) { top = mid - half; bottom = mid + half; }
+  }
+  const w = view.cw - ins.left - ins.right - 2 * pad, h = bottom - top;
   layout = chooseLayout(state.court, w, h);
   view.fitK = view.k = layout.scale;
   view.tx = ins.left + pad + (w - layout.W * view.k) / 2;
-  view.ty = ins.top + pad + (h - layout.H * view.k) / 2;
+  view.ty = top + (h - layout.H * view.k) / 2;
   requestRender();
 }
 
@@ -1261,8 +1265,7 @@ function updateUI() {
   document.querySelectorAll('[data-theme]').forEach(b => b.classList.toggle('active', b.dataset.theme === state.theme));
   // Whatever peeks out around the app (rare) matches the border
   document.documentElement.style.background = document.body.style.background = t.band;
-  // Soft shade behind the clock: over a white border, or when the full court runs under it
-  $('scrim').classList.toggle('show', t.band === '#ffffff' || state.court === 'full');
+  $('scrim').classList.toggle('show', t.band === '#ffffff');   // shade behind the clock on a white border
   document.body.classList.toggle('light-band', t.band === '#ffffff');
   requestRender();
 }
