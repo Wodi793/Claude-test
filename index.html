@@ -375,7 +375,7 @@ const THEMES = {
 
 const PEN_WIDTHS = [0.55, 1.0];  // marker thickness in feet on the court (new lines use the first;
                                  // the second is only for thick lines saved by older versions)
-const APP_VERSION = 13;           // shown in the ••• menu; bump with each update
+const APP_VERSION = 14;           // shown in the ••• menu; bump with each update
 const ZOOM_MAX = 6;              // how far you can zoom in (6× the fitted size)
 const ERASER_RADIUS_PX = 14;     // how close the eraser must come to a line, in screen points
 const PLAIN_BAND = 0.75;         // minimum border (feet) around the court: thin, but not zero
@@ -663,6 +663,9 @@ function safeInsets() {
 function fitView() {
   const ins = safeInsets(), pad = 2;
   if (bottomAlreadyCut()) ins.bottom = 0;
+  // The full court is limited by height, so it also uses the strip under the clock
+  // (about 10% bigger). The clock then sits over the court's top corner.
+  if (state.court === 'full') ins.top = 0;
   const w = view.cw - ins.left - ins.right - 2 * pad;
   const h = view.ch - ins.top - ins.bottom - 2 * pad;
   layout = chooseLayout(state.court, w, h);
@@ -1258,7 +1261,8 @@ function updateUI() {
   document.querySelectorAll('[data-theme]').forEach(b => b.classList.toggle('active', b.dataset.theme === state.theme));
   // Whatever peeks out around the app (rare) matches the border
   document.documentElement.style.background = document.body.style.background = t.band;
-  $('scrim').classList.toggle('show', t.band === '#ffffff');
+  // Soft shade behind the clock: over a white border, or when the full court runs under it
+  $('scrim').classList.toggle('show', t.band === '#ffffff' || state.court === 'full');
   document.body.classList.toggle('light-band', t.band === '#ffffff');
   requestRender();
 }
