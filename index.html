@@ -340,11 +340,14 @@ const THEMES = {
 
 const PEN_WIDTHS = [0.55, 1.0];  // marker thickness in feet on the court (new lines use the first;
                                  // the second is only for thick lines saved by older versions)
-const APP_VERSION = 5;           // shown in the ••• menu; bump with each update
+const APP_VERSION = 6;           // shown in the ••• menu; bump with each update
 const ZOOM_MAX = 6;              // how far you can zoom in (6× the fitted size)
 const ERASER_RADIUS_PX = 14;     // how close the eraser must come to a line, in screen points
-const LETTER_BAND = 6;           // border width (feet) where PENGUINS is written
-const PLAIN_BAND = 1.5;          // border width (feet) on the other sides
+const PLAIN_BAND = 1.5;          // minimum border (feet) around the court
+const MIN_BORDER_LETTERS = 2;    // letter size (feet) needed to write PENGUINS in the border;
+                                 // with less room, it goes on the court floor instead
+const MAX_LETTERS = 4.5;         // biggest letter size (feet) in the border
+const FLOOR_LETTERS = 3.5;       // letter size (feet) of the wordmark on the floor
 
 /* =====================================================================
    3. COURT GEOMETRY  (U.S. high-school / NFHS dimensions, in feet)
@@ -431,19 +434,48 @@ function drawCourt(ctx, courtKey, t) {
   ctx.restore();
 }
 
-/** Big spaced-out letters, centered on (x, y). Drawn at 10× and scaled down,
- *  because some browsers handle tiny font sizes badly. */
-function drawTeamName(ctx, x, y, rotation, color) {
+/** Big spaced-out letters, centered on (x, y), `size` feet tall. Drawn at a large
+ *  font size and scaled down, because some browsers handle tiny font sizes badly. */
+const TEAM_FONT = '900 36px -apple-system, system-ui, "Helvetica Neue", Arial, sans-serif';
+const TEAM_SPACING = 7;   // gap between letters, at the 36px drawing size
+function drawTeamName(ctx, x, y, rotation, color, size) {
   ctx.save();
-  ctx.translate(x, y); ctx.rotate(rotation); ctx.scale(0.1, 0.1);
+  ctx.translate(x, y); ctx.rotate(rotation); ctx.scale(size / 36, size / 36);
   ctx.fillStyle = color;
-  ctx.font = '900 36px -apple-system, system-ui, "Helvetica Neue", Arial, sans-serif';
+  ctx.font = TEAM_FONT;
   ctx.textBaseline = 'middle';
-  const spacing = 7;
   const widths = [...TEAM_NAME].map(ch => ctx.measureText(ch).width);
-  const total = widths.reduce((a, w) => a + w, 0) + spacing * (TEAM_NAME.length - 1);
+  const total = widths.reduce((a, w) => a + w, 0) + TEAM_SPACING * (TEAM_NAME.length - 1);
   let cx = -total / 2;
-  [...TEAM_NAME].forEach((ch, i) => { ctx.fillText(ch, cx, 1); cx += widths[i] + spacing; });
+  [...TEAM_NAME].forEach((ch, i) => { ctx.fillText(ch, cx, 1); cx += widths[i] + TEAM_SPACING; });
+  ctx.restore();
+}
+
+/** How long PENGUINS is, as a multiple of its letter size. */
+let teamNameRatio = 0;
+function teamNameLength(size) {
+  if (!teamNameRatio) {
+    const m = document.createElement('canvas').getContext('2d');
+    m.font = TEAM_FONT;
+    const total = [...TEAM_NAME].reduce((a, ch) => a + m.measureText(ch).width, 0)
+                + TEAM_SPACING * (TEAM_NAME.length - 1);
+    teamNameRatio = total / 36;
+  }
+  return teamNameRatio * size;
+}
+
+/** The faint wordmark painted on the floor (used when the border is too thin for letters).
+ *  It sits in the open floor between the 3-point line and the center circle. */
+function drawFloorName(ctx, courtKey, t) {
+  ctx.save();
+  ctx.globalAlpha = 0.17;
+  const mid = HS.threeRadius + HS.rimCenter + (HS.length / 2 - HS.centerRadius - HS.threeRadius - HS.rimCenter) / 2;
+  if (courtKey === 'full') {
+    drawTeamName(ctx, HS.width / 2, mid, 0, t.lines, FLOOR_LETTERS);
+    drawTeamName(ctx, HS.width / 2, HS.length - mid, 0, t.lines, FLOOR_LETTERS);
+  } else {
+    drawTeamName(ctx, mid, HS.width / 2, -Math.PI / 2, t.lines, FLOOR_LETTERS);
+  }
   ctx.restore();
 }
 
@@ -453,25 +485,31 @@ function line(ctx, x1, y1, x2, y2) {
 
 /* =====================================================================
    4. LAYOUT: make the court as big as the screen allows
-   Tries the court upright and turned, with PENGUINS along the ends or the
-   sides, and keeps whichever arrangement gives the biggest court.
+   1. The court gets as big as fits (upright or turned, whichever is bigger),
+      keeping just a thin border.
+   2. PENGUINS goes in the leftover border — ends or sides, whichever fits
+      bigger letters. If neither has room, it's painted faintly on the floor.
    ===================================================================== */
 function chooseLayout(courtKey, availW, availH) {
   const c = COURTS[courtKey];
   let best = null;
   for (const turned of [false, true]) {
     const dw = turned ? c.h : c.w, dh = turned ? c.w : c.h;   // court size as shown
-    for (const lettersOn of ['ends', 'sides']) {
-      const tb = lettersOn === 'ends' ? LETTER_BAND : PLAIN_BAND;   // top/bottom border
-      const lr = lettersOn === 'ends' ? PLAIN_BAND : LETTER_BAND;   // left/right border
-      const W = dw + 2 * lr, H = dh + 2 * tb;
-      const scale = Math.min(availW / W, availH / H);
-      if (!best || scale > best.scale * 1.01) {
-        best = { scale, turned, lettersOn, W, H, ox: lr, oy: tb, ch: c.h };
-      }
-    }
+    const scale = Math.min(availW / (dw + 2 * PLAIN_BAND), availH / (dh + 2 * PLAIN_BAND));
+    if (!best || scale > best.scale * 1.01) best = { scale, turned, dw, dh };
   }
-  return best;
+  const L = best;
+  L.W = availW / L.scale; L.H = availH / L.scale;            // whole area, in feet
+  L.ox = (L.W - L.dw) / 2; L.oy = (L.H - L.dh) / 2;           // court centered in it
+  L.ch = c.h;
+
+  // Biggest letters that fit: in the top/bottom border, or in the side borders
+  const fit = (band, room) => Math.min((band - 0.5) / 0.85, (room * 0.85) / teamNameLength(1));
+  const ends = fit(L.oy, L.dw), sides = fit(L.ox, L.dh);
+  const size = Math.min(MAX_LETTERS, Math.max(ends, sides));
+  L.letters = size >= MIN_BORDER_LETTERS ? (ends >= sides ? 'ends' : 'sides') : 'floor';
+  L.letterSize = size;
+  return L;
 }
 
 /* =====================================================================
@@ -499,18 +537,22 @@ let layout = chooseLayout('full', 1, 1);
 
 const isStandalone = navigator.standalone || matchMedia('(display-mode: standalone)').matches;
 
-/** Home-screen apps on iPhone can be told the screen is shorter than it really is
- *  (by the height of the status bar), leaving an empty strip at the bottom.
- *  When the app's width matches the screen, use the screen's real height. */
+/** Home-screen apps on iPhone can be given a viewport shorter than the screen
+ *  (by the height of the status bar), and iOS won't show the app's content below
+ *  it. So the app fills exactly the area iOS shows; the strip below is painted in
+ *  the border color so the board looks continuous. */
 function sizeApp() {
-  let h = window.innerHeight;
-  if (isStandalone && screen.width && screen.height) {
-    const portrait = window.innerHeight >= window.innerWidth;
-    const sw = portrait ? Math.min(screen.width, screen.height) : Math.max(screen.width, screen.height);
-    const sh = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
-    if (Math.abs(window.innerWidth - sw) <= 2 && sh > h) h = sh;
-  }
-  document.documentElement.style.setProperty('--app-h', h + 'px');
+  document.documentElement.style.setProperty('--app-h', window.innerHeight + 'px');
+}
+
+/** True when iOS has cut the bottom off (see sizeApp): the home bar is then already
+ *  below the visible area, so there's no need to keep the court clear of it. */
+function bottomAlreadyCut() {
+  if (!isStandalone || !screen.width || !screen.height) return false;
+  const portrait = window.innerHeight >= window.innerWidth;
+  const sw = portrait ? Math.min(screen.width, screen.height) : Math.max(screen.width, screen.height);
+  const sh = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+  return Math.abs(window.innerWidth - sw) <= 2 && sh - window.innerHeight >= 20;
 }
 
 function resizeCanvas() {
@@ -538,6 +580,7 @@ function safeInsets() {
 /** Show the whole board, as big as fits, clear of the clock and home bar. */
 function fitView() {
   const ins = safeInsets(), pad = 4;
+  if (bottomAlreadyCut()) ins.bottom = 0;
   const w = view.cw - ins.left - ins.right - 2 * pad;
   const h = view.ch - ins.top - ins.bottom - 2 * pad;
   layout = chooseLayout(state.court, w, h);
@@ -587,18 +630,19 @@ function render() {
 
   // Board feet: team name in the border
   ctx.setTransform(d * view.k, 0, 0, d * view.k, d * view.tx, d * view.ty);
-  if (L.lettersOn === 'ends') {
-    drawTeamName(ctx, L.W / 2, L.oy / 2, 0, t.lettering);
-    drawTeamName(ctx, L.W / 2, L.H - L.oy / 2, 0, t.lettering);
-  } else {
-    drawTeamName(ctx, L.ox / 2, L.H / 2, -Math.PI / 2, t.lettering);
-    drawTeamName(ctx, L.W - L.ox / 2, L.H / 2, Math.PI / 2, t.lettering);
+  if (L.letters === 'ends') {
+    drawTeamName(ctx, L.W / 2, L.oy / 2, 0, t.lettering, L.letterSize);
+    drawTeamName(ctx, L.W / 2, L.H - L.oy / 2, 0, t.lettering, L.letterSize);
+  } else if (L.letters === 'sides') {
+    drawTeamName(ctx, L.ox / 2, L.H / 2, -Math.PI / 2, t.lettering, L.letterSize);
+    drawTeamName(ctx, L.W - L.ox / 2, L.H / 2, Math.PI / 2, t.lettering, L.letterSize);
   }
 
   // Court feet: the court and the drawings, turned if the layout says so
   ctx.translate(L.ox, L.oy);
   if (L.turned) ctx.transform(0, 1, -1, 0, L.ch, 0);
   drawCourt(ctx, state.court, t);
+  if (L.letters === 'floor') drawFloorName(ctx, state.court, t);
   for (const s of state.strokes) drawStroke(ctx, s, t);
   if (input.current) drawStroke(ctx, input.current, t);
 }

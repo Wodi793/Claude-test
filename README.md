@@ -27,7 +27,8 @@ No accounts, no server — plays are stored on the device.
   **Saved plays → Save as new** makes a copy.
 - **Saved plays → Export backup** saves all plays to one file (iPhone: choose "Save to Files").
   **Import backup** adds them back; plays you already have are kept.
-- The court arranges itself (turned or not, PENGUINS on the ends or sides) to be as big as
+- The court is made as big as the screen allows; PENGUINS goes in the leftover border (ends or
+  sides), or faintly on the floor if the border is too thin. It turns to fit when the phone does, as big as
   the screen allows. Drawings are stored in court feet, so they follow the court.
 
 ## Common changes (all in `index.html`, section "2. SETTINGS")
@@ -38,7 +39,7 @@ No accounts, no server — plays are stored on the device.
 - Marker thickness: `PEN_WIDTHS[0]` (in feet)
 - Version shown in the ••• menu: `APP_VERSION` (bump it with each update)
 - How far you can zoom: `ZOOM_MAX`
-- Border widths: `LETTER_BAND`, `PLAIN_BAND`
+- Border and lettering: `PLAIN_BAND`, `MIN_BORDER_LETTERS`, `MAX_LETTERS`, `FLOOR_LETTERS`
 
 Court measurements (U.S. high school) are in section "3. COURT GEOMETRY".
 
