@@ -18,10 +18,11 @@ No accounts, no server — plays are stored on the device.
 - **Draw:** one finger (iPhone) or Apple Pencil (iPad).
 - **Zoom / move:** pinch and drag with two fingers. On iPad, once you've used the Pencil,
   fingers only zoom and move — so your palm never leaves marks.
-- **Tools:** tap the pen button (bottom right). The slim toolbar has: board-color marker,
+- **Tools:** swipe in from the right edge (or tap the glass tab there); swipe back to hide.
+  The rail has: board-color marker,
   rainbow color picker, eraser, undo, redo, clear, save, and ••• for the rest
   (full/half court, purple/white board, line thickness, saved plays, fit to screen).
-  Touching the court puts the toolbar away.
+  Touching the court also puts it away.
 - **Save** asks for a name the first time, then saves quietly. A dot on it means unsaved changes.
   **Saved plays → Save as new** makes a copy.
 - **Saved plays → Export backup** saves all plays to one file (iPhone: choose "Save to Files").

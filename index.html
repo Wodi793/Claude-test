@@ -32,8 +32,8 @@
   --danger: #e5605e;
   --serif: ui-serif, "New York", "Iowan Old Style", Georgia, serif;
   --sans: -apple-system, system-ui, "Helvetica Neue", sans-serif;
-  /* Tool button size: 44px, smaller only if 9 won't fit across a narrow phone */
-  --b: min(44px, calc((100vw - 44px) / 9));
+  /* Tool button size: 44px, smaller only if the rail won't fit a short (sideways) screen */
+  --b: min(44px, calc((100vh - 110px) / 9.5));
   --app-h: 100%;                    /* set by the script to the true screen height */
 }
 
@@ -75,8 +75,8 @@ html, body {
 #toast {
   position: absolute; left: 50%; top: calc(env(safe-area-inset-top) + 10px);
   transform: translateX(-50%);
-  background: rgba(20,18,25,.92); color: var(--text);
-  padding: 9px 16px; border-radius: 999px; font-size: 15px;
+  color: var(--text);
+  padding: 9px 18px; border-radius: 999px; font-size: 15px;
   pointer-events: none; opacity: 0; transition: opacity .25s; white-space: nowrap;
 }
 #toast.show { opacity: 1; }
@@ -91,81 +91,103 @@ button, .tb {
 svg { width: 22px; height: 22px; flex: none;
   fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
-/* Round button in the bottom-right corner that opens the toolbar */
-#btnTools {
-  position: absolute; z-index: 5;
-  right: calc(env(safe-area-inset-right) + 12px);
-  bottom: calc(env(safe-area-inset-bottom) + 12px);
-  width: 48px; height: 48px; border-radius: 50%;
-  background: var(--panel);
-  box-shadow: 0 2px 12px rgba(0,0,0,.35), inset 0 0 0 3px var(--ink, #fff);
+/* ---------- Liquid glass: translucent, blurred, with a soft lit edge ---------- */
+.glass {
+  background:
+    linear-gradient(160deg, rgba(255,255,255,.18), rgba(255,255,255,.04) 45%, rgba(255,255,255,.08)),
+    rgba(30, 20, 46, .58);
+  -webkit-backdrop-filter: blur(30px) saturate(1.8); backdrop-filter: blur(30px) saturate(1.8);
+  border: 1px solid rgba(255,255,255,.26);
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,.45),     /* light catching the top edge */
+    inset 0 -1px 1px rgba(255,255,255,.08),
+    0 12px 32px rgba(12, 6, 24, .32);           /* soft float above the court */
 }
+.glass svg { filter: drop-shadow(0 1px 1px rgba(0,0,0,.35)); }
+/* Over a white border, the glass takes a deeper tint so white icons stay crisp */
+.light-band #rail, .light-band #toast {
+  background:
+    linear-gradient(160deg, rgba(255,255,255,.16), rgba(255,255,255,.03) 45%, rgba(255,255,255,.06)),
+    rgba(34, 22, 54, .78);
+}
+.light-band #grab span { background: rgba(78, 42, 132, .55); }
 
-/* ---------- Toolbar: one slim row ---------- */
-#tools {
-  position: absolute; z-index: 6; left: 50%;
-  bottom: calc(env(safe-area-inset-bottom) + 12px);
-  display: flex; align-items: center; gap: 2px; padding: 4px;
-  background: var(--panel);
-  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
-  border-radius: 999px;
-  box-shadow: 0 4px 20px rgba(0,0,0,.4);
-  transform: translate(-50%, 0); opacity: 1;
-  transition: transform .2s ease, opacity .2s ease;
+/* ---------- Tools: a glass rail that slides in from the right edge ---------- */
+#drawer {
+  position: absolute; z-index: 6; top: 50%;
+  right: calc(env(safe-area-inset-right) + 10px);
+  display: flex; align-items: center; gap: 6px;
+  transform: translate(0, -50%);
+  transition: transform .38s cubic-bezier(.2, .9, .25, 1.08);   /* a little spring */
 }
-#tools.closed { transform: translate(-50%, 30px); opacity: 0; pointer-events: none; }
-.tb { width: var(--b); height: var(--b); border-radius: 50%; }
-.tb:active { background: var(--btn-press); }
-.tb.active { box-shadow: inset 0 0 0 2px var(--accent); }
+#drawer.closed { transform: translate(var(--hide, 80px), -50%); }
+/* The tab that peeks out at the screen edge: tap or swipe it */
+#grab { width: 22px; height: 76px; }
+#grab span {
+  width: 6px; height: 52px; border-radius: 3px; padding: 0;
+  background: rgba(255,255,255,.55);
+  box-shadow: 0 0 0 1px rgba(30,20,45,.25), 0 2px 8px rgba(0,0,0,.25);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+#rail {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 6px; border-radius: 30px;
+}
+.tb { width: var(--b); height: var(--b); border-radius: 50%; transition: background .15s, transform .15s; }
+.tb:active { background: rgba(255,255,255,.18); transform: scale(.92); }
+.tb.active { background: rgba(255,255,255,.24); box-shadow: inset 0 0 0 1px rgba(255,255,255,.45); }
 .tb:disabled { opacity: .3; }
-.sep { width: 1px; height: 22px; background: rgba(255,255,255,.15); margin: 0 2px; }
-.dot { width: 22px; height: 22px; border-radius: 50%; box-shadow: 0 0 0 1.5px rgba(255,255,255,.6); }
+.sep { width: 22px; height: 1px; background: rgba(255,255,255,.22); margin: 3px 0; }
+.dot { width: 22px; height: 22px; border-radius: 50%; box-shadow: 0 0 0 1.5px rgba(255,255,255,.7), 0 1px 3px rgba(0,0,0,.3); }
 /* Rainbow ring = color picker; the center shows the color you last picked */
 .rainbow .dot {
   background: conic-gradient(#f44, #fd4, #4d6, #4cf, #66f, #d4f, #f44);
-  box-shadow: none; display: flex; align-items: center; justify-content: center;
+  display: flex; align-items: center; justify-content: center;
 }
 .rainbow .dot span { width: 12px; height: 12px; border-radius: 50%; background: var(--custom, #ffd84d);
-  box-shadow: 0 0 0 1.5px rgba(30,27,36,.9); }
+  box-shadow: 0 0 0 1.5px rgba(30,27,36,.85); }
 .rainbow input {   /* the real color picker sits invisibly on top of the rainbow button */
   position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; border: 0; padding: 0; cursor: pointer;
 }
 #btnSave.unsaved::after {   /* small dot = unsaved changes */
-  content: ""; position: absolute; top: 7px; right: 7px;
-  width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+  content: ""; position: absolute; top: 8px; right: 8px;
+  width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
 }
 
-/* ---------- "More" menu: the rarely used settings ---------- */
+/* ---------- "More" menu: glass card beside the rail ---------- */
 #more {
-  position: absolute; z-index: 7;
-  right: calc(env(safe-area-inset-right) + 12px);
-  bottom: calc(env(safe-area-inset-bottom) + 12px + var(--b) + 18px);
-  width: min(300px, calc(100vw - 24px));
-  background: var(--panel);
-  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
-  border-radius: 20px; padding: 14px;
-  box-shadow: 0 8px 30px rgba(0,0,0,.45);
-  display: flex; flex-direction: column; gap: 10px;
+  position: absolute; z-index: 7; top: 50%;
+  right: calc(env(safe-area-inset-right) + 10px + var(--b) + 26px);
+  width: min(290px, calc(100vw - var(--b) - 60px));
+  transform: translateY(-50%);
+  border-radius: 26px; padding: 16px;
+  display: flex; flex-direction: column; gap: 12px;
 }
 #more[hidden] { display: none; }
 #playName {
-  font-family: var(--serif); font-size: 20px; font-weight: 600;
+  font-family: var(--serif); font-size: 21px; font-weight: 600;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  text-shadow: 0 1px 2px rgba(0,0,0,.3);
 }
-.setting { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 15px; color: var(--muted); }
-.seg { display: flex; background: rgba(255,255,255,.07); border-radius: 12px; padding: 3px; }
-.seg button { min-height: 36px; padding: 0 12px; border-radius: 9px; font-size: 15px; }
-.seg button.active { background: var(--accent-strong); }
+.setting { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  font-size: 15px; color: rgba(255,255,255,.75); }
+.seg { display: flex; background: rgba(0,0,0,.18); border-radius: 13px; padding: 3px;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.2); }
+.seg button { min-height: 34px; padding: 0 12px; border-radius: 10px; font-size: 15px; transition: background .15s; }
+.seg button.active { background: rgba(255,255,255,.26); box-shadow: inset 0 1px 1px rgba(255,255,255,.4), 0 1px 4px rgba(0,0,0,.2); }
 .menu-btn {
   justify-content: flex-start; gap: 10px; width: 100%; min-height: 44px;
-  padding: 0 10px; border-radius: 12px; background: rgba(255,255,255,.07); font-size: 16px;
+  padding: 0 12px; border-radius: 14px; background: rgba(255,255,255,.10); font-size: 16px;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.18);
 }
-.menu-btn:active { background: var(--btn-press); }
+.menu-btn:active { background: rgba(255,255,255,.2); }
 
 /* ---------- Saved plays screen ---------- */
 .sheet {
   position: fixed; top: 0; left: 0; right: 0; height: var(--app-h); z-index: 10;
-  background: var(--bg);
+  background: rgba(18, 13, 26, .62);
+  -webkit-backdrop-filter: blur(30px) saturate(1.6); backdrop-filter: blur(30px) saturate(1.6);
   display: flex; flex-direction: column;
   padding: env(safe-area-inset-top) env(safe-area-inset-right)
            env(safe-area-inset-bottom) env(safe-area-inset-left);
@@ -175,13 +197,15 @@ svg { width: 22px; height: 22px; flex: none;
 .sheet h1 { flex: 1; margin: 0; font-family: var(--serif); font-size: 28px; font-weight: 600; }
 .sheet .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 4px 14px 12px; }
 .sheet .note { color: var(--muted); font-size: 13px; padding: 0 16px 8px; margin: 0; }
-.pill-btn { min-height: 46px; padding: 0 14px; border-radius: 14px; background: #2b2734; }
-.pill-btn:active { background: #3a3446; }
+.pill-btn { min-height: 46px; padding: 0 14px; border-radius: 14px; background: rgba(255,255,255,.10);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.18); }
+.pill-btn:active { background: rgba(255,255,255,.2); }
 .scrollable { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
 #playList { list-style: none; margin: 0; padding: 0 14px 20px; }
 #playList li {
   display: flex; align-items: center; gap: 8px;
-  background: #1f1c25; border-radius: 14px;
+  background: rgba(255,255,255,.07); border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.10);
   padding: 8px 8px 8px 14px; margin-bottom: 8px;
 }
 #playList .open { flex: 1; min-width: 0; text-align: left; justify-content: flex-start; min-height: 46px; }
@@ -194,21 +218,21 @@ svg { width: 22px; height: 22px; flex: none;
 /* ---------- Pop-up dialog (name a play, rename, confirm delete) ---------- */
 dialog {
   border: 0; border-radius: 20px; padding: 20px;
-  width: min(92vw, 380px);
-  background: #1f1c25; color: var(--text);
+  width: min(92vw, 380px); color: var(--text);
+  border-radius: 26px;
 }
-dialog::backdrop { background: rgba(0,0,0,.55); }
+dialog::backdrop { background: rgba(10,6,18,.35); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
 dialog h2 { margin: 0 0 8px; font-family: var(--serif); font-weight: 600; font-size: 22px; }
 dialog p { margin: 0 0 14px; color: var(--muted); font-size: 15px; line-height: 1.4; }
 dialog input {
   width: 100%; font-size: 17px; /* 16px+ stops iOS zooming into the field */
-  padding: 12px; border-radius: 12px; border: 2px solid #3a3446;
-  background: var(--bg); color: var(--text); margin-bottom: 14px;
+  padding: 12px; border-radius: 14px; border: 1px solid rgba(255,255,255,.25);
+  background: rgba(0,0,0,.25); color: var(--text); margin-bottom: 14px;
   -webkit-user-select: text; user-select: text;
 }
 dialog input:focus { outline: none; border-color: var(--accent); }
 dialog .buttons { display: flex; gap: 8px; }
-dialog .buttons button { flex: 1; min-height: 46px; border-radius: 14px; background: #2b2734; }
+dialog .buttons button { flex: 1; min-height: 46px; border-radius: 14px; background: rgba(255,255,255,.12); }
 dialog .buttons button.primary { background: var(--accent-strong); }
 dialog .buttons button.danger { background: var(--danger); }
 </style>
@@ -220,35 +244,32 @@ dialog .buttons button.danger { background: var(--danger); }
 <main id="stage">
   <canvas id="board"></canvas>
   <div id="scrim"></div>
-  <div id="toast"></div>
+  <div id="toast" class="glass"></div>
 
-  <!-- Corner button: opens the toolbar -->
-  <button id="btnTools" aria-label="Show tools">
-    <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-  </button>
-
-  <!-- Toolbar: board-color ink, color picker, eraser | undo, redo | clear, save, more, close -->
-  <div id="tools" class="closed">
-    <button class="tb" id="btnInk" aria-label="Board-color marker"><span class="dot"></span></button>
-    <label class="tb rainbow" id="btnColor" aria-label="Pick a color">
-      <span class="dot"><span></span></span>
-      <input type="color" id="colorInput" value="#ffd84d">
-    </label>
-    <button class="tb" id="btnEraser" aria-label="Eraser">
-      <svg viewBox="0 0 24 24"><path d="M20 20H9l-5-5a2 2 0 0 1 0-3l8-8a2 2 0 0 1 3 0l5 5a2 2 0 0 1 0 3l-8 8"/><path d="m8 8 8 8"/></svg>
-    </button>
-    <span class="sep"></span>
-    <button class="tb" id="btnUndo" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
-    <button class="tb" id="btnRedo" aria-label="Redo"><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button>
-    <span class="sep"></span>
-    <button class="tb" id="btnClear" aria-label="Clear all"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
-    <button class="tb" id="btnSave" aria-label="Save"><svg viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/></svg></button>
-    <button class="tb" id="btnMore" aria-label="More"><svg viewBox="0 0 24 24"><path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3"/></svg></button>
-    <button class="tb" id="btnHide" aria-label="Hide tools"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+  <!-- Tools: swipe in from the right edge (or tap the tab); swipe back to hide -->
+  <div id="drawer" class="closed">
+    <button id="grab" aria-label="Show or hide tools"><span></span></button>
+    <div id="rail" class="glass">
+      <button class="tb" id="btnInk" aria-label="Board-color marker"><span class="dot"></span></button>
+      <label class="tb rainbow" id="btnColor" aria-label="Pick a color">
+        <span class="dot"><span></span></span>
+        <input type="color" id="colorInput" value="#ffd84d">
+      </label>
+      <button class="tb" id="btnEraser" aria-label="Eraser">
+        <svg viewBox="0 0 24 24"><path d="M20 20H9l-5-5a2 2 0 0 1 0-3l8-8a2 2 0 0 1 3 0l5 5a2 2 0 0 1 0 3l-8 8"/><path d="m8 8 8 8"/></svg>
+      </button>
+      <span class="sep"></span>
+      <button class="tb" id="btnUndo" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+      <button class="tb" id="btnRedo" aria-label="Redo"><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button>
+      <span class="sep"></span>
+      <button class="tb" id="btnClear" aria-label="Clear all"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
+      <button class="tb" id="btnSave" aria-label="Save"><svg viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/></svg></button>
+      <button class="tb" id="btnMore" aria-label="More"><svg viewBox="0 0 24 24"><path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3"/></svg></button>
+    </div>
   </div>
 
   <!-- More: court, board color, line thickness, saved plays -->
-  <div id="more" hidden>
+  <div id="more" class="glass" hidden>
     <div id="playName">Untitled play</div>
     <div class="setting">Court
       <div class="seg"><button data-court="full">Full</button><button data-court="half">Half</button></div>
@@ -285,7 +306,7 @@ dialog .buttons button.danger { background: var(--danger); }
 </section>
 
 <!-- One reusable pop-up for names and confirmations -->
-<dialog id="modal">
+<dialog id="modal" class="glass">
   <form id="modalForm">
     <h2 id="modalTitle"></h2>
     <p id="modalMsg"></p>
@@ -625,10 +646,20 @@ function localPoint(e) {
   return { x: e.clientX - r.left, y: e.clientY - r.top };
 }
 
+let edgeSwipeId = null;   // finger that started at the right edge: it pulls out the tools
+
 canvas.addEventListener('pointerdown', e => {
   e.preventDefault();
-  hideTools();   // touching the court puts the tools away (and still draws)
   const pt = localPoint(e);
+  // One finger starting at the right edge pulls out the tools instead of drawing
+  if (e.pointerType !== 'pen' && !toolsOpen() && input.touches.size === 0 &&
+      input.drawId === null && pt.x >= view.cw - EDGE_ZONE) {
+    edgeSwipeId = e.pointerId;
+    try { canvas.setPointerCapture(e.pointerId); } catch { /* not critical */ }
+    swipeStart(e.clientX);
+    return;
+  }
+  hideTools();   // touching the court puts the tools away (and still draws)
   if (e.pointerType === 'touch') {
     input.touches.set(e.pointerId, pt);
     if (input.penSeen || input.touches.size > 1 || input.navLock) {
@@ -648,6 +679,7 @@ canvas.addEventListener('pointerdown', e => {
 });
 
 canvas.addEventListener('pointermove', e => {
+  if (e.pointerId === edgeSwipeId) { swipeMove(e.clientX); return; }
   if (e.pointerType === 'touch' && input.touches.has(e.pointerId)) {
     input.touches.set(e.pointerId, localPoint(e));
     if (input.nav) { updateNav(); return; }
@@ -660,6 +692,7 @@ canvas.addEventListener('pointermove', e => {
 });
 
 function pointerEnd(e) {
+  if (e.pointerId === edgeSwipeId) { edgeSwipeId = null; swipeEnd(e.clientX); return; }
   if (e.pointerType === 'touch' && input.touches.delete(e.pointerId) && input.nav) {
     if (input.touches.size === 0) { input.nav = null; input.navLock = false; }
     else startNav();   // re-anchor on the remaining finger(s)
@@ -1097,6 +1130,7 @@ function updateUI() {
   // Whatever peeks out around the app (rare) matches the border
   document.documentElement.style.background = document.body.style.background = t.band;
   $('scrim').classList.toggle('show', t.band === '#ffffff');
+  document.body.classList.toggle('light-band', t.band === '#ffffff');
   requestRender();
 }
 
@@ -1134,10 +1168,70 @@ function ask({ title, message = '', input, placeholder = '', okText = 'OK', dang
 }
 
 // Toolbar open/close
-function showTools() { $('tools').classList.remove('closed'); $('btnTools').hidden = true; }
-function hideTools() { $('tools').classList.add('closed'); $('more').hidden = true; $('btnTools').hidden = false; }
-$('btnTools').onclick = showTools;
-$('btnHide').onclick = hideTools;
+/* ----- Tools rail: swipe in from the right edge, swipe back to hide ----- */
+const drawer = $('drawer');
+const EDGE_ZONE = 24;   // a finger starting this close to the right edge opens the tools
+
+function toolsOpen() { return !drawer.classList.contains('closed'); }
+/** How far right the rail moves to hide, leaving only the tab peeking out. */
+function hideDistance() { return $('rail').offsetWidth + 6 + 10 + safeInsets().right; }
+function showTools() { settleDrawer(true); }
+function hideTools() { settleDrawer(false); }
+function settleDrawer(open) {
+  drawer.style.transition = drawer.style.transform = '';   // hand back to the CSS spring
+  drawer.style.setProperty('--hide', hideDistance() + 'px');
+  drawer.classList.toggle('closed', !open);
+  if (!open) $('more').hidden = true;
+}
+
+// A swipe in progress: the rail follows the finger, then springs open or closed
+let swipe = null, swallowClick = false;
+function swipeStart(x) {
+  const hide = hideDistance();
+  swipe = { x0: x, base: toolsOpen() ? 0 : hide, hide, pos: null, moved: false, t0: performance.now() };
+}
+function swipeMove(x) {
+  if (!swipe) return;
+  const dx = x - swipe.x0;
+  if (Math.abs(dx) > 6) swipe.moved = true;
+  if (!swipe.moved) return;
+  swipe.pos = Math.min(swipe.hide, Math.max(0, swipe.base + dx));
+  drawer.style.transition = 'none';
+  drawer.style.transform = `translate(${swipe.pos}px, -50%)`;
+  $('more').hidden = true;
+}
+/** Returns true if this was a swipe (not a tap). */
+function swipeEnd(x) {
+  if (!swipe) return false;
+  const s = swipe; swipe = null;
+  if (!s.moved) return false;
+  const speed = (x - s.x0) / Math.max(1, performance.now() - s.t0);   // points per ms; + = rightward
+  const open = speed < -0.4 ? true : speed > 0.4 ? false : s.pos < s.hide / 2;
+  settleDrawer(open);
+  return true;
+}
+
+// Swiping on the rail or its tab (a quick flick right puts it away; a tap still works normally)
+drawer.addEventListener('pointerdown', e => {
+  swipeStart(e.clientX);
+  const move = ev => swipeMove(ev.clientX);
+  const up = ev => {
+    document.removeEventListener('pointermove', move);
+    document.removeEventListener('pointerup', up);
+    document.removeEventListener('pointercancel', up);
+    if (swipeEnd(ev.clientX)) {   // a swipe shouldn't also press a button…
+      swallowClick = true;
+      setTimeout(() => { swallowClick = false; }, 400);   // …but the next real tap should work
+    }
+  };
+  document.addEventListener('pointermove', move);
+  document.addEventListener('pointerup', up);
+  document.addEventListener('pointercancel', up);
+});
+drawer.addEventListener('click', e => {
+  if (swallowClick) { swallowClick = false; e.preventDefault(); e.stopPropagation(); }
+}, true);
+$('grab').onclick = () => (toolsOpen() ? hideTools() : showTools());
 $('btnMore').onclick = () => { $('more').hidden = !$('more').hidden; };
 
 // Ink, color picker, eraser
@@ -1186,12 +1280,13 @@ $('importFile').onchange = e => {
 /* =====================================================================
    14. START-UP
    ===================================================================== */
-window.addEventListener('resize', () => { sizeApp(); resizeCanvas(); });
+window.addEventListener('resize', () => { sizeApp(); resizeCanvas(); settleDrawer(toolsOpen()); });
 
 (async function start() {
   sizeApp();
   resizeCanvas();
   updateUI();
+  settleDrawer(false);
   try {
     const draft = await DB.getMeta('draft');
     if (draft && COURTS[draft.court]) loadIntoState(draft);
