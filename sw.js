@@ -5,7 +5,7 @@
    version the NEXT time you open the app.
 
    If you add a new file to the app, add it to FILES below and bump VERSION. */
-const VERSION = 'penguins-v1';
+const VERSION = 'penguins-v2';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-512.png'];
 
 self.addEventListener('install', event => {

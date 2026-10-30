@@ -51,10 +51,9 @@ html, body {
   touch-action: manipulation;            /* no double-tap zoom */
 }
 
-/* The app fills the screen, padded so nothing hides under the notch or home bar */
-#app {
-  position: fixed; inset: 0;
-  display: flex; flex-direction: column;
+/* Reads the notch / home-bar margins so the script can keep the court clear of them */
+#safe {
+  position: fixed; visibility: hidden; pointer-events: none;
   padding: env(safe-area-inset-top) env(safe-area-inset-right)
            env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
@@ -75,11 +74,31 @@ button svg { width: 22px; height: 22px; flex: none;
 button.danger { background: var(--danger); color: #fff; }
 button.primary { background: var(--accent-strong); }
 
-/* ---------- Top bar ---------- */
-.topbar {
-  display: flex; align-items: center; gap: 8px;
-  padding: 8px 10px; background: var(--panel);
+/* ---------- Tools panel (slides down from the top) ---------- */
+#btnMenu {
+  position: fixed; z-index: 5;
+  top: calc(env(safe-area-inset-top) + 8px);
+  right: calc(env(safe-area-inset-right) + 8px);
+  width: 50px; height: 50px; padding: 0; border-radius: 50%;
+  background: rgba(31, 28, 37, .88);
+  box-shadow: 0 2px 10px rgba(0,0,0,.35);
 }
+.drawer {
+  position: fixed; z-index: 6; top: 0; left: 0; right: 0;
+  max-width: 760px; margin: 0 auto;
+  background: var(--panel);
+  padding: calc(env(safe-area-inset-top) + 6px) calc(env(safe-area-inset-right) + 8px) 0
+           calc(env(safe-area-inset-left) + 8px);
+  border-radius: 0 0 24px 24px;
+  box-shadow: 0 8px 30px rgba(0,0,0,.45);
+  display: flex; flex-direction: column; gap: 6px;
+  transform: translateY(-110%);
+  transition: transform .22s ease;
+}
+.drawer.open { transform: none; }
+.grabber { min-height: 30px; background: transparent; width: 100%; }
+.grabber span { width: 44px; height: 5px; border-radius: 3px; background: var(--muted); }
+.topbar { display: flex; align-items: center; gap: 8px; }
 .title {
   flex: 1; min-width: 0;
   font-family: var(--serif); font-size: 19px; font-weight: 600;
@@ -96,7 +115,11 @@ button.primary { background: var(--accent-strong); }
 }
 
 /* ---------- Drawing area ---------- */
-#stage { position: relative; flex: 1; min-height: 0; }
+/* The court fills the whole screen below the clock/status bar */
+#stage { position: fixed; left: 0; right: 0; top: env(safe-area-inset-top); bottom: 0; }
+/* Home-screen app: iOS can report a too-short screen with "bottom: 0", leaving an empty
+   strip at the bottom. The full screen height (100vh) is reliable there. */
+html.standalone #stage { bottom: auto; height: calc(100vh - env(safe-area-inset-top)); }
 #board {
   position: absolute; inset: 0; width: 100%; height: 100%;
   touch-action: none;   /* the court gets every touch: no scrolling while drawing */
@@ -110,8 +133,6 @@ button.primary { background: var(--accent-strong); }
 }
 #toast.show { opacity: 1; }
 
-/* ---------- Bottom toolbar ---------- */
-.toolbar { background: var(--panel); padding: 6px 8px 8px; display: flex; flex-direction: column; gap: 6px; }
 .row { display: flex; gap: 6px; }
 .row > button { flex: 1; padding: 0 4px; }
 .row .label { display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: var(--muted); min-height: 52px; }
@@ -167,8 +188,22 @@ dialog .buttons button { flex: 1; }
 </head>
 <body>
 
-<div id="app">
-  <!-- Top: open saved plays, play name, court choice, board colors -->
+<div id="safe"></div>
+
+<!-- The court: fills the screen -->
+<main id="stage">
+  <canvas id="board"></canvas>
+  <div id="toast"></div>
+</main>
+
+<!-- Corner button that opens the tools panel -->
+<button id="btnMenu" aria-label="Show tools">
+  <svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
+</button>
+
+<!-- Tools panel: hidden until the corner button is tapped; drawing on the court closes it -->
+<div id="drawer" class="drawer">
+  <!-- Saved plays, play name, court choice, board colors -->
   <header class="topbar">
     <button id="btnPlays" aria-label="Saved plays">
       <svg viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>
@@ -181,15 +216,8 @@ dialog .buttons button { flex: 1; }
     <button id="btnTheme" aria-label="Switch board colors"><span class="swatch"></span></button>
   </header>
 
-  <!-- Middle: the court -->
-  <main id="stage">
-    <canvas id="board"></canvas>
-    <div id="toast"></div>
-  </main>
-
-  <!-- Bottom: pens on row 1, actions on row 2 -->
-  <footer class="toolbar">
-    <div class="row" id="penRow">
+  <!-- Pens, thickness, eraser -->
+  <div class="row" id="penRow">
       <button class="pen" data-slot="0"><span class="pen-dot"></span></button>
       <button class="pen" data-slot="1"><span class="pen-dot"></span></button>
       <button class="pen" data-slot="2"><span class="pen-dot"></span></button>
@@ -207,7 +235,7 @@ dialog .buttons button { flex: 1; }
       <button id="btnClear" class="label"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>Clear</button>
       <button id="btnSave" class="label"><svg viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/></svg>Save</button>
     </div>
-  </footer>
+  <button class="grabber" id="btnCloseDrawer" aria-label="Hide tools"><span></span></button>
 </div>
 
 <!-- Saved plays screen -->
@@ -422,13 +450,27 @@ function resizeCanvas() {
   fitView();
 }
 
-/** Show the whole board, as big as fits, centered. */
+// Watch the court's own size, not just the window. iOS sometimes changes the
+// layout after start-up without telling the window; if we missed that, the
+// picture would be stretched and lines would land away from your finger.
+new ResizeObserver(() => resizeCanvas()).observe(canvas);
+
+/** Notch / home-bar margins, in screen points. */
+function safeInsets() {
+  const s = getComputedStyle(document.getElementById('safe'));
+  return { left: parseFloat(s.paddingLeft) || 0, right: parseFloat(s.paddingRight) || 0,
+           bottom: parseFloat(s.paddingBottom) || 0 };
+}
+
+/** Show the whole board, as big as fits, centered (clear of the notch and home bar). */
 function fitView() {
-  const b = COURTS[state.court], pad = 6;
-  view.fitK = Math.min((view.cw - 2 * pad) / b.W, (view.ch - 2 * pad) / b.H);
+  const b = COURTS[state.court], pad = 4, ins = safeInsets();
+  const w = view.cw - ins.left - ins.right - 2 * pad;
+  const h = view.ch - ins.bottom - 2 * pad;
+  view.fitK = Math.min(w / b.W, h / b.H);
   view.k = view.fitK;
-  view.tx = (view.cw - b.W * view.k) / 2;
-  view.ty = (view.ch - b.H * view.k) / 2;
+  view.tx = ins.left + pad + (w - b.W * view.k) / 2;
+  view.ty = pad + (h - b.H * view.k) / 2;
   requestRender();
 }
 
@@ -457,18 +499,17 @@ function requestRender() {
 }
 
 function render() {
-  const d = view.dpr, t = THEMES[state.theme], b = COURTS[state.court];
+  const d = view.dpr, t = THEMES[state.theme];
+  // The border color fills the whole screen, so the board runs edge to edge
   ctx.setTransform(d, 0, 0, d, 0, 0);
-  ctx.clearRect(0, 0, view.cw, view.ch);
+  ctx.fillStyle = t.band;
+  ctx.fillRect(0, 0, view.cw, view.ch);
 
   ctx.setTransform(d * view.k, 0, 0, d * view.k, d * view.tx, d * view.ty);
   drawBoard(ctx, state.court, t);
 
-  ctx.save();
-  ctx.beginPath(); ctx.rect(0, 0, b.W, b.H); ctx.clip();   // ink stays on the board
   for (const s of state.strokes) drawStroke(ctx, s, t);
   if (input.current) drawStroke(ctx, input.current, t);
-  ctx.restore();
 }
 
 /** Marker look: solid color, round ends, smoothed through the midpoints. */
@@ -512,6 +553,7 @@ function localPoint(e) {
 
 canvas.addEventListener('pointerdown', e => {
   e.preventDefault();
+  closeDrawer();   // touching the court puts the tools away (and still draws)
   const pt = localPoint(e);
   if (e.pointerType === 'touch') {
     input.touches.set(e.pointerId, pt);
@@ -1006,6 +1048,12 @@ function ask({ title, message = '', input, placeholder = '', okText = 'OK', dang
   });
 }
 
+// Tools panel
+const drawer = $('drawer');
+function closeDrawer() { drawer.classList.remove('open'); }
+$('btnMenu').onclick = () => drawer.classList.add('open');
+$('btnCloseDrawer').onclick = closeDrawer;
+
 // Pens, widths, eraser
 document.querySelectorAll('.pen').forEach(b => b.onclick = () => {
   state.pen = +b.dataset.slot; state.tool = 'pen'; updateUI();
@@ -1048,6 +1096,11 @@ $('importFile').onchange = e => {
    13. START-UP
    ===================================================================== */
 window.addEventListener('resize', resizeCanvas);
+
+// Launched from the home screen? (Used by the CSS to fill the full screen height.)
+if (navigator.standalone || matchMedia('(display-mode: standalone)').matches) {
+  document.documentElement.classList.add('standalone');
+}
 
 (async function start() {
   resizeCanvas();

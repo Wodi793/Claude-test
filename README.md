@@ -18,7 +18,8 @@ No accounts, no server — plays are stored on the device.
 - **Draw:** one finger (iPhone) or Apple Pencil (iPad).
 - **Zoom / move:** pinch and drag with two fingers. On iPad, once you've used the Pencil,
   fingers only zoom and move — so your palm never leaves marks. **Fit** resets the view.
-- **Board colors:** the half-purple circle (top right) swaps purple board ⇄ white board.
+- **Tools:** tap the round button in the top-right corner. Touching the court puts them away.
+- **Board colors:** the half-purple circle in the tools panel swaps purple board ⇄ white board.
 - **Save** overwrites the open play. **Plays → Save as new** makes a copy.
 - **Plays → Export backup** saves all plays to one file (iPhone: choose "Save to Files").
   **Import backup** adds them back; plays you already have are kept.
