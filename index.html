@@ -376,7 +376,7 @@ const THEMES = {
 
 const PEN_WIDTHS = [0.55, 1.0];  // marker thickness in feet on the court (new lines use the first;
                                  // the second is only for thick lines saved by older versions)
-const APP_VERSION = 10;           // shown in the ••• menu; bump with each update
+const APP_VERSION = 11;           // shown in the ••• menu; bump with each update
 const ZOOM_MAX = 6;              // how far you can zoom in (6× the fitted size)
 const ERASER_RADIUS_PX = 14;     // how close the eraser must come to a line, in screen points
 const PLAIN_BAND = 0.75;         // minimum border (feet) around the court: thin, but not zero
@@ -532,15 +532,15 @@ const PENGUIN = new Path2D(
   'M2.85 .1C3.9 .9 4.4 2.3 4.25 3.2M-2.85 .1C-3.9 .9 -4.4 2.3 -4.25 3.2' +
   // feet
   'M-2 4.85Q-1.2 5.45 -.4 4.85M.4 4.85Q1.2 5.45 2 4.85');
+/** The penguin sits in the full court's center circle (the half court has none). */
 function drawPenguin(ctx, courtKey, t) {
-  const [x, y, scale] = courtKey === 'full'
-    ? [HS.width / 2, HS.length / 2, 0.88]                                    // inside the center circle
-    : [(HS.threeRadius + HS.rimCenter + HS.length / 2 - HS.centerRadius) / 2, HS.width / 2, 0.95];  // open floor
+  if (courtKey !== 'full') return;
+  const x = HS.width / 2, y = HS.length / 2, scale = 0.88;
   ctx.save();
   ctx.globalAlpha = 0.6;
   ctx.translate(x, y); ctx.scale(scale, scale);
   ctx.strokeStyle = ctx.fillStyle = t.lines;
-  ctx.lineWidth = LINE / scale; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.lineWidth = LINE * 1.7 / scale;   // a bit bolder than the court lines ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   ctx.stroke(PENGUIN);
   for (const ex of [-.8, .8]) { ctx.beginPath(); ctx.arc(ex, -3.6, .28, 0, 2 * Math.PI); ctx.fill(); }   // eyes
   ctx.beginPath(); ctx.moveTo(-.55, -3.15); ctx.lineTo(.55, -3.15); ctx.lineTo(0, -2.55); ctx.closePath(); ctx.fill();   // beak
