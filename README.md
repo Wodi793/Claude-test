@@ -21,7 +21,7 @@ No accounts, no server — plays are stored on the device.
 - **Tools:** swipe in from the right edge (or tap the glass tab there); swipe back to hide.
   The rail has: board-color marker,
   rainbow color picker, eraser, undo, redo, clear, save, and ••• for the rest
-  (full/half court, purple/white board, line thickness, saved plays, fit to screen).
+  (full/half court, purple/white board, saved plays, fit to screen, version number).
   Touching the court also puts it away.
 - **Save** asks for a name the first time, then saves quietly. A dot on it means unsaved changes.
   **Saved plays → Save as new** makes a copy.
@@ -35,7 +35,8 @@ No accounts, no server — plays are stored on the device.
 - Team name: `TEAM_NAME`
 - Purple shade: `PURPLE`
 - Board-color marker: `ink` inside `THEMES`
-- Marker thickness: `PEN_WIDTHS` (in feet)
+- Marker thickness: `PEN_WIDTHS[0]` (in feet)
+- Version shown in the ••• menu: `APP_VERSION` (bump it with each update)
 - How far you can zoom: `ZOOM_MAX`
 - Border widths: `LETTER_BAND`, `PLAIN_BAND`
 
@@ -43,6 +44,8 @@ Court measurements (U.S. high school) are in section "3. COURT GEOMETRY".
 
 ## Publishing an update
 
-Commit and push to `main`; GitHub Pages republishes in about a minute. The installed app
-picks up the new version the *second* time you open it (first open downloads it quietly).
+Commit and push to `main`; GitHub Pages republishes in about a minute. When the phone is
+online, the app loads the newest version each time it opens (fully close it first: swipe it
+away in the app switcher). Offline, it uses the copy saved on the phone. GitHub may take up
+to ~10 minutes to stop serving the old copy. Check the version number in the ••• menu.
 If you add a new file, list it in `FILES` in `sw.js` and change `VERSION`.

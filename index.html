@@ -165,6 +165,7 @@ svg { width: 22px; height: 22px; flex: none;
   display: flex; flex-direction: column; gap: 12px;
 }
 #more[hidden] { display: none; }
+#version { text-align: center; font-size: 12px; color: rgba(255,255,255,.45); }
 #playName {
   font-family: var(--serif); font-size: 21px; font-weight: 600;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -277,15 +278,13 @@ dialog .buttons button.danger { background: var(--danger); }
     <div class="setting">Board
       <div class="seg"><button data-theme="purple">Purple</button><button data-theme="white">White</button></div>
     </div>
-    <div class="setting">Line
-      <div class="seg"><button data-width="0">Thin</button><button data-width="1">Thick</button></div>
-    </div>
     <button class="menu-btn" id="btnPlays">
       <svg viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>Saved plays &amp; backup
     </button>
     <button class="menu-btn" id="btnFit">
       <svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Fit court to screen
     </button>
+    <div id="version"></div>
   </div>
 </main>
 
@@ -339,7 +338,9 @@ const THEMES = {
             oldPens: [PURPLE, '#1c1b22', '#d62839', '#1f6fd1'] },
 };
 
-const PEN_WIDTHS = [0.45, 1.0];  // marker thickness, in feet on the court
+const PEN_WIDTHS = [0.55, 1.0];  // marker thickness in feet on the court (new lines use the first;
+                                 // the second is only for thick lines saved by older versions)
+const APP_VERSION = 5;           // shown in the ••• menu; bump with each update
 const ZOOM_MAX = 6;              // how far you can zoom in (6× the fitted size)
 const ERASER_RADIUS_PX = 14;     // how close the eraser must come to a line, in screen points
 const LETTER_BAND = 6;           // border width (feet) where PENGUINS is written
@@ -1124,9 +1125,9 @@ function updateUI() {
   $('btnRedo').disabled = !state.redo.length;
   $('btnSave').classList.toggle('unsaved', state.dirty && state.strokes.length > 0);
   $('playName').textContent = state.name || 'Untitled play';
+  $('version').textContent = `Penguins Playbook · version ${APP_VERSION}`;
   document.querySelectorAll('[data-court]').forEach(b => b.classList.toggle('active', b.dataset.court === state.court));
   document.querySelectorAll('[data-theme]').forEach(b => b.classList.toggle('active', b.dataset.theme === state.theme));
-  document.querySelectorAll('[data-width]').forEach(b => b.classList.toggle('active', +b.dataset.width === state.width));
   // Whatever peeks out around the app (rare) matches the border
   document.documentElement.style.background = document.body.style.background = t.band;
   $('scrim').classList.toggle('show', t.band === '#ffffff');
@@ -1258,9 +1259,6 @@ document.querySelectorAll('[data-court]').forEach(b => b.onclick = async () => {
 });
 document.querySelectorAll('[data-theme]').forEach(b => b.onclick = () => {
   if (b.dataset.theme !== state.theme) { state.theme = b.dataset.theme; markDirty(); }
-});
-document.querySelectorAll('[data-width]').forEach(b => b.onclick = () => {
-  state.width = +b.dataset.width; state.tool = 'pen'; updateUI();
 });
 $('btnPlays').onclick = openPlays;
 $('btnFit').onclick = () => { fitView(); hideTools(); };
