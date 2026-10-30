@@ -28,13 +28,16 @@ No accounts, no server — plays are stored on the device.
   **Saved plays → Save as new** makes a copy.
 - **Saved plays → Export backup** saves all plays to one file (iPhone: choose "Save to Files").
   **Import backup** adds them back; plays you already have are kept.
-- The court is made as big as the screen allows; PENGUINS goes in the leftover border (ends or
-  sides), or faintly on the floor if the border is too thin. It turns to fit when the phone does, as big as
+- The court is made as big as the screen allows. PENGUINS and BURNS PARK go in the leftover border
+  (ends or sides), or faintly on the floor if the border is too thin. A penguin outline sits at center
+  court. Turn on the iPhone's rotation lock to keep the court upright; if the phone does rotate, the
+  full court stays along the long side of the screen, as big as
   the screen allows. Drawings are stored in court feet, so they follow the court.
 
 ## Common changes (all in `index.html`, section "2. SETTINGS")
 
-- Team name: `TEAM_NAME`
+- Team name: `TEAM_NAME`; school name (opposite side): `SCHOOL_NAME`
+- Center-court penguin: `PENGUIN` (outline) and `drawPenguin`
 - Purple shade: `PURPLE`
 - Board-color marker: `ink` inside `THEMES`
 - Marker thickness: `PEN_WIDTHS[0]` (in feet)

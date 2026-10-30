@@ -362,6 +362,7 @@ dialog .buttons button.danger { background: var(--danger); }
    The easiest things to change: team name, colors, marker sizes.
    ===================================================================== */
 const TEAM_NAME = 'PENGUINS';
+const SCHOOL_NAME = 'BURNS PARK';   // written opposite the team name
 const PURPLE = '#4e2a84';
 
 // Two board styles. "ink" is the board-color marker: white on purple, purple on white.
@@ -375,7 +376,7 @@ const THEMES = {
 
 const PEN_WIDTHS = [0.55, 1.0];  // marker thickness in feet on the court (new lines use the first;
                                  // the second is only for thick lines saved by older versions)
-const APP_VERSION = 9;           // shown in the ••• menu; bump with each update
+const APP_VERSION = 10;           // shown in the ••• menu; bump with each update
 const ZOOM_MAX = 6;              // how far you can zoom in (6× the fitted size)
 const ERASER_RADIUS_PX = 14;     // how close the eraser must come to a line, in screen points
 const PLAIN_BAND = 0.75;         // minimum border (feet) around the court: thin, but not zero
@@ -473,44 +474,76 @@ function drawCourt(ctx, courtKey, t) {
  *  font size and scaled down, because some browsers handle tiny font sizes badly. */
 const TEAM_FONT = '900 36px -apple-system, system-ui, "Helvetica Neue", Arial, sans-serif';
 const TEAM_SPACING = 7;   // gap between letters, at the 36px drawing size
-function drawTeamName(ctx, x, y, rotation, color, size) {
+function drawTeamName(ctx, x, y, rotation, color, size, text = TEAM_NAME) {
   ctx.save();
   ctx.translate(x, y); ctx.rotate(rotation); ctx.scale(size / 36, size / 36);
   ctx.fillStyle = color;
   ctx.font = TEAM_FONT;
   ctx.textBaseline = 'middle';
-  const widths = [...TEAM_NAME].map(ch => ctx.measureText(ch).width);
-  const total = widths.reduce((a, w) => a + w, 0) + TEAM_SPACING * (TEAM_NAME.length - 1);
+  const widths = [...text].map(ch => ctx.measureText(ch).width);
+  const total = widths.reduce((a, w) => a + w, 0) + TEAM_SPACING * (text.length - 1);
   let cx = -total / 2;
-  [...TEAM_NAME].forEach((ch, i) => { ctx.fillText(ch, cx, 1); cx += widths[i] + TEAM_SPACING; });
+  [...text].forEach((ch, i) => { ctx.fillText(ch, cx, 1); cx += widths[i] + TEAM_SPACING; });
   ctx.restore();
 }
 
-/** How long PENGUINS is, as a multiple of its letter size. */
-let teamNameRatio = 0;
-function teamNameLength(size) {
-  if (!teamNameRatio) {
+/** How long a name is when written `size` feet tall. */
+const nameRatios = new Map();
+function nameLength(size, text = TEAM_NAME) {
+  if (!nameRatios.has(text)) {
     const m = document.createElement('canvas').getContext('2d');
     m.font = TEAM_FONT;
-    const total = [...TEAM_NAME].reduce((a, ch) => a + m.measureText(ch).width, 0)
-                + TEAM_SPACING * (TEAM_NAME.length - 1);
-    teamNameRatio = total / 36;
+    const total = [...text].reduce((a, ch) => a + m.measureText(ch).width, 0)
+                + TEAM_SPACING * (text.length - 1);
+    nameRatios.set(text, total / 36);
   }
-  return teamNameRatio * size;
+  return nameRatios.get(text) * size;
 }
+const longestName = () => Math.max(nameLength(1, TEAM_NAME), nameLength(1, SCHOOL_NAME));
 
-/** The faint wordmark painted on the floor (used when the border is too thin for letters).
- *  It sits in the open floor between the 3-point line and the center circle. */
-function drawFloorName(ctx, courtKey, t) {
+/** Faint names painted on the floor (used when the border is too thin for letters). */
+function drawFloorNames(ctx, courtKey, t) {
   ctx.save();
   ctx.globalAlpha = 0.17;
-  const mid = HS.threeRadius + HS.rimCenter + (HS.length / 2 - HS.centerRadius - HS.threeRadius - HS.rimCenter) / 2;
   if (courtKey === 'full') {
-    drawTeamName(ctx, HS.width / 2, mid, 0, t.lines, FLOOR_LETTERS);
-    drawTeamName(ctx, HS.width / 2, HS.length - mid, 0, t.lines, FLOOR_LETTERS);
+    // In the open floor between each 3-point line and the center circle
+    const mid = HS.threeRadius + HS.rimCenter + (HS.length / 2 - HS.centerRadius - HS.threeRadius - HS.rimCenter) / 2;
+    drawTeamName(ctx, HS.width / 2, mid, 0, t.lines, FLOOR_LETTERS, SCHOOL_NAME);
+    drawTeamName(ctx, HS.width / 2, HS.length - mid, 0, t.lines, FLOOR_LETTERS, TEAM_NAME);
   } else {
-    drawTeamName(ctx, mid, HS.width / 2, -Math.PI / 2, t.lines, FLOOR_LETTERS);
+    // Along each sideline, between the top of the 3-point arc and the half-court line
+    const x0 = HS.threeRadius + HS.rimCenter, x1 = HS.length / 2;
+    const size = Math.min(FLOOR_LETTERS, (x1 - x0 - 2) / longestName());
+    const cx = (x0 + x1) / 2;
+    drawTeamName(ctx, cx, 1 + size / 2 + 1, 0, t.lines, size, SCHOOL_NAME);
+    drawTeamName(ctx, cx, HS.width - 1 - size / 2 - 1, 0, t.lines, size, TEAM_NAME);
   }
+  ctx.restore();
+}
+
+/** Penguin outline (center-court logo): about 10.3 ft tall at scale 1, centered on (0, 0). */
+const PENGUIN = new Path2D(
+  // body and head
+  'M0 -5C1.6 -5 2.4 -3.8 2.3 -2.4C2.2 -1.6 2.6 -.6 3 .6C3.4 2 3.2 3.6 2.2 4.4' +
+  'C1.4 5 -1.4 5 -2.2 4.4C-3.2 3.6 -3.4 2 -3 .6C-2.6 -.6 -2.2 -1.6 -2.3 -2.4C-2.4 -3.8 -1.6 -5 0 -5Z' +
+  // belly
+  'M0 -2.4C1.3 -2.4 1.9 -.5 1.9 1.4C1.9 3.1 1.1 3.9 0 3.9C-1.1 3.9 -1.9 3.1 -1.9 1.4C-1.9 -.5 -1.3 -2.4 0 -2.4Z' +
+  // flippers
+  'M2.85 .1C3.9 .9 4.4 2.3 4.25 3.2M-2.85 .1C-3.9 .9 -4.4 2.3 -4.25 3.2' +
+  // feet
+  'M-2 4.85Q-1.2 5.45 -.4 4.85M.4 4.85Q1.2 5.45 2 4.85');
+function drawPenguin(ctx, courtKey, t) {
+  const [x, y, scale] = courtKey === 'full'
+    ? [HS.width / 2, HS.length / 2, 0.88]                                    // inside the center circle
+    : [(HS.threeRadius + HS.rimCenter + HS.length / 2 - HS.centerRadius) / 2, HS.width / 2, 0.95];  // open floor
+  ctx.save();
+  ctx.globalAlpha = 0.6;
+  ctx.translate(x, y); ctx.scale(scale, scale);
+  ctx.strokeStyle = ctx.fillStyle = t.lines;
+  ctx.lineWidth = LINE / scale; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.stroke(PENGUIN);
+  for (const ex of [-.8, .8]) { ctx.beginPath(); ctx.arc(ex, -3.6, .28, 0, 2 * Math.PI); ctx.fill(); }   // eyes
+  ctx.beginPath(); ctx.moveTo(-.55, -3.15); ctx.lineTo(.55, -3.15); ctx.lineTo(0, -2.55); ctx.closePath(); ctx.fill();   // beak
   ctx.restore();
 }
 
@@ -520,26 +553,24 @@ function line(ctx, x1, y1, x2, y2) {
 
 /* =====================================================================
    4. LAYOUT: make the court as big as the screen allows
-   1. The court gets as big as fits (upright or turned, whichever is bigger),
-      keeping just a thin border.
-   2. PENGUINS goes in the leftover border — ends or sides, whichever fits
-      bigger letters. If neither has room, it's painted faintly on the floor.
+   1. The court always runs the same way: the full court along the long side
+      of the screen, the half court with its basket on the short side.
+      It gets as big as fits, keeping just a thin border.
+   2. The names go in the leftover border — ends or sides, whichever fits
+      bigger letters. If neither has room, they're painted faintly on the floor.
    ===================================================================== */
 function chooseLayout(courtKey, availW, availH) {
   const c = COURTS[courtKey];
-  let best = null;
-  for (const turned of [false, true]) {
-    const dw = turned ? c.h : c.w, dh = turned ? c.w : c.h;   // court size as shown
-    const scale = Math.min(availW / (dw + 2 * PLAIN_BAND), availH / (dh + 2 * PLAIN_BAND));
-    if (!best || scale > best.scale * 1.01) best = { scale, turned, dw, dh };
-  }
-  const L = best;
+  const turned = availW > availH;                              // screen held sideways
+  const dw = turned ? c.h : c.w, dh = turned ? c.w : c.h;      // court size as shown
+  const scale = Math.min(availW / (dw + 2 * PLAIN_BAND), availH / (dh + 2 * PLAIN_BAND));
+  const L = { scale, turned, dw, dh };
   L.W = availW / L.scale; L.H = availH / L.scale;            // whole area, in feet
   L.ox = (L.W - L.dw) / 2; L.oy = (L.H - L.dh) / 2;           // court centered in it
   L.ch = c.h;
 
   // Biggest letters that fit: in the top/bottom border, or in the side borders
-  const fit = (band, room) => Math.min((band - 0.5) / 0.85, (room * 0.85) / teamNameLength(1));
+  const fit = (band, room) => Math.min((band - 0.5) / 0.85, (room * 0.85) / longestName());
   const ends = fit(L.oy, L.dw), sides = fit(L.ox, L.dh);
   const size = Math.min(MAX_LETTERS, Math.max(ends, sides));
   L.letters = size >= MIN_BORDER_LETTERS ? (ends >= sides ? 'ends' : 'sides') : 'floor';
@@ -666,18 +697,19 @@ function render() {
   // Board feet: team name in the border
   ctx.setTransform(d * view.k, 0, 0, d * view.k, d * view.tx, d * view.ty);
   if (L.letters === 'ends') {
-    drawTeamName(ctx, L.W / 2, L.oy / 2, 0, t.lettering, L.letterSize);
-    drawTeamName(ctx, L.W / 2, L.H - L.oy / 2, 0, t.lettering, L.letterSize);
+    drawTeamName(ctx, L.W / 2, L.oy / 2, 0, t.lettering, L.letterSize, SCHOOL_NAME);
+    drawTeamName(ctx, L.W / 2, L.H - L.oy / 2, 0, t.lettering, L.letterSize, TEAM_NAME);
   } else if (L.letters === 'sides') {
-    drawTeamName(ctx, L.ox / 2, L.H / 2, -Math.PI / 2, t.lettering, L.letterSize);
-    drawTeamName(ctx, L.W - L.ox / 2, L.H / 2, Math.PI / 2, t.lettering, L.letterSize);
+    drawTeamName(ctx, L.ox / 2, L.H / 2, -Math.PI / 2, t.lettering, L.letterSize, TEAM_NAME);
+    drawTeamName(ctx, L.W - L.ox / 2, L.H / 2, Math.PI / 2, t.lettering, L.letterSize, SCHOOL_NAME);
   }
 
   // Court feet: the court and the drawings, turned if the layout says so
   ctx.translate(L.ox, L.oy);
   if (L.turned) ctx.transform(0, 1, -1, 0, L.ch, 0);
   drawCourt(ctx, state.court, t);
-  if (L.letters === 'floor') drawFloorName(ctx, state.court, t);
+  if (L.letters === 'floor') drawFloorNames(ctx, state.court, t);
+  drawPenguin(ctx, state.court, t);
   for (const s of state.strokes) drawStroke(ctx, s, t);
   if (input.current) drawStroke(ctx, input.current, t);
 }
@@ -1358,7 +1390,15 @@ $('importFile').onchange = e => {
 /* =====================================================================
    14. START-UP
    ===================================================================== */
-window.addEventListener('resize', () => { sizeApp(); resizeCanvas(); settleDrawer(toolsOpen()); });
+/** Re-measure the screen and refit the court. iOS can report the old screen shape
+ *  for a moment when the app wakes or rotates, so check again shortly after. */
+function refreshLayout() { sizeApp(); resizeCanvas(); settleDrawer(toolsOpen()); }
+function refreshSoon() { refreshLayout(); for (const ms of [150, 500, 1200]) setTimeout(refreshLayout, ms); }
+window.addEventListener('resize', refreshSoon);
+window.addEventListener('orientationchange', refreshSoon);
+window.addEventListener('pageshow', refreshSoon);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshSoon(); });
+screen.orientation?.addEventListener?.('change', refreshSoon);
 
 (async function start() {
   sizeApp();
