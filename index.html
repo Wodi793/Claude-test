@@ -32,8 +32,7 @@
   --danger: #e5605e;
   --serif: ui-serif, "New York", "Iowan Old Style", Georgia, serif;
   --sans: -apple-system, system-ui, "Helvetica Neue", sans-serif;
-  /* Tool button size: 44px, smaller only if the rail won't fit a short (sideways) screen */
-  --b: min(44px, calc((100vh - 110px) / 11));
+  --b: 44px;                        /* tool button size; the script shrinks it on short screens */
   --app-h: 100%;                    /* set by the script to the true screen height */
 }
 
@@ -186,8 +185,8 @@ svg { width: 22px; height: 22px; flex: none;
 /* ---------- "More" menu: glass card beside the rail ---------- */
 #more {
   position: absolute; z-index: 7; top: 50%;
-  right: calc(env(safe-area-inset-right) + 10px + var(--b) + 26px);
-  width: min(290px, calc(100vw - var(--b) - 60px));
+  right: calc(env(safe-area-inset-right) + 10px + var(--b) + 12px + 6px + 22px + 8px);   /* rail + tab + gaps */
+  width: min(290px, calc(100vw - var(--b) - 76px));
   transform: translateY(-50%);
   border-radius: 24px; padding: 14px;
   display: flex; flex-direction: column; gap: 10px;
@@ -376,7 +375,7 @@ const THEMES = {
 
 const PEN_WIDTHS = [0.55, 1.0];  // marker thickness in feet on the court (new lines use the first;
                                  // the second is only for thick lines saved by older versions)
-const APP_VERSION = 12;           // shown in the ••• menu; bump with each update
+const APP_VERSION = 13;           // shown in the ••• menu; bump with each update
 const ZOOM_MAX = 6;              // how far you can zoom in (6× the fitted size)
 const ERASER_RADIUS_PX = 14;     // how close the eraser must come to a line, in screen points
 const PLAIN_BAND = 0.75;         // minimum border (feet) around the court: thin, but not zero
@@ -621,7 +620,11 @@ const isStandalone = navigator.standalone || matchMedia('(display-mode: standalo
  *  it. So the app fills exactly the area iOS shows; the strip below is painted in
  *  the border color so the board looks continuous. */
 function sizeApp() {
-  document.documentElement.style.setProperty('--app-h', window.innerHeight + 'px');
+  const h = window.innerHeight, root = document.documentElement.style;
+  root.setProperty('--app-h', h + 'px');
+  // Tool buttons: 44pt, smaller only if the whole rail wouldn't fit this height.
+  // (Measured here, because CSS screen-height units are unreliable in the home-screen app.)
+  root.setProperty('--b', Math.max(20, Math.min(44, (h - 80) / 9.5)) + 'px');
 }
 
 /** True when iOS has cut the bottom off (see sizeApp): the home bar is then already
@@ -1408,7 +1411,7 @@ $('importFile').onchange = e => {
 function refreshLayout() { sizeApp(); resizeCanvas(); settleDrawer(toolsOpen()); }
 function refreshSoon() { refreshLayout(); for (const ms of [150, 500, 1200]) setTimeout(refreshLayout, ms); }
 window.addEventListener('resize', refreshSoon);
-window.addEventListener('orientationchange', refreshSoon);
+window.addEventListener('orientationchange', () => { $('more').hidden = true; refreshSoon(); });
 window.addEventListener('pageshow', refreshSoon);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshSoon(); });
 screen.orientation?.addEventListener?.('change', refreshSoon);
