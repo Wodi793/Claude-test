@@ -192,6 +192,17 @@ svg { width: 22px; height: 22px; flex: none;
   display: flex; flex-direction: column; gap: 10px;
 }
 #more[hidden] { display: none; }
+.line-adjust { display: flex; align-items: center; gap: 12px; }
+#widthRange { -webkit-appearance: none; appearance: none; width: 140px; height: 30px; background: transparent; margin: 0; }
+#widthRange::-webkit-slider-runnable-track { height: 6px; border-radius: 3px;
+  background: rgba(0,0,0,.28); box-shadow: inset 0 1px 2px rgba(0,0,0,.35), 0 1px 0 rgba(255,255,255,.12); }
+#widthRange::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; margin-top: -10px; border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.65));
+  box-shadow: inset 0 1px 1px #fff, 0 2px 8px rgba(10,5,25,.4); }
+#widthRange::-moz-range-track { height: 6px; border-radius: 3px; background: rgba(0,0,0,.28); }
+#widthRange::-moz-range-thumb { width: 26px; height: 26px; border: 0; border-radius: 50%; background: #fff; }
+#widthPreview { width: 34px; min-height: 1px; border-radius: 99px; background: var(--ink, #fff);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.15); }
 #version { text-align: center; font-size: 12px; color: rgba(255,255,255,.45); }
 #screenCheck { text-align: center; font-size: 12px; color: rgba(255,255,255,.6); margin-top: -6px; }
 #playName {
@@ -308,6 +319,9 @@ dialog .buttons button.danger { background: var(--danger); }
   <!-- More: court, board color, line thickness, saved plays -->
   <div id="more" class="glass" hidden>
     <div id="playName">Untitled play</div>
+    <div class="setting">Line
+      <span class="line-adjust"><input type="range" id="widthRange" aria-label="Line thickness"><span id="widthPreview"></span></span>
+    </div>
     <div class="setting">Board
       <div class="seg"><button data-theme="purple">Purple</button><button data-theme="white">White</button></div>
     </div>
@@ -373,9 +387,9 @@ const THEMES = {
             oldPens: [PURPLE, '#1c1b22', '#d62839', '#1f6fd1'] },
 };
 
-const PEN_WIDTHS = [0.55, 1.0];  // marker thickness in feet on the court (new lines use the first;
-                                 // the second is only for thick lines saved by older versions)
-const APP_VERSION = 15;           // shown in the ••• menu; bump with each update
+const DEFAULT_WIDTH = 0.35;      // marker thickness for new lines, in feet on the court
+const MIN_WIDTH = 0.15, MAX_WIDTH = 1.2;   // range of the Line slider in the ••• menu
+const APP_VERSION = 16;           // shown in the ••• menu; bump with each update
 const ZOOM_MAX = 6;              // how far you can zoom in (6× the fitted size)
 const ERASER_RADIUS_PX = 14;     // how close the eraser must come to a line, in screen points
 const PLAIN_BAND = 0.75;         // minimum border (feet) around the court: thin, but not zero
@@ -521,7 +535,7 @@ function drawFloorNames(ctx, courtKey, t) {
 /* ----- Center-court logo: the same basketball-and-penguin drawing as the app icon -----
    Coordinates are copied from icon.svg (a 100×100 square, ball centered at 50,50 with
    radius 40). If you change one, change the other so the branding stays matched. */
-const LOGO_SEAMS = new Path2D('M50 10V90M17 28Q50 46 83 28M17 72Q50 54 83 72');  // vertical line + curved seams
+const LOGO_SEAMS = new Path2D('M50 10V90M10 50H90M17 28Q50 46 83 28M17 72Q50 54 83 72');  // center lines + curved seams
 const LOGO_PENGUIN_AT = [50, 51, 4.3];   // penguin position and scale inside the logo
 const PENGUIN_BODY = new Path2D(
   'M0 -5C1.6 -5 2.4 -3.8 2.3 -2.4C2.2 -1.6 2.6 -.6 3 .6C3.4 2 3.2 3.6 2.2 4.4' +
@@ -538,7 +552,9 @@ function drawPenguin(ctx, courtKey, t) {
   if (courtKey !== 'full') return;
   const k = HS.centerRadius / 40;                         // icon units → feet
   ctx.save();
-  ctx.translate(HS.width / 2, HS.length / 2); ctx.scale(k, k); ctx.translate(-50, -50);
+  ctx.translate(HS.width / 2, HS.length / 2);
+  if (layout.turned) ctx.rotate(-Math.PI / 2);            // court turned sideways: keep the penguin upright
+  ctx.scale(k, k); ctx.translate(-50, -50);
   ctx.strokeStyle = ctx.fillStyle = t.lines;
   ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   ctx.lineWidth = LINE / k;                               // seams: same weight as court lines
@@ -597,7 +613,7 @@ const state = {
   court: 'full', theme: 'purple',
   strokes: [],
   playId: null, name: '', created: null, dirty: false,
-  color: 0, customColor: '#ffd84d', width: 0, tool: 'pen',   // tool: 'pen' or 'eraser'
+  color: 0, customColor: '#ffd84d', width: DEFAULT_WIDTH, tool: 'pen',   // tool: 'pen' or 'eraser'
   undo: [], redo: [],                                        // snapshots of the strokes list
 };
 
@@ -737,6 +753,9 @@ function render() {
   if (input.current) drawStroke(ctx, input.current, t);
 }
 
+/** Line thickness in feet. Plays saved before version 16 stored 0 (thin, 0.55 ft) or 1 (thick, 1 ft). */
+function strokeWidth(s) { return s.w === 0 ? 0.55 : s.w; }
+
 function strokeColor(s, t) {
   if (typeof s.c === 'string') return s.c;
   return s.c === 0 ? t.ink : t.oldPens[s.c] || t.ink;
@@ -744,7 +763,7 @@ function strokeColor(s, t) {
 
 /** Marker look: solid color, round ends, smoothed through the midpoints. */
 function drawStroke(ctx, s, t) {
-  const p = s.p, w = PEN_WIDTHS[s.w];
+  const p = s.p, w = strokeWidth(s);
   ctx.strokeStyle = ctx.fillStyle = strokeColor(s, t);
   if (p.length <= 2) {   // a single tap = a dot
     ctx.beginPath(); ctx.arc(p[0], p[1], w * 0.75, 0, 2 * Math.PI); ctx.fill();
@@ -849,7 +868,7 @@ canvas.addEventListener('wheel', e => {
 // Stop Safari's own page pinch-zoom and any page scrolling outside lists
 document.addEventListener('gesturestart', e => e.preventDefault());
 document.addEventListener('touchmove', e => {
-  if (!e.target.closest('.scrollable')) e.preventDefault();
+  if (!e.target.closest('.scrollable, input')) e.preventDefault();
 }, { passive: false });
 
 /* ----- pinch / pan ----- */
@@ -930,7 +949,7 @@ function eraseAt(pt) {
   const before = state.strokes.length;
   for (let i = 1; i <= steps; i++) {
     const [x, y] = toCourt({ x: from.x + (pt.x - from.x) * i / steps, y: from.y + (pt.y - from.y) * i / steps });
-    state.strokes = state.strokes.filter(s => !strokeHit(s, x, y, radius + PEN_WIDTHS[s.w] / 2));
+    state.strokes = state.strokes.filter(s => !strokeHit(s, x, y, radius + strokeWidth(s) / 2));
   }
   if (state.strokes.length !== before) { input.erased = true; requestRender(); }
   input.lastErase = pt;
@@ -1049,8 +1068,8 @@ let draftTimer = null;
 function scheduleDraftSave() {
   clearTimeout(draftTimer);
   draftTimer = setTimeout(() => {
-    const { court, theme, strokes, playId, name, created, dirty, customColor } = state;
-    DB.setMeta('draft', { v: FORMAT, court, theme, strokes, playId, name, created, dirty, customColor })
+    const { court, theme, strokes, playId, name, created, dirty, customColor, width } = state;
+    DB.setMeta('draft', { v: FORMAT, court, theme, strokes, playId, name, created, dirty, customColor, penWidth: width })
       .catch(() => {});
   }, 400);
 }
@@ -1078,6 +1097,7 @@ function loadIntoState(p) {
     dirty: !!p.dirty, undo: [], redo: [],
   });
   if (p.customColor) state.customColor = p.customColor;
+  if (p.penWidth) state.width = p.penWidth;
   fitView(); updateUI(); scheduleDraftSave();
 }
 
@@ -1260,6 +1280,8 @@ function updateUI() {
   $('btnSave').classList.toggle('unsaved', state.dirty && state.strokes.length > 0);
   $('playName').textContent = state.name || 'Untitled play';
   $('version').textContent = `Penguins Playbook · version ${APP_VERSION}`;
+  widthRange.value = state.width;
+  $('widthPreview').style.height = Math.max(1, state.width * view.k) + 'px';
   document.querySelectorAll('[data-court]').forEach(b => b.classList.toggle('active', b.dataset.court === state.court));
   $('courtSeg').classList.toggle('half', state.court === 'half');
   document.querySelectorAll('[data-theme]').forEach(b => b.classList.toggle('active', b.dataset.theme === state.theme));
@@ -1394,6 +1416,12 @@ document.querySelectorAll('[data-court]').forEach(b => b.onclick = async () => {
 });
 document.querySelectorAll('[data-theme]').forEach(b => b.onclick = () => {
   if (b.dataset.theme !== state.theme) { state.theme = b.dataset.theme; markDirty(); }
+});
+const widthRange = $('widthRange');
+Object.assign(widthRange, { min: MIN_WIDTH, max: MAX_WIDTH, step: 0.05 });
+widthRange.addEventListener('input', () => {
+  state.width = round2(+widthRange.value); state.tool = 'pen';
+  updateUI(); scheduleDraftSave();
 });
 $('btnPlays').onclick = openPlays;
 $('btnFit').onclick = () => { fitView(); hideTools(); };

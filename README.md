@@ -23,7 +23,7 @@ No accounts, no server — plays are stored on the device.
   The rail has: board-color marker,
   Full | Half switch at the top, then rainbow color picker, eraser, undo, redo, clear, save,
   and ••• for the rest
-  (purple/white board, saved plays, fit to screen, version number).
+  (Line thickness slider, purple/white board, saved plays, fit to screen, version number).
   Touching the court also puts it away.
 - **Save** asks for a name the first time, then saves quietly. A dot on it means unsaved changes.
   **Saved plays → Save as new** makes a copy.
@@ -31,7 +31,7 @@ No accounts, no server — plays are stored on the device.
   **Import backup** adds them back; plays you already have are kept.
 - The court is made as big as the screen allows. PENGUINS and BURNS PARK go in the leftover border
   (ends or sides), or faintly on the floor if the border is too thin. The app-icon logo (basketball + penguin)
-  fills the full court's center circle. Turn on the iPhone's rotation lock to keep the court upright; if the phone does rotate, the
+  fills the full court's center circle and stays upright when the court is turned. Turn on the iPhone's rotation lock to keep the court upright; if the phone does rotate, the
   full court stays along the long side of the screen, as big as
   the screen allows. Drawings are stored in court feet, so they follow the court.
 
@@ -41,7 +41,7 @@ No accounts, no server — plays are stored on the device.
 - Center-court logo: `LOGO_SEAMS`, `PENGUIN_*`, `drawPenguin` (keep in step with `icon.svg`)
 - Purple shade: `PURPLE`
 - Board-color marker: `ink` inside `THEMES`
-- Marker thickness: `PEN_WIDTHS[0]` (in feet)
+- Marker thickness: `DEFAULT_WIDTH`, slider range `MIN_WIDTH`–`MAX_WIDTH` (in feet)
 - Version shown in the ••• menu: `APP_VERSION` (bump it with each update)
 - How far you can zoom: `ZOOM_MAX`
 - Border and lettering: `PLAIN_BAND`, `MIN_BORDER_LETTERS`, `MAX_LETTERS`, `FLOOR_LETTERS`
