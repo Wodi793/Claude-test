@@ -23,7 +23,7 @@ Use it (with the git history) to find and undo any single change.
 |---|---|---|
 | 1 | How to test stages | Preview address; live app untouched until Stage 7 |
 | 2 | Where the tabs go | Floating glass switcher (court keeps its full size) |
-| 3 | Compact-layout cutoff | Short side under **455 pt**: all regular iPhones compact; the unfolded foldable (469 pt) gets the large layout |
+| 3 | Compact-layout cutoff | Short side under **455 pt**: all regular iPhones compact; the unfolded foldable (measured 669 pt — see Stage 1b) gets the large layout |
 | 4 | Absent / Injured / Sitting out | Applies to one game only |
 | 5 | Default game format | Waiting on the league rulebook (needed at Stage 4) |
 | 6 | Split code into a few files | Not yet answered — ask before Stage 2 |
@@ -101,3 +101,28 @@ the drawing behavior changed.
 **Baseline checklist:** all automated checks pass on the preview (19/19, three runs; also 19/19 on the
 live app as a control). Layout/finger-accuracy, rotation/tool-rail, wake re-measure, line slider, and
 upright-logo tests also pass. Owner to confirm on the real phone and iPad.
+
+## Stage 1b — Correction from the real Screen check (2026-11-01)
+
+**What we learned** (owner's Screen check, foldable, upright, home-screen app):
+- App area 669 × 927 pt; true screen height 951 pt (100lvh); clock/camera strip 82 pt; home bar 34 pt.
+- iOS hides only ~24 pt at the bottom (not 57). `screen.width/height` report unrelated numbers (457 × 678).
+- **Earlier simulations used the wrong screen size** (469 × 667): screenshots arrive scaled down, and their
+  pixel size was taken at face value. The old detection of the hidden strip never switched on on this phone.
+- Stage 1 as first written would have made the upright court ~6% smaller and still 12 pt off-center
+  on the real phone. Caught in the preview; never reached the live app.
+
+**Fix** (`next/index.html`, `physicalHeight()` + hidden `#lvhProbe` element): measure the true screen
+height with a 100lvh-tall element (the method the Screen check proved), and center on it.
+
+**Measured with the real numbers (upright):**
+
+| | Live app today | Preview |
+|---|---|---|
+| Full court | 12 pt below center, 793 pt tall | centered, 769 pt tall (−3%) |
+| Half court | 12 pt below center, 764 pt tall | centered, 760 pt tall |
+
+Sideways on the real phone not yet measured — needs a sideways Screen check screenshot.
+
+**Baseline checklist:** all automated checks pass on the preview (19/19, two runs); tools, rotation/rail
+(10/10), line slider, upright logo, wake re-measure, finger accuracy all pass.

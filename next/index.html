@@ -51,6 +51,7 @@ html, body {
 }
 
 /* Hidden helper: lets the script read the notch / home-bar margins */
+#lvhProbe { position: fixed; top: 0; left: 0; width: 1px; height: 100lvh; visibility: hidden; pointer-events: none; }
 #safe {
   position: fixed; visibility: hidden; pointer-events: none;
   padding: env(safe-area-inset-top) env(safe-area-inset-right)
@@ -280,6 +281,7 @@ dialog .buttons button.danger { background: var(--danger); }
 <body>
 
 <div id="safe"></div>
+<div id="lvhProbe"></div>   <!-- measures the full screen height; see physicalHeight() -->
 
 <main id="stage">
   <canvas id="board"></canvas>
@@ -643,13 +645,14 @@ function sizeApp() {
 }
 
 /** The phone's real screen height, if iOS has cut the bottom off the app's area
- *  (see sizeApp); otherwise null. */
+ *  (see sizeApp); otherwise null.
+ *  Measured with a hidden 100lvh-tall element ("large viewport" = the full screen).
+ *  The Screen check (2026-11-01, owner's foldable) showed this reaches the true bottom,
+ *  while screen.width/height report unrelated numbers there — so they aren't used. */
 function physicalHeight() {
-  if (!isStandalone || !screen.width || !screen.height) return null;
-  const portrait = window.innerHeight >= window.innerWidth;
-  const sw = portrait ? Math.min(screen.width, screen.height) : Math.max(screen.width, screen.height);
-  const sh = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
-  return Math.abs(window.innerWidth - sw) <= 2 && sh - window.innerHeight >= 20 ? sh : null;
+  if (!isStandalone) return null;
+  const full = document.getElementById('lvhProbe').getBoundingClientRect().height;
+  return full - window.innerHeight >= 8 ? full : null;
 }
 
 function resizeCanvas() {
