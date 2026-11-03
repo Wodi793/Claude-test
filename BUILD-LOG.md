@@ -293,3 +293,29 @@ technical's 2-minute bench time counting as playing time — both need foul/tech
 finger accuracy, tabs — all pass. No errors.
 
 Cache `penguins-preview-v21`; app version "21 preview".
+
+## Stage 4 (with 4b) approved by owner (2026-11-03)
+
+## Stage 5 — Readouts: game timeline and season view (2026-11-03)
+
+**New file** `next/readouts.js` (3 sections: timeline, season view, past game). Calculated from the event logs only.
+
+**Game timeline** — one row per player (everyone available, so a girl who didn't play shows an empty bar): bars
+across each period for her time on court, total at the right. Purple = played, black = her current stretch,
+red line = now, dashed line = mid-Q3 (when the league minimum is on). Shown at the bottom of the live game
+(redrawn once a second), on the final screen, and for past games.
+
+**Season view** — "Season" button on the Minutes tab. For the current team + season, finished games only:
+total minutes, games played (games with any minutes), average per game played, **fair share** (her minutes ÷
+an exactly equal split of the games she was available for: game length × players on court ÷ players available;
+100% = even), and "N× short" if she missed the league minimum. Sorted furthest-behind first; under 90% highlighted.
+Games list: tap for that game's timeline; delete a game (asks).
+"Available for a game" = everyone who played in it + anyone on the active roster not marked absent/injured/sitting.
+
+**Tests** (two simulated games, 7 players; one girl absent from game 2; checked by hand): Ava 42:00, 2 games,
+21:00 avg, 113% (= 42 ÷ (17:09 + 20:00)); Fay 6:00, 16%, 1× short; Gia 6:00, 35% (game 2 not counted — absent);
+order furthest-behind first; past game opens (6 rows incl. Fay's empty one); delete updates the season.
+Live timeline renders and moves. Regression: baseline 19/19, tools, rotation/rail 10/10, slider/logo, finger
+accuracy, tabs, Stage 4 game test, Stage 4b rule test — all pass. No errors.
+
+Cache `penguins-preview-v22`; app version "22 preview".

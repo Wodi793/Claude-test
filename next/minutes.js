@@ -307,7 +307,9 @@ function renderLive(body) {
     <ul class="players" id="courtList"></ul>
     <h2 class="card-title">Bench <span>${ms ? 'owed first, then least played' : 'least played first'}</span></h2>
     <ul class="players" id="benchList"></ul>
-    ${bench.length ? '' : '<p class="hint">Nobody on the bench.</p>'}`;
+    ${bench.length ? '' : '<p class="hint">Nobody on the bench.</p>'}
+    <h2 class="card-title">Game timeline</h2>
+    <section class="card tl-card" id="liveTimeline"></section>`;
 
   $('gUndo').onclick = undo;
   $('gMenu').onclick = openGameMenu;
@@ -330,6 +332,7 @@ function renderLive(body) {
     onTapOrHold(li, () => tapBench(p.id), () => openPlayerMenu(p));
     $('benchList').appendChild(li);
   }
+  renderTimeline($('liveTimeline'), g, M.roster, r);
   renderSubBar();
 }
 
@@ -398,7 +401,10 @@ function renderFinal(body) {
     </section>
     <h2 class="card-title">Minutes</h2>
     <ul class="players" id="finalList"></ul>
+    <h2 class="card-title">Game timeline</h2>
+    <section class="card tl-card" id="finalTimeline"></section>
     <button class="big-btn" id="gNew">New game</button>`;
+  renderTimeline($('finalTimeline'), g, M.roster, r);
   const ms = ruleStatus(r);
   for (const p of rows) {
     const st = ms?.players[p.id];
@@ -445,6 +451,9 @@ setInterval(() => {
     for (const el of document.querySelectorAll('[data-rule]')) { const t = ruleTag(ms.players[el.dataset.rule]); if (t) el.textContent = t.text; }
     const bar = $('ruleBar'); if (bar) bar.innerHTML = ruleBarText(ms);
   }
+  // The timeline moves once a second (cheap to redraw)
+  const tl = $('liveTimeline');
+  if (tl && GameClock.now() - (M.tlDrawn || 0) > 1000) { M.tlDrawn = GameClock.now(); renderTimeline(tl, M.game, M.roster, r); }
   if (r.running) checkSubAlert(r);
 }, 250);
 

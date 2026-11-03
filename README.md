@@ -13,7 +13,7 @@ No accounts, no server — plays are stored on the device.
 | `sw.js` | Service worker — keeps a copy of the app on the device for offline use |
 | `icon.svg` | The icon artwork (basketball + penguin). The center-court logo copies its coordinates |
 | `icon-180.png`, `icon-512.png` | App icons, made from `icon.svg` |
-| `next/` | **Preview** of the team app in progress (wodi793.github.io/Claude-test/next/), with its own database. Split into `index.html` (structure), `styles.css`, `playbook.js`, `sports.js`, `data.js`, `settings.js`, `gamelog.js`, `minutes.js`, `shell.js` — see BUILD-LOG.md |
+| `next/` | **Preview** of the team app in progress (wodi793.github.io/Claude-test/next/), with its own database. Split into `index.html` (structure), `styles.css`, `playbook.js`, `sports.js`, `data.js`, `settings.js`, `gamelog.js`, `readouts.js`, `minutes.js`, `shell.js` — see BUILD-LOG.md |
 | `BUILD-LOG.md` | Record of every stage of the team-app build, decisions, and the Playbook baseline checklist |
 
 ## Using it
