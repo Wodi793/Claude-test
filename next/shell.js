@@ -9,7 +9,35 @@
 
 const App = {
   tab: 'playbook',
+  layout: 'tall',     // 'compact' | 'tall' | 'wide' — see chooseAppLayout()
+  oneHand: false,     // force the compact layout on any screen (setting)
 };
+
+/* ----- The three layouts (Stage 6) -----
+   Chosen from the screen's SHORT side, so a sideways iPhone is still compact:
+     compact — short side under 455 pt: every regular iPhone either way up (the biggest is
+               ~440 pt) and the foldable's cover screen. One-hand: essentials only, thumb controls.
+     tall    — bigger screen held upright (unfolded foldable ~669 pt, iPad portrait): one column.
+     wide    — bigger screen held sideways (iPad on the bench): two columns.
+   The Minutes screens read <html data-layout="…">; the Playbook keeps its own scaling. */
+const COMPACT_BELOW = 455;
+// (Named chooseAppLayout — NOT chooseLayout, which is the Playbook's court-fitting function.)
+function chooseAppLayout() {
+  const w = window.innerWidth, h = window.innerHeight, short = Math.min(w, h);
+  const layout = App.oneHand || short < COMPACT_BELOW ? 'compact' : w > h ? 'wide' : 'tall';
+  const root = document.documentElement;
+  root.dataset.orient = w > h ? 'land' : 'port';
+  if (layout !== App.layout || root.dataset.layout !== layout) {
+    App.layout = layout; root.dataset.layout = layout;
+    window.dispatchEvent(new Event('penguins:layout'));   // Minutes redraws (nothing is lost — it's all in the saved game)
+  }
+}
+function setOneHand(on) {
+  App.oneHand = !!on;
+  try { localStorage.setItem('penguins.oneHand', on ? '1' : '0'); } catch { /* not critical */ }
+  chooseAppLayout();
+}
+try { App.oneHand = localStorage.getItem('penguins.oneHand') === '1'; } catch { /* not critical */ }
 
 /** Optional per-tab code to run when a tab is shown. */
 const TAB_SHOWN = {
@@ -19,6 +47,7 @@ const TAB_SHOWN = {
 function showTab(name) {
   if (!document.getElementById('tab-' + name)) return;
   App.tab = name;
+  document.documentElement.dataset.tab = name;   // lets styles differ per tab (e.g. the switcher's glass)
   for (const el of document.querySelectorAll('.tab')) {
     const on = el.id === 'tab-' + name;
     if (el.classList.contains('tab-page')) el.hidden = !on;      // ordinary pages: show/hide
@@ -50,9 +79,11 @@ function placeTabbar() {
 }
 
 for (const b of document.querySelectorAll('.tabbtn')) b.onclick = () => showTab(b.dataset.tab);
-window.addEventListener('resize', () => { placeTabbar(); placeLens(); });
+window.addEventListener('resize', () => { chooseAppLayout(); placeTabbar(); placeLens(); });
+window.addEventListener('orientationchange', () => setTimeout(() => { chooseAppLayout(); placeTabbar(); placeLens(); }, 300));
 
 // Start on the tab used last time
+chooseAppLayout();
 placeTabbar();
 let startTab = 'playbook';
 try { startTab = localStorage.getItem('penguins.tab') || 'playbook'; } catch { /* not critical */ }

@@ -112,6 +112,7 @@ async function openSeason() {
 async function openPastGame(id, roster) {
   const g = await DB.get('games', id);
   if (!g) return;
+  M.tlSheet = false; $('pastDelete').hidden = false;   // (the sheet is also used for the live game's timeline)
   $('pastTitle').textContent = new Date(g.date).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
     + (g.opponent ? ` · vs ${g.opponent}` : '');
   renderTimeline($('pastTimeline'), g, roster);
@@ -126,4 +127,4 @@ async function openPastGame(id, roster) {
 
 $('btnSeason').onclick = openSeason;
 $('btnCloseSeason').onclick = () => { $('seasonSheet').hidden = true; };
-$('btnClosePast').onclick = () => { $('pastSheet').hidden = true; };
+$('btnClosePast').onclick = () => { $('pastSheet').hidden = true; M.tlSheet = false; };

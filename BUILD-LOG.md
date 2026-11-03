@@ -319,3 +319,47 @@ Live timeline renders and moves. Regression: baseline 19/19, tools, rotation/rai
 accuracy, tabs, Stage 4 game test, Stage 4b rule test — all pass. No errors.
 
 Cache `penguins-preview-v22`; app version "22 preview".
+
+## Stage 5 approved by owner (2026-11-03)
+
+## Stage 6 — Three layouts, one-hand toggle, Apple look, one font (2026-11-03)
+
+**Owner's extra requests:** "more Apple-like in appearance", "make fonts consistent".
+
+**⚠ Playbook change (flagged):** the app's serif font is replaced everywhere by Apple's system font (SF Pro) —
+on the Playbook this only affects a few headings (play name in •••, the "Playbook" screen title, pop-up titles).
+Court, tools, drawing unchanged.
+
+**Apple look (team side: Minutes, Team, Season, their pop-ups).** iOS grouped style: light background
+(`--ios-bg`), white rounded groups with hairline separators, 34 pt bold titles, small gray uppercase section
+headers, purple tint (`--tint`), black for selections, filled capsule buttons, iOS segmented controls and text
+fields, light frosted glass for sheets / pop-ups / tab switcher / sub queue (solid if Reduce Transparency is on).
+The Playbook keeps its dark look around the court.
+
+**Layouts** (`shell.js` → `chooseAppLayout()`, sets `<html data-layout data-orient>`; styles at the end of `styles.css`):
+
+| Layout | When | Live game |
+|---|---|---|
+| compact | short side < 455 pt (all regular iPhones, either way; cover screen) or One-hand on | Clock on top; 5 on court always visible; bench scrolls on its own; Undo + Start/Stop pinned at the bottom (thumb); timeline in ••• → Game timeline. Sideways: three columns (clock+buttons, court, bench). While picking subs, the sub queue takes the thumb bar's place. Short screens (< 740 pt) slightly tighter. |
+| tall | bigger screen upright (unfolded foldable, iPad portrait) | One centered column, timeline included |
+| wide | bigger screen sideways (iPad on the bench) | Clock, rule line, court, bench left; timeline right |
+
+**One-hand toggle:** ••• → "One-hand layout", and Team → Display (Auto / Always). Remembered on the device.
+Rotating / folding mid-game only rearranges — every screen is drawn from the saved game.
+
+**Bugs found by testing and fixed**
+1. **Name clash broke the Playbook's court fitting:** the new layout function was first named `chooseLayout`, the
+   same as the Playbook's — the newer one replaced it. Renamed `chooseAppLayout`. Also renamed Minutes' `undo` →
+   `undoGameAction` (clashed with the Playbook's `undo`). **Added a name-clash scan to every stage's checks.**
+2. Sideways phone: only 2 of 5 on court fit → three-column layout; Undo icon-only there so Stop has room.
+3. Sub queue overlapped the bottom of the bench (could block tapping the last bench player) → one shared size
+   (`--actions-h`); on short screens the queue replaces the thumb bar while picking subs.
+4. Disabled Start button was see-through over the list → solid. Opponent field looked like a web box → iOS field.
+
+**Tests.** Live game checked on iPhone upright (compact), iPhone sideways (compact, 3 columns), foldable unfolded
+669×927 (tall), iPad sideways (wide), iPad with One-hand on (compact), back to iPhone — clock, Start/Stop and all
+five on court visible and not covered (stricter check: inside the screen, not clipped by a list, not under
+anything); same game and clock throughout. Small-screen sub flow (664 pt). Regression: baseline 19/19, tools,
+rotation/rail 10/10, slider/logo, wake, finger accuracy, tabs, Stage 3/4/4b/5 tests — all pass; no name clashes.
+
+Cache `penguins-preview-v23`; app version "23 preview".

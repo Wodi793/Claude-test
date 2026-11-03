@@ -57,6 +57,12 @@ async function renderTeamSheet(roster) {
   $('rosterNote').textContent = active > sport.maxRoster
     ? `${active} active players — the game screens are designed for up to ${sport.maxRoster}.` : '';
 
+  // Display: one-hand layout (shell.js)
+  for (const b of document.querySelectorAll('[data-onehand]')) {
+    b.classList.toggle('active', (b.dataset.onehand === 'on') === App.oneHand);
+    b.onclick = () => { setOneHand(b.dataset.onehand === 'on'); renderTeamSheet(); };
+  }
+
   // Teams & seasons: tap to switch
   const teams = await Data.teams(), tl = $('teamList');
   tl.innerHTML = '';

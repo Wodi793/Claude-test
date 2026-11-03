@@ -46,6 +46,7 @@ async function loadMinutes() {
   renderMinutes();
 }
 window.onTeamChanged = loadMinutes;   // called by settings.js when the team or roster changes
+window.addEventListener('penguins:layout', () => renderMinutes());   // rotate / fold / one-hand toggle (shell.js)
 
 async function newPregame() {
   const game = await Data.saveGame({
@@ -137,7 +138,7 @@ async function commitSubs() {
 }
 
 /** Undo the last action (all events that share its action id). */
-async function undo() {
+async function undoGameAction() {   // (not "undo": that's the Playbook's)
   const ev = M.game.events;
   if (!ev.length) return;
   const last = ev[ev.length - 1].action, removed = ev.filter(e => e.action === last);
@@ -287,31 +288,43 @@ function renderLive(body) {
     ? `<button class="clock-btn next" id="gNext">${r.lastPeriod ? 'End game' : `Start ${periodLabel(g, r.period + 1)}`}</button>`
     : `<button class="clock-btn ${r.running ? 'stop' : 'go'}" id="gClock">${r.running ? 'Stop' : 'Start'}</button>`;
 
+  // The same sections in every layout; styles.css (Stage 6) arranges them per layout:
+  // compact = clock on top, Start/Stop + Undo at the bottom by the thumb, bench scrolls on its own;
+  // tall = one column; wide = court & bench left, timeline right.
   body.innerHTML = `
-    <section class="scoreboard">
-      <div class="sb-top">
-        <span class="period-chip" id="gPeriod">${label}</span>
-        <span class="sb-vs">${g.opponent ? 'vs ' + esc(g.opponent) : ''}</span>
-        <button class="undo-btn" id="gUndo" ${g.events.length ? '' : 'disabled'} aria-label="Undo last action">
-          <svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Undo</button>
-        <button class="round-btn glass" id="gMenu" aria-label="Game menu">
-          <svg viewBox="0 0 24 24"><path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3"/></svg></button>
-      </div>
-      <div class="clock ${r.running ? 'running' : ''} ${r.periodOver ? 'over' : ''}" id="gClockText">${formatClock(r.clock)}</div>
-      ${r.periodOver ? `<div class="period-over">End of ${label}</div>` : ''}
-      ${mainBtn}
-    </section>
+    <div class="live">
+      <section class="scoreboard sec-sb">
+        <div class="sb-top">
+          <span class="period-chip" id="gPeriod">${label}</span>
+          <span class="sb-vs">${g.opponent ? 'vs ' + esc(g.opponent) : ''}</span>
+          <button class="round-btn" id="gMenu" aria-label="Game menu">
+            <svg viewBox="0 0 24 24"><path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3"/></svg></button>
+        </div>
+        <div class="clock ${r.running ? 'running' : ''} ${r.periodOver ? 'over' : ''}" id="gClockText">${formatClock(r.clock)}</div>
+        ${r.periodOver ? `<div class="period-over">End of ${label}</div>` : ''}
+        <div class="sb-actions">
+          <button class="undo-btn" id="gUndo" ${g.events.length ? '' : 'disabled'} aria-label="Undo last action">
+            <svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Undo</button>
+          ${mainBtn}
+        </div>
+      </section>
+      ${ms ? `<div class="rule-bar sec-rule ${ms.shortfall > 0 ? 'warn' : ''}" id="ruleBar">${ruleBarText(ms)}</div>` : ''}
+      <section class="sec-court">
+        <h2 class="card-title">On court <span>${onCourt.length}</span></h2>
+        <ul class="players" id="courtList"></ul>
+      </section>
+      <section class="sec-bench">
+        <h2 class="card-title">Bench <span>${ms ? 'owed first, then least played' : 'least played first'}</span></h2>
+        <div class="bench-scroll scrollable"><ul class="players" id="benchList"></ul>
+          ${bench.length ? '' : '<p class="hint">Nobody on the bench.</p>'}</div>
+      </section>
+      <section class="sec-tl">
+        <h2 class="card-title">Game timeline</h2>
+        <section class="card tl-card" id="liveTimeline"></section>
+      </section>
+    </div>`;
 
-    ${ms ? `<div class="rule-bar ${ms.shortfall > 0 ? 'warn' : ''}" id="ruleBar">${ruleBarText(ms)}</div>` : ''}
-    <h2 class="card-title">On court <span>${onCourt.length}</span></h2>
-    <ul class="players" id="courtList"></ul>
-    <h2 class="card-title">Bench <span>${ms ? 'owed first, then least played' : 'least played first'}</span></h2>
-    <ul class="players" id="benchList"></ul>
-    ${bench.length ? '' : '<p class="hint">Nobody on the bench.</p>'}
-    <h2 class="card-title">Game timeline</h2>
-    <section class="card tl-card" id="liveTimeline"></section>`;
-
-  $('gUndo').onclick = undo;
+  $('gUndo').onclick = undoGameAction;
   $('gMenu').onclick = openGameMenu;
   $('gClock')?.addEventListener('click', toggleClock);
   $('gNext')?.addEventListener('click', nextPeriod);
@@ -370,6 +383,8 @@ function renderSubBar() {
   const bar = $('subBar');
   const live = M.game?.status === 'live' && (M.pairs.length || M.out);
   bar.hidden = !live;
+  // While picking subs, the queue takes the thumb bar's place in the compact layout (styles.css)
+  document.documentElement.dataset.subbing = live ? 'yes' : 'no';
   const room = () => document.documentElement.style.setProperty('--subbar-h', bar.hidden ? '0px' : bar.offsetHeight + 12 + 'px');
   if (!live) { room(); return; }
   const name = id => { const p = playerById(id); return p ? `#${esc(p.number)} ${esc(p.name)}` : '?'; };
@@ -412,7 +427,7 @@ function renderFinal(body) {
     $('finalList').appendChild(playerRow(p, { minutes: r.played[p.id] || 0, met: st?.state === 'met',
       rule: short ? { text: `Short ${formatClock(st.owed)}`, cls: 'rule-must' } : null }));
   }
-  $('gUndo').onclick = undo;
+  $('gUndo').onclick = undoGameAction;
   $('gNew').onclick = startNewGame;
 }
 
@@ -424,6 +439,7 @@ function renderMinutes() {
   else if (M.game.status === 'live') renderLive(body);
   else renderFinal(body);
   if (M.game.status !== 'live') { M.pairs = []; M.out = null; renderSubBar(); }
+  document.documentElement.dataset.live = M.game.status === 'live' ? 'yes' : 'no';
   updateWakeLock();
 }
 
@@ -451,7 +467,10 @@ setInterval(() => {
     for (const el of document.querySelectorAll('[data-rule]')) { const t = ruleTag(ms.players[el.dataset.rule]); if (t) el.textContent = t.text; }
     const bar = $('ruleBar'); if (bar) bar.innerHTML = ruleBarText(ms);
   }
-  // The timeline moves once a second (cheap to redraw)
+  // The timeline moves once a second (cheap to redraw) — on the page, or in the "This game" sheet
+  if (M.tlSheet && !$('pastSheet').hidden && GameClock.now() - (M.tlSheetDrawn || 0) > 1000) {
+    M.tlSheetDrawn = GameClock.now(); renderTimeline($('pastTimeline'), M.game, M.roster, r);
+  }
   const tl = $('liveTimeline');
   if (tl && GameClock.now() - (M.tlDrawn || 0) > 1000) { M.tlDrawn = GameClock.now(); renderTimeline(tl, M.game, M.roster, r); }
   if (r.running) checkSubAlert(r);
@@ -539,6 +558,15 @@ document.addEventListener('visibilitychange', () => { updateWakeLock(); if (!doc
 /* =====================================================================
    8. MENUS AND POP-UPS
    ===================================================================== */
+/** The current game's timeline in a sheet (compact layout hides it from the main screen). */
+function openLiveTimeline() {
+  M.tlSheet = true;
+  $('pastTitle').textContent = 'This game' + (M.game.opponent ? ` · vs ${M.game.opponent}` : '');
+  renderTimeline($('pastTimeline'), M.game, M.roster);
+  $('pastDelete').hidden = true;
+  $('pastSheet').hidden = false;
+}
+
 /** Press-and-hold menu: Absent / Injured / Sitting out / Reactivate — this game only. */
 function openPlayerMenu(p) {
   const d = $('playerMenu');
@@ -574,6 +602,10 @@ function openGameMenu() {
   d.querySelector('#gmNew').onclick = () => { d.close(); startNewGame(); };
   d.querySelector('#gmDiscard').onclick = () => { d.close(); discardGame(); };
   d.querySelector('#gmTeam').onclick = () => { d.close(); openTeamSheet(); };
+  d.querySelector('#gmTimeline').onclick = () => { d.close(); openLiveTimeline(); };
+  const oh = d.querySelector('#gmOneHand');
+  oh.textContent = `One-hand layout: ${App.oneHand ? 'On' : 'Auto'}`;
+  oh.onclick = () => { d.close(); setOneHand(!App.oneHand); toast(App.oneHand ? 'One-hand layout on' : 'Layout follows the screen size'); };
   d.querySelector('#gmClose').onclick = () => d.close();
   d.showModal();
 }

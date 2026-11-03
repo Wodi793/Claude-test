@@ -133,7 +133,7 @@
 
 <!-- ===================== TEAM SETTINGS (Stage 3) =====================
      Team, season, roster, backup. Opened from the gear on the Minutes tab. -->
-<section id="teamSheet" class="sheet" hidden>
+<section id="teamSheet" class="sheet light" hidden>
   <header>
     <h1>Team</h1>
     <button class="pill-btn" id="btnCloseTeam" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
@@ -165,6 +165,13 @@
       </div>
     </section>
 
+    <h2 class="card-title">Display</h2>
+    <section class="card">
+      <div class="field">One-hand layout
+        <div class="seg"><button data-onehand="auto">Auto</button><button data-onehand="on">Always</button></div></div>
+      <p class="note">Auto uses the compact one-hand layout on iPhones and the larger layouts on the unfolded phone and iPad.</p>
+    </section>
+
     <h2 class="card-title">Backup</h2>
     <section class="card">
       <p class="note">One file with everything: plays, teams, rosters and games. Export now and then — iOS can clear app data.</p>
@@ -179,7 +186,7 @@
 </section>
 
 <!-- ===================== SEASON VIEW (Stage 5) ===================== -->
-<section id="seasonSheet" class="sheet" hidden>
+<section id="seasonSheet" class="sheet light" hidden>
   <header>
     <h1>Season</h1>
     <button class="pill-btn" id="btnCloseSeason" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
@@ -194,7 +201,7 @@
 </section>
 
 <!-- A past game: timeline and minutes -->
-<section id="pastSheet" class="sheet" hidden>
+<section id="pastSheet" class="sheet light" hidden>
   <header>
     <h1>Game</h1>
     <button class="pill-btn" id="btnClosePast" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
@@ -207,7 +214,7 @@
 </section>
 
 <!-- Press-and-hold player menu (this game only) -->
-<dialog id="playerMenu" class="glass menu-dialog">
+<dialog id="playerMenu" class="glass menu-dialog light">
   <h2 id="pmTitle"></h2>
   <p id="pmNote"></p>
   <div class="menu-list">
@@ -220,21 +227,23 @@
 </dialog>
 
 <!-- Game menu (•••) -->
-<dialog id="gameMenu" class="glass menu-dialog">
+<dialog id="gameMenu" class="glass menu-dialog light">
   <h2>Game</h2>
   <div class="menu-list">
     <button class="menu-btn" id="gmAdjust">Adjust clock</button>
     <button class="menu-btn" id="gmSettings">Game settings &amp; sub alert</button>
     <button class="menu-btn" id="gmEnd">End game now</button>
     <button class="menu-btn" id="gmNew">Start a new game</button>
+    <button class="menu-btn" id="gmTimeline">Game timeline</button>
     <button class="menu-btn" id="gmTeam">Team &amp; roster</button>
+    <button class="menu-btn" id="gmOneHand">One-hand layout</button>
     <button class="menu-btn danger-text" id="gmDiscard">Discard this game</button>
   </div>
   <button class="pill-btn wide" id="gmClose">Close</button>
 </dialog>
 
 <!-- Game settings: format (before the game) and sub alert (any time) -->
-<dialog id="gameSettings" class="glass menu-dialog">
+<dialog id="gameSettings" class="glass menu-dialog light">
   <h2>Game settings</h2>
   <div class="format-block">
     <div class="gs-row"><span>Periods</span>
