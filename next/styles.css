@@ -1,0 +1,316 @@
+/* Penguins — shared look and the Playbook's styles.
+   (Moved unchanged from index.html in Stage 2; shell styles are at the end.) */
+/* =====================================================================
+   1. LOOK AND LAYOUT
+   Court and ink colors are in the script, section "SETTINGS".
+   ===================================================================== */
+:root {
+  --bg: #151319;
+  --panel: rgba(30, 27, 36, .94);   /* toolbar and menus (slightly see-through) */
+  --btn-press: rgba(255,255,255,.12);
+  --text: #f3f0f8;
+  --muted: #a79fb5;
+  --accent: #a784e8;                /* Penguins lavender: selected tool, unsaved dot */
+  --accent-strong: #5b2d91;
+  --danger: #e5605e;
+  --serif: ui-serif, "New York", "Iowan Old Style", Georgia, serif;
+  --sans: -apple-system, system-ui, "Helvetica Neue", sans-serif;
+  --b: 44px;                        /* tool button size; the script shrinks it on short screens */
+  --app-h: 100%;                    /* set by the script to the true screen height */
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0; height: 100%;
+  background: var(--bg); color: var(--text);
+  font-family: var(--sans);
+  overflow: hidden;                      /* no page scrolling */
+  overscroll-behavior: none;             /* no rubber-band bounce */
+  -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none;           /* no long-press popups */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;            /* no double-tap zoom */
+}
+
+/* Hidden helper: lets the script read the notch / home-bar margins */
+#lvhProbe { position: fixed; top: 0; left: 0; width: 1px; height: 100lvh; visibility: hidden; pointer-events: none; }
+#safe {
+  position: fixed; visibility: hidden; pointer-events: none;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+           env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* ---------- The court: edge to edge, top to bottom ---------- */
+#stage { position: fixed; top: 0; left: 0; right: 0; height: var(--app-h); }
+#board {
+  position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+  touch-action: none;   /* the court gets every touch: no scrolling while drawing */
+}
+/* Soft shade behind the clock/battery so they stay readable on a white border */
+#scrim {
+  position: absolute; top: 0; left: 0; right: 0;
+  height: calc(env(safe-area-inset-top) + 10px);
+  background: linear-gradient(rgba(0,0,0,.38), rgba(0,0,0,0));
+  pointer-events: none; display: none;
+}
+#scrim.show { display: block; }
+#toast {
+  position: absolute; left: 50%; top: calc(env(safe-area-inset-top) + 10px);
+  transform: translateX(-50%);
+  color: var(--text);
+  padding: 9px 18px; border-radius: 999px; font-size: 15px;
+  pointer-events: none; opacity: 0; transition: opacity .25s; white-space: nowrap;
+}
+#toast.show { opacity: 1; }
+
+/* ---------- Buttons ---------- */
+button, .tb {
+  font: inherit; color: var(--text);
+  background: transparent; border: 0; padding: 0; margin: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer; position: relative;
+}
+svg { width: 22px; height: 22px; flex: none;
+  fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------- Liquid glass: translucent, blurred, with a soft lit edge ---------- */
+.glass {
+  background:
+    linear-gradient(160deg, rgba(255,255,255,.18), rgba(255,255,255,.04) 45%, rgba(255,255,255,.08)),
+    rgba(30, 20, 46, .58);
+  -webkit-backdrop-filter: blur(30px) saturate(1.8); backdrop-filter: blur(30px) saturate(1.8);
+  border: 1px solid rgba(255,255,255,.26);
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,.45),     /* light catching the top edge */
+    inset 0 -1px 1px rgba(255,255,255,.08),
+    0 12px 32px rgba(12, 6, 24, .32);           /* soft float above the court */
+}
+.glass svg { filter: drop-shadow(0 1px 1px rgba(0,0,0,.35)); }
+/* Over a white border, the glass takes a deeper tint so white icons stay crisp */
+.light-band #rail, .light-band #toast {
+  background:
+    linear-gradient(160deg, rgba(255,255,255,.16), rgba(255,255,255,.03) 45%, rgba(255,255,255,.06)),
+    rgba(34, 22, 54, .78);
+}
+.light-band #grab span { background: rgba(78, 42, 132, .55); }
+
+/* ---------- Tools: a glass rail that slides in from the right edge ---------- */
+#drawer {
+  position: absolute; z-index: 6; top: 50%;
+  right: calc(env(safe-area-inset-right) + 10px);
+  display: flex; align-items: center; gap: 6px;
+  transform: translate(0, -50%);
+  transition: transform .38s cubic-bezier(.2, .9, .25, 1.08);   /* a little spring */
+}
+#drawer.closed { transform: translate(var(--hide, 80px), -50%); }
+/* The tab that peeks out at the screen edge: tap or swipe it */
+#grab { width: 22px; height: 76px; }
+#grab span {
+  width: 6px; height: 52px; border-radius: 3px; padding: 0;
+  background: rgba(255,255,255,.55);
+  box-shadow: 0 0 0 1px rgba(30,20,45,.25), 0 2px 8px rgba(0,0,0,.25);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+#rail {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 6px; border-radius: 30px;
+}
+.tb { width: var(--b); height: var(--b); border-radius: 50%; transition: background .15s, transform .15s; }
+.tb:active { background: rgba(255,255,255,.18); transform: scale(.92); }
+.tb.active {
+  background: linear-gradient(180deg, rgba(255,255,255,.40), rgba(255,255,255,.10) 55%, rgba(255,255,255,.18));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.45), inset 0 1px 1px rgba(255,255,255,.85), 0 3px 10px rgba(10,5,25,.3);
+}
+.tb:disabled { opacity: .3; }
+/* Full | Half switch at the top of the rail: a glass lens slides to the chosen court */
+.courtseg { position: relative; display: flex; flex-direction: column; gap: 2px; padding: 3px;
+  background: rgba(0,0,0,.22); border-radius: 18px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,.35), inset 0 -1px 0 rgba(255,255,255,.12); }
+.cs { position: relative; z-index: 1; width: calc(var(--b) - 6px); height: calc(var(--b) * .72);
+  border-radius: 14px; font-size: 12px; font-weight: 600; letter-spacing: .2px;
+  color: rgba(255,255,255,.6); transition: color .25s; }
+.cs.active { color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.3); }
+.courtseg .lens {
+  position: absolute; z-index: 0; left: 3px; right: 3px; top: 3px;
+  height: calc(var(--b) * .72); border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,.46), rgba(255,255,255,.12) 55%, rgba(255,255,255,.22));
+  -webkit-backdrop-filter: blur(8px) saturate(2); backdrop-filter: blur(8px) saturate(2);
+  border: 1px solid rgba(255,255,255,.45);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.9),     /* bright rim along the top */
+              inset 0 -2px 4px rgba(255,255,255,.18),   /* light pooling at the bottom */
+              0 3px 10px rgba(10,5,25,.35);
+  transition: transform .42s cubic-bezier(.25, 1.35, .4, 1);   /* springy slide */
+}
+.courtseg.half .lens { transform: translateY(calc(var(--b) * .72 + 2px)); }
+.cs .icon { display: none; width: min(20px, calc(var(--b) * .7)); height: min(20px, calc(var(--b) * .7)); }
+@media (max-height: 520px) {   /* short (sideways) screen: court icons instead of words */
+  .cs .word { display: none; }
+  .cs .icon { display: block; }
+}
+.sep { width: 22px; height: 1px; background: rgba(255,255,255,.22); margin: 3px 0; }
+.dot { width: 22px; height: 22px; border-radius: 50%; box-shadow: 0 0 0 1.5px rgba(255,255,255,.7), 0 1px 3px rgba(0,0,0,.3); }
+/* Rainbow ring = color picker; the center shows the color you last picked */
+.rainbow .dot {
+  background: conic-gradient(#f44, #fd4, #4d6, #4cf, #66f, #d4f, #f44);
+  display: flex; align-items: center; justify-content: center;
+}
+.rainbow .dot span { width: 12px; height: 12px; border-radius: 50%; background: var(--custom, #ffd84d);
+  box-shadow: 0 0 0 1.5px rgba(30,27,36,.85); }
+.rainbow input {   /* the real color picker sits invisibly on top of the rainbow button */
+  position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; border: 0; padding: 0; cursor: pointer;
+}
+#btnSave.unsaved::after {   /* small dot = unsaved changes */
+  content: ""; position: absolute; top: 8px; right: 8px;
+  width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
+
+/* ---------- "More" menu: glass card beside the rail ---------- */
+#more {
+  position: absolute; z-index: 7; top: 50%;
+  right: calc(env(safe-area-inset-right) + 10px + var(--b) + 12px + 6px + 22px + 8px);   /* rail + tab + gaps */
+  width: min(290px, calc(100vw - var(--b) - 76px));
+  transform: translateY(-50%);
+  border-radius: 24px; padding: 14px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+#more[hidden] { display: none; }
+.line-adjust { display: flex; align-items: center; gap: 12px; }
+#widthRange { -webkit-appearance: none; appearance: none; width: 140px; height: 30px; background: transparent; margin: 0; }
+#widthRange::-webkit-slider-runnable-track { height: 6px; border-radius: 3px;
+  background: rgba(0,0,0,.28); box-shadow: inset 0 1px 2px rgba(0,0,0,.35), 0 1px 0 rgba(255,255,255,.12); }
+#widthRange::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; margin-top: -10px; border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.65));
+  box-shadow: inset 0 1px 1px #fff, 0 2px 8px rgba(10,5,25,.4); }
+#widthRange::-moz-range-track { height: 6px; border-radius: 3px; background: rgba(0,0,0,.28); }
+#widthRange::-moz-range-thumb { width: 26px; height: 26px; border: 0; border-radius: 50%; background: #fff; }
+#widthPreview { width: 34px; min-height: 1px; border-radius: 99px; background: var(--ink, #fff);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.15); }
+#version { text-align: center; font-size: 12px; color: rgba(255,255,255,.45); }
+#screenCheck { text-align: center; font-size: 12px; color: rgba(255,255,255,.6); margin-top: -6px; }
+#playName {
+  font-family: var(--serif); font-size: 21px; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  text-shadow: 0 1px 2px rgba(0,0,0,.3);
+}
+.setting { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  font-size: 15px; color: rgba(255,255,255,.75); }
+.seg { display: flex; background: rgba(0,0,0,.18); border-radius: 13px; padding: 3px;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.2); }
+.seg button { min-height: 34px; padding: 0 12px; border-radius: 10px; font-size: 15px; transition: background .15s; }
+.seg button.active { background: rgba(255,255,255,.26); box-shadow: inset 0 1px 1px rgba(255,255,255,.4), 0 1px 4px rgba(0,0,0,.2); }
+.menu-btn {
+  justify-content: flex-start; gap: 10px; width: 100%; min-height: 44px;
+  padding: 0 12px; border-radius: 14px; background: rgba(255,255,255,.10); font-size: 16px;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.18);
+}
+.menu-btn:active { background: rgba(255,255,255,.2); }
+
+/* ---------- Saved plays screen ---------- */
+.sheet {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--app-h); z-index: 10;
+  background: rgba(18, 13, 26, .62);
+  -webkit-backdrop-filter: blur(30px) saturate(1.6); backdrop-filter: blur(30px) saturate(1.6);
+  display: flex; flex-direction: column;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+           env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+.sheet[hidden] { display: none; }
+.sheet header { display: flex; align-items: center; padding: 10px 14px; gap: 10px; }
+.sheet h1 { flex: 1; margin: 0; font-family: var(--serif); font-size: 28px; font-weight: 600; }
+.sheet .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 4px 14px 12px; }
+.sheet .note { color: var(--muted); font-size: 13px; padding: 0 16px 8px; margin: 0; }
+.pill-btn { min-height: 46px; padding: 0 14px; border-radius: 14px; background: rgba(255,255,255,.10);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.18); }
+.pill-btn:active { background: rgba(255,255,255,.2); }
+.scrollable { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+#playList { list-style: none; margin: 0; padding: 0 14px 20px; }
+#playList li {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,.07); border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.10);
+  padding: 8px 8px 8px 14px; margin-bottom: 8px;
+}
+#playList .open { flex: 1; min-width: 0; text-align: left; justify-content: flex-start; min-height: 46px; }
+#playList .name { font-family: var(--serif); font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#playList .meta { font-size: 13px; color: var(--muted); }
+#playList .open > div { min-width: 0; }
+#playList li.current { box-shadow: inset 0 0 0 2px var(--accent); }
+.empty { color: var(--muted); text-align: center; padding: 40px 20px; font-size: 16px; }
+
+/* ---------- Pop-up dialog (name a play, rename, confirm delete) ---------- */
+dialog {
+  border: 0; border-radius: 20px; padding: 20px;
+  width: min(92vw, 380px); color: var(--text);
+  border-radius: 26px;
+}
+dialog::backdrop { background: rgba(10,6,18,.35); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+dialog h2 { margin: 0 0 8px; font-family: var(--serif); font-weight: 600; font-size: 22px; }
+dialog p { margin: 0 0 14px; color: var(--muted); font-size: 15px; line-height: 1.4; }
+dialog input {
+  width: 100%; font-size: 17px; /* 16px+ stops iOS zooming into the field */
+  padding: 12px; border-radius: 14px; border: 1px solid rgba(255,255,255,.25);
+  background: rgba(0,0,0,.25); color: var(--text); margin-bottom: 14px;
+  -webkit-user-select: text; user-select: text;
+}
+dialog input:focus { outline: none; border-color: var(--accent); }
+dialog .buttons { display: flex; gap: 8px; }
+dialog .buttons button { flex: 1; min-height: 46px; border-radius: 14px; background: rgba(255,255,255,.12); }
+dialog .buttons button.primary { background: var(--accent-strong); }
+dialog .buttons button.danger { background: var(--danger); }
+
+/* =====================================================================
+   SHELL (added in Stage 2): tabs and the floating tab switcher
+   ===================================================================== */
+
+/* A hidden tab stays laid out (so the Playbook keeps its size and drawing)
+   but is invisible and can't be touched. */
+.tab.is-hidden { visibility: hidden; }
+
+/* Ordinary scrolling page (Minutes and future tabs) */
+.tab-page {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--app-h); z-index: 4;
+  background: var(--page-bg, #4e2a84); color: #fff;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
+}
+.tab-page[hidden] { display: none; }
+.page-scroll { height: 100%; padding: 16px 16px calc(var(--tabs-bottom, 16px) + 72px); }
+.coming { min-height: 70%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; gap: 10px; }
+.coming-logo { width: 120px; height: 120px; border-radius: 28px; box-shadow: 0 8px 30px rgba(0,0,0,.35); }
+.coming h1 { margin: 6px 0 0; font-family: var(--serif); font-size: 32px; font-weight: 600; }
+.coming p { margin: 0; color: rgba(255,255,255,.75); font-size: 16px; }
+
+/* Floating glass tab switcher: bottom center, in the gap below the court */
+#tabbar {
+  position: fixed; z-index: 8; left: 50%; transform: translateX(-50%);
+  bottom: var(--tabs-bottom, 12px);
+  display: flex; gap: 0; padding: 4px; border-radius: 999px;
+}
+.tabbtn { position: relative; z-index: 1; height: 36px; padding: 0 18px; border-radius: 999px;
+  font-size: 15px; font-weight: 600; color: rgba(255,255,255,.65); transition: color .25s; min-width: 98px; }
+.tabbtn.active { color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.3); }
+#tabbar .lens {
+  position: absolute; z-index: 0; top: 4px; left: 4px; height: 36px; width: var(--lens-w, 98px); border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255,255,255,.46), rgba(255,255,255,.12) 55%, rgba(255,255,255,.22));
+  border: 1px solid rgba(255,255,255,.45);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.9), inset 0 -2px 4px rgba(255,255,255,.18), 0 3px 10px rgba(10,5,25,.35);
+  transform: translateX(var(--lens-x, 0)); transition: transform .42s cubic-bezier(.25, 1.35, .4, 1), width .3s;
+}
+
+/* Respect iOS "Reduce Motion" and "Reduce Transparency" */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass, #tabbar { -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+    background: #2a1d40 !important; }
+}
+
+/* Over a white border, the switcher takes the same deeper tint as the tool rail */
+.light-band #tabbar {
+  background:
+    linear-gradient(160deg, rgba(255,255,255,.16), rgba(255,255,255,.03) 45%, rgba(255,255,255,.06)),
+    rgba(34, 22, 54, .78);
+}

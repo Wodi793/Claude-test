@@ -26,7 +26,8 @@ Use it (with the git history) to find and undo any single change.
 | 3 | Compact-layout cutoff | Short side under **455 pt**: all regular iPhones compact; the unfolded foldable (measured 669 pt — see Stage 1b) gets the large layout |
 | 4 | Absent / Injured / Sitting out | Applies to one game only |
 | 5 | Default game format | Waiting on the league rulebook (needed at Stage 4) |
-| 6 | Split code into a few files | Not yet answered — ask before Stage 2 |
+| 6 | Split code into a few files | Yes (owner: "follow your recommendations") |
+| 7 | Tab switcher position | Bottom center, floating glass, in the gap below the court |
 | — | Centering vs. size sideways | Always centered (owner's requirement); sideways court ~17–21% smaller |
 
 ## Baseline checklist — the Playbook (re-tested after every stage)
@@ -126,3 +127,40 @@ Sideways on the real phone not yet measured — needs a sideways Screen check sc
 
 **Baseline checklist:** all automated checks pass on the preview (19/19, two runs); tools, rotation/rail
 (10/10), line slider, upright logo, wake re-measure, finger accuracy all pass.
+
+## Stage 1 approved by owner (2026-11-01)
+
+## Stage 2 — Tab shell (2026-11-03)
+
+**Code split** (preview only, `next/`). The Playbook's styles and code were moved **unchanged** out of
+`index.html` — verified byte-for-byte against the previous commit:
+
+| File | Contents |
+|---|---|
+| `next/index.html` | Page structure only: the Playbook tab, the Minutes tab, the tab switcher, the shared pop-up |
+| `next/styles.css` | All styles: the original Playbook styles (unchanged), then a "SHELL" section (tabs, switcher, Reduce Motion / Reduce Transparency) |
+| `next/playbook.js` | The original Playbook code, unchanged except the version label ("18 preview") |
+| `next/shell.js` | Tab switching. How to add a tab (e.g. Stats) is explained at the top |
+
+**How tabs work.** Each tab is a `<div id="tab-NAME" class="tab">` plus a button in `#tabbar`.
+Switching only hides/shows: the Playbook is made invisible and untouchable (`visibility: hidden` + `inert`)
+but stays laid out, so its size, drawing, zoom, unsaved changes and open tools are untouched. Nothing
+reloads. The last-used tab is remembered. Minutes is a placeholder until Stage 4.
+
+**Switcher placement.** `placeTabbar()` keeps it just above the bottom of what iOS shows (clear of the home
+bar, not pushed up by the part iOS hides). Measured clear of the court on the owner's phone (court bottom
+860, switcher top 865) and on a regular iPhone.
+
+**Accessibility.** Respects iOS Reduce Motion (no slide animations) and Reduce Transparency (solid
+instead of glass).
+
+**Tests**
+- Tab switching (iPhone + iPad): drawing, unsaved status, zoom position, open tools all kept; the hidden
+  Playbook can't be touched; last tab remembered after restart. No errors.
+- Found during testing (not caused by tabs, left as is): zooming within ~1 s of opening the app gets reset by
+  the start-up screen re-check (B5). Same on the live app.
+- Baseline checklist: 19/19 (two runs); tools/swipe, rotation/rail 10/10, line slider, upright logo, wake
+  re-measure, finger accuracy — all pass.
+
+**Files the offline copy needs** (`next/sw.js` FILES) now include `styles.css`, `playbook.js`, `shell.js`,
+`../icon.svg`; cache version `penguins-preview-v18`.
