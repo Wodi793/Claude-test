@@ -5,8 +5,8 @@
    refreshed at the same time. With no internet, the saved copy is used.
 
    If you add a new file to the app, add it to FILES below and bump VERSION. */
-const VERSION = 'penguins-preview-v19';
-const FILES = ['./', './index.html', './styles.css', './playbook.js', './shell.js', './sports.js', './data.js', './settings.js',
+const VERSION = 'penguins-preview-v20';
+const FILES = ['./', './index.html', './styles.css', './playbook.js', './shell.js', './sports.js', './data.js', './settings.js', './gamelog.js', './minutes.js',
                './manifest.webmanifest',
                '../icon.svg', '../icon-180.png', '../icon-512.png'];
 const NETWORK_WAIT_MS = 3000;   // on a very slow connection, fall back to the saved copy after this

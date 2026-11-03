@@ -3,17 +3,20 @@
    (see DB in playbook.js, section 10) and is included in the one backup file.
 
    RECORD SHAPES — keep these stable; Stats (later) builds on them.
-     Team    { id, name, sport, season, created, updated }
+     Team    { id, name, sport, season, gameDefaults?, created, updated }
              One record per team per season ("Start new season" copies the roster).
      Player  { id, teamId, name, number, active, removed, created, updated }
              active:false = long-term inactive (left out of games until reactivated).
              removed:true = taken off the roster but kept, so old games still show her.
-     Game    { id, teamId, date, opponent, settings, absences, events, created, updated }
-             settings  { periods, periodMinutes, onCourt, subAlertSeconds }
+     Game    { id, teamId, date, opponent, settings, absences, starters, status, events, created, updated }
+             settings  { periods, periodMinutes, onCourt, subAlert: { mode: 'off'|'half'|'every', minutes } }
              absences  { playerId: 'absent' | 'injured' | 'sitting' } — this game only
+             status    'pregame' | 'live' | 'final'
              events    the EVENT LOG (see below)
-     Event   { id, type, at, period, clock, playerId?, data? }
-             type   'clock_start' | 'clock_stop' | 'period_end' | 'sub_in' | 'sub_out' | 'clock_adjust'
+     Event   { id, action, type, at, period, clock, playerId?, data? }
+             action  events recorded together share it; Undo removes the last action
+             type   'clock_start' | 'clock_stop' | 'period_end' | 'game_end' | 'sub_in' | 'sub_out' | 'clock_adjust'
+                    (starters are recorded as 'sub_in' at the start; clock_adjust has data.from)
                     (Stats will add e.g. 'points', 'rebound', 'foul' — anything a reader doesn't
                     recognize is ignored, so new types never break old code)
              at     wall-clock time (ms since 1970)

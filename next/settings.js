@@ -11,11 +11,8 @@ async function refreshTeamUI() {
   const t = TeamUI.team, roster = await Data.players(t.id);
   $('mTeamName').textContent = t.name;
   $('mTeamSeason').textContent = `${SPORTS[t.sport]?.name || ''} · ${t.season}`;
-  const active = roster.filter(p => p.active).length;
-  $('mRosterSummary').textContent = roster.length
-    ? `${roster.length} player${roster.length === 1 ? '' : 's'} on the roster${active < roster.length ? ` (${active} active)` : ''}.`
-    : 'No players yet — tap the gear to add your roster.';
   if (!$('teamSheet').hidden) renderTeamSheet(roster);
+  window.onTeamChanged?.();   // let the Minutes tab reload the roster / team (minutes.js)
 }
 window.onBackupImported = refreshTeamUI;   // called by importBackup (playbook.js)
 

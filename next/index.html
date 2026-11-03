@@ -100,7 +100,7 @@
 </div><!-- /tab-playbook -->
 
 <!-- ===================== TAB: MINUTES =====================
-     Team header + settings (Stage 3). The game tracker comes in Stage 4. -->
+     Team header + settings (Stage 3); game tracker (Stage 4, minutes.js). -->
 <div id="tab-minutes" class="tab tab-page" hidden>
   <div class="scrollable page-scroll">
     <header class="page-head">
@@ -112,14 +112,14 @@
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
       </button>
     </header>
-    <div class="coming">
-      <img src="../icon.svg" alt="" class="coming-logo">
-      <h1>Minutes</h1>
-      <p id="mRosterSummary"></p>
-      <p>The game tracker comes in the next stage.</p>
-    </div>
+    <div id="mBody"></div>   <!-- pre-game, live game or final screen (minutes.js) -->
   </div>
 </div><!-- /tab-minutes -->
+
+<!-- Sub queue: floats above the tab switcher while subs are being picked -->
+<div id="subBar" class="glass" hidden></div>
+<!-- Sub alert / end-of-period banner: shows on any tab -->
+<div id="alertBanner" role="alert" hidden></div>
 
 <!-- ===================== TAB SWITCHER =====================
      Floating glass pill at the bottom center. Add a button here (and a
@@ -177,6 +177,53 @@
   </div>
 </section>
 
+<!-- Press-and-hold player menu (this game only) -->
+<dialog id="playerMenu" class="glass menu-dialog">
+  <h2 id="pmTitle"></h2>
+  <p id="pmNote"></p>
+  <div class="menu-list">
+    <button class="menu-btn" data-abs="absent">Absent</button>
+    <button class="menu-btn" data-abs="injured">Injured</button>
+    <button class="menu-btn" data-abs="sitting">Sitting out</button>
+    <button class="menu-btn" data-abs="reactivate">Reactivate</button>
+  </div>
+  <button class="pill-btn wide" id="pmCancel">Cancel</button>
+</dialog>
+
+<!-- Game menu (•••) -->
+<dialog id="gameMenu" class="glass menu-dialog">
+  <h2>Game</h2>
+  <div class="menu-list">
+    <button class="menu-btn" id="gmAdjust">Adjust clock</button>
+    <button class="menu-btn" id="gmSettings">Game settings &amp; sub alert</button>
+    <button class="menu-btn" id="gmEnd">End game now</button>
+    <button class="menu-btn" id="gmNew">Start a new game</button>
+    <button class="menu-btn" id="gmTeam">Team &amp; roster</button>
+    <button class="menu-btn danger-text" id="gmDiscard">Discard this game</button>
+  </div>
+  <button class="pill-btn wide" id="gmClose">Close</button>
+</dialog>
+
+<!-- Game settings: format (before the game) and sub alert (any time) -->
+<dialog id="gameSettings" class="glass menu-dialog">
+  <h2>Game settings</h2>
+  <div class="format-block">
+    <div class="gs-row"><span>Periods</span>
+      <div class="seg"><button data-periods="2">2 halves</button><button data-periods="4">4 quarters</button></div></div>
+    <div class="gs-row"><span>Custom</span>
+      <div class="stepper"><button id="gsPeriodsDown" aria-label="Fewer periods">−</button><b id="gsPeriods"></b><button id="gsPeriodsUp" aria-label="More periods">+</button></div></div>
+    <div class="gs-row"><span>Minutes per period</span>
+      <div class="stepper"><button id="gsMinDown" aria-label="Shorter">−</button><b id="gsMinutes"></b><button id="gsMinUp" aria-label="Longer">+</button></div></div>
+    <p class="note" id="gsLockedNote">Format is locked once the game has started.</p>
+  </div>
+  <div class="gs-row"><span>Sub alert</span>
+    <div class="seg"><button data-alert="off">Off</button><button data-alert="half">Halfway</button><button data-alert="every">Every…</button></div></div>
+  <div class="gs-row" id="gsEvery"><span>Every</span>
+    <div class="stepper"><button id="gsAlertDown" aria-label="Less often">−</button><b><span id="gsAlertMin"></span> min</b><button id="gsAlertUp" aria-label="More often">+</button></div></div>
+  <p class="note" id="gsHalfNote"></p>
+  <div class="buttons"><button type="button" class="pill-btn" id="gsCancel">Cancel</button><button type="button" class="pill-btn primary-btn" id="gsSave">Save</button></div>
+</dialog>
+
 <!-- One reusable pop-up for names and confirmations -->
 <dialog id="modal" class="glass">
   <form id="modalForm">
@@ -193,11 +240,14 @@
 <input type="file" id="importFile" accept="application/json,.json" hidden>
 
 <!-- Scripts, in order: sport settings, the Playbook (its storage and pop-ups are shared),
-     team data, the team settings screen, then the tab shell. -->
+     team data, the team settings screen, the game-log calculations, the Minutes tab,
+     then the tab shell. -->
 <script src="sports.js"></script>
 <script src="playbook.js"></script>
 <script src="data.js"></script>
 <script src="settings.js"></script>
+<script src="gamelog.js"></script>
+<script src="minutes.js"></script>
 <script src="shell.js"></script>
 </body>
 </html>

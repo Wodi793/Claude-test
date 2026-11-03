@@ -203,3 +203,55 @@ game tracker is Stage 4.
   re-measure; finger accuracy; tab switching keeps drawing/zoom/tools (iPhone + iPad). No errors.
 
 Cache version `penguins-preview-v19`; app version "19 preview".
+
+## Stages 1–3 confirmed by owner on the preview itself (2026-11-03)
+(Earlier OKs had been given while looking at the live app; owner then opened the preview and approved.)
+
+## Stage 4 — Minutes: pre-game, clock, subs, undo, alerts (2026-11-03)
+
+**Rulebook not yet received** — built with placeholder defaults 4 × 6 min (`sports.js`), changeable per game.
+
+**New files** (`next/`):
+
+| File | Contents |
+|---|---|
+| `gamelog.js` | The calculations: replays a game's event log into clock, period, who's on court, everyone's minutes, and on-court stretches (for Stage 5 timelines). No screens. |
+| `minutes.js` | The Minutes screens, in 8 labeled sections: state, recording actions, pre-game, live game, final, the ¼-second update, sub alert + screen wake, menus |
+
+**How time works.** The clock is never counted by ticks: while running, time left = (clock at start) − (now − start
+time). Playing time = time on court while the clock runs, recalculated from the log every time. A locked screen,
+backgrounded app, tab switch, or restart can't make it drift.
+
+**Pre-game.** Opponent (optional), Format (periods, minutes, sub alert), roster: tap to pick starters (exactly 5 to
+enable Start), press-and-hold for Absent / Injured / Sitting out / Reactivate (this game only).
+
+**Live game.** Period chip, big clock, Start/Stop, Undo (always visible), ••• game menu (Adjust clock, Game settings &
+sub alert, End game now, Start a new game, Team & roster, Discard this game). On court and Bench (least played
+first) with minutes. Subs: tap who comes out (on court), then who goes in (bench); queue several; one
+"Confirm N subs" records them all at that moment. Tapping a queued player again takes that sub back. The count on
+court can't change (subs are always one-for-one). At 0:00 the clock stops itself at the exact moment it hit zero
+and shows "Start Q2" (or "End game" after the last period). The same five stay on court into the next period.
+
+**Undo** removes the last action (all events recorded together share an action id), including starting or ending
+the game.
+
+**Sub alert.** Off / Halfway (default) / Every N minutes. Banner + whole-screen flash (steady outline if Reduce
+Motion is on) + a three-tone sound, on any tab. Sound is unlocked by tapping Start game / Start (an iPhone rule);
+on iOS 17+ it's set to play even with the silent switch on. Not possible on iPhone/iPad web apps: alerts while the
+screen is locked or in another app, vibration. The screen is kept awake during a live game (Screen Wake Lock).
+Game settings changes are remembered as the team's defaults for the next game. Format is locked once a game starts.
+
+**Bugs found by testing and fixed before publishing**
+1. Picking starters quickly lost taps: each save replaced the game in memory with its saved copy. Now saves update
+   the game in place (`saveGame()` in minutes.js).
+2. With subs queued, the floating sub bar covered the bottom of the bench list and it couldn't be scrolled into
+   view. The list now gets extra bottom room while the bar shows (`--subbar-h`).
+
+**Tests** (simulated clock, 8-player roster, one absent): starters (Start disabled at 4, enabled at 5; absent can't
+be picked) · 90 s → 4:30 · two subs while running → correct minutes · bench order · undo restores exact minutes ·
+halfway alert at 3:00 · 100 s "screen locked" gap → correct · auto-stop at 0:00, on-court time totals exactly
+5 × 6:00 · next period · adjust clock credits no time · 45 s in the Playbook → clock and minutes continued ·
+app restart mid-game → running, correct, same tab · end game → final list · undo end → live. No errors.
+Baseline checklist 19/19 (two runs) and all other Playbook, tab and Stage 3 tests pass.
+
+Cache `penguins-preview-v20`; app version "20 preview".
