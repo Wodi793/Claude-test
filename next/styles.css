@@ -463,3 +463,14 @@ body.alert-flash::after { content: ""; position: fixed; inset: 0; z-index: 11; p
 .format-block.locked { opacity: .45; pointer-events: none; }
 #gameSettings .buttons { display: flex; gap: 8px; margin-top: 10px; }
 #gameSettings .buttons .pill-btn { flex: 1; }
+
+/* Minimum playing time (Stage 4b) */
+.rule-note { margin: -4px 4px 14px; font-size: 15px; line-height: 1.4; color: rgba(255,255,255,.85); }
+.rule-bar { background: #fff; color: #24133d; border-radius: 14px; padding: 10px 14px; margin: -4px 0 14px; font-size: 15px; line-height: 1.35; }
+.rule-bar.warn { box-shadow: inset 0 0 0 3px #000; }
+.ptag.rule-owed { background: #efe8fb; color: #4e2a84; }
+.ptag.rule-now, .ptag.rule-must { background: #000; color: #fff; }
+.ptag.rule-keep { background: #4e2a84; color: #fff; }
+.pmet { font-size: 18px; font-weight: 800; color: #4e2a84; }
+.prow.selected .pmet, .prow.going-out .pmet, .prow.coming-in .pmet { color: #fff; }
+.prow.selected .ptag.rule-now, .prow.going-out .ptag.rule-keep { background: #fff; color: #000; }

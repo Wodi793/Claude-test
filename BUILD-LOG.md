@@ -255,3 +255,41 @@ app restart mid-game → running, correct, same tab · end game → final list �
 Baseline checklist 19/19 (two runs) and all other Playbook, tab and Stage 3 tests pass.
 
 Cache `penguins-preview-v20`; app version "20 preview".
+
+## Stage 4b — League minimum playing time (2026-11-03)
+
+**Source.** The rulebook PDF (Fall 2026 2nd/3rd Grade Basketball Rules, a2schools.org) couldn't be downloaded here
+(the site isn't on this workspace's network allow-list). Built from the owner's summary of it plus the owner's
+answers: **6-minute quarters, running clock** (stops only for the mid-quarter break, timeouts, injuries), halftime
+not needed, and **free substitution all game** unless the ref starts enforcing half-quarter blocks.
+
+**Rule implemented** (Rule 14 + Note 1, as summarized): every player plays at least **one full quarter (6:00) by
+mid-Q3**; anyone still short then goes in and stays until she has it; a player who arrives after Q3 starts is exempt.
+Because of free substitution this is tracked in time, not blocks. (A block-based version — mid-quarter break button,
+blocks played — can be added later if the ref enforces blocks.)
+
+**Code.** `gamelog.js`: `minimumStatus()` (pure calculation; also gives `gameElapsed`). `minutes.js`: tags, bench
+order, rule line, arrivals, setting. `sports.js`: defaults now confirmed (4 × 6, minimumRule on).
+
+**What the coach sees**
+- Pre-game: "League rule: everyone plays a full quarter (6:00) by mid-Q3. With N players that leaves X of free
+  time…" (or warns it can't all fit).
+- Live: a rule line ("6 still owed a full quarter · 9:00 of play before mid-Q3", or a warning if it can't fit, or
+  "Past mid-Q3: … they go in and stay"). Tags: **Needs 2:30** · **Play now** (bench; must go in now to make it) ·
+  **Keep on** (on court; must stay) · **Must go in** (past mid-Q3) · ✓ once she has her quarter.
+- Bench order: Play now / Must go in first, then Needs, then least played.
+- Tapping a "Keep on" player to sub out shows a reminder (allowed — the coach decides).
+- Press-and-hold an absent player during the game → "Arrived / back now" records her arrival time.
+- Final screen: ✓ or "Short m:ss" per player.
+- Game settings: Minimum time Off / "1 quarter by mid-Q3" (on by default; remembered per team).
+
+**Not built (deferred to Stats):** fouls per block (3 in a block → can pull early, time still owed) and the
+technical's 2-minute bench time counting as playing time — both need foul/technical buttons.
+
+**Tests.** 11 players: "9:00 of free time" (matches the summary's 3 free blocks); states at start of Q2, mid-Q2
+("Play now · 6:00" for the girl who hasn't played, top of the bench), past mid-Q3 ("Must go in"), final ("Short 6:00").
+13 players: "3:00 short" warning. Late arrival in Q4: exempt. Stage 4 game test unchanged (4:30 after 90 s, subs,
+5 × 6:00 total, adjust, restart, undo end). Baseline checklist 19/19; tools, rotation/rail 10/10, slider/logo,
+finger accuracy, tabs — all pass. No errors.
+
+Cache `penguins-preview-v21`; app version "21 preview".

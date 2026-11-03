@@ -2,8 +2,10 @@
    One bundle per sport. Only basketball exists now; soccer, field hockey and
    lacrosse can be added later as new entries with the same fields.
 
-   Game defaults are placeholders until the league rulebook is in (see BUILD-LOG.md);
-   each game's settings can be changed in the app anyway. */
+   Basketball defaults follow the Fall 2026 2nd/3rd grade league rules as confirmed by
+   the owner (2026-11-03): four 6-minute quarters, running clock, and a minimum of one
+   full quarter per player by mid-Q3 (see minimumStatus in gamelog.js). Each game's
+   settings can be changed in the app. */
 'use strict';
 
 const SPORTS = {
@@ -11,8 +13,9 @@ const SPORTS = {
     name: 'Basketball',
     onCourt: 5,              // players on the court at once
     maxRoster: 15,           // roster size the screens are designed for
-    periods: 4,              // default number of periods (placeholder — rulebook)
-    periodMinutes: 6,        // default period length in minutes (placeholder — rulebook)
+    periods: 4,              // four quarters (league rules)
+    periodMinutes: 6,        // 6-minute quarters, running clock (league rules)
+    minimumRule: true,       // everyone plays a full quarter by mid-Q3 (league rules)
     periodName: 'Quarter',   // shown as "Q1", "Quarter 2", …
     // Later: court drawing for the Playbook, stat types for the Stats tab.
   },

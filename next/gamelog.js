@@ -85,6 +85,7 @@ function replayGame(game, now = GameClock.now()) {
     .filter(seg => seg.to > seg.from)];
 
   return {
+    gameElapsed: (s.period - 1) * len + (len - s.clock),   // game time played so far, all periods
     period: s.period, clock: s.clock, running: s.running, runStart: s.runStart,
     onCourt: [...s.onCourt], played: s.played, segments, ended: s.ended,
     periodOver: !s.running && s.clock <= 0 && !s.ended,
@@ -102,4 +103,52 @@ function formatClock(seconds, { up = true } = {}) {
 function periodLabel(game, period) {
   const n = game.settings.periods;
   return (n === 4 ? 'Q' : n === 2 ? 'H' : 'P') + period;
+}
+
+/* ---------------------------------------------------------------------
+   MINIMUM PLAYING TIME (Stage 4b) — league rule, per the owner's summary of the
+   Fall 2026 2nd/3rd grade rules: every player plays at least one full quarter
+   by the middle of Q3; anyone still short then goes in and stays until she has it
+   (Rule 14, Note 1). A player who arrives after Q3 starts is exempt.
+   Free substitution is assumed all game (owner, 2026-11-03), so this is measured in
+   time, not half-quarter blocks.
+   For other formats: one period's worth of time, by 62.5% of the game (= mid-Q3 in 4 quarters).
+   --------------------------------------------------------------------- */
+const MIN_RULE = { deadlineShare: 0.625, margin: 20 };   // margin: seconds of slack before "Play now"
+
+/**
+ * For each available player: { played, owed, state }
+ *   state 'met'    — has her full period
+ *          'owed'   — short, but there's still time before the deadline
+ *          'now'    — must go in now (bench) to make the deadline
+ *          'keep'   — must stay on (on court and still short, when it's tight or past the deadline)
+ *          'must'   — past the deadline and still short: must go in and stay
+ *          'waived' — arrived after the second half started
+ * Plus: required, deadline (game seconds), remaining (game seconds left before it),
+ *       shortfall (seconds that can't fit even with perfect rotation; 0 if fine).
+ */
+function minimumStatus(game, r, availableIds) {
+  const len = periodSeconds(game), total = len * game.settings.periods;
+  const required = len, deadline = total * MIN_RULE.deadlineShare;
+  const remaining = Math.max(0, deadline - r.gameElapsed), before = r.gameElapsed < deadline;
+  const secondHalf = len * Math.ceil(game.settings.periods / 2);
+  const players = {};
+  let owedTotal = 0;
+  for (const id of availableIds) {
+    const played = r.played[id] || 0, onCourt = r.onCourt.includes(id);
+    const arrived = game.arrivals?.[id];
+    if (arrived != null && arrived >= secondHalf) { players[id] = { played, owed: 0, state: 'waived' }; continue; }
+    const owed = Math.max(0, required - played);
+    let state = 'met';
+    if (owed > 0) {
+      if (!before) state = onCourt ? 'keep' : 'must';
+      else if (owed >= remaining - MIN_RULE.margin) state = onCourt ? 'keep' : 'now';
+      else state = 'owed';
+      if (before) owedTotal += Math.min(owed, remaining);
+    }
+    players[id] = { played, owed, state };
+  }
+  const onCourtCount = game.settings.onCourt;
+  const shortfall = before ? Math.max(0, owedTotal - onCourtCount * remaining) : 0;
+  return { required, deadline, remaining, before, shortfall, players };
 }

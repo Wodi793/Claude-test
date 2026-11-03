@@ -31,7 +31,7 @@ const ABSENCE = { absent: 'Absent', injured: 'Injured', sitting: 'Sitting out' }
 function defaultSettings(team) {
   const sport = SPORTS[team.sport] || SPORTS.basketball;
   return { periods: sport.periods, periodMinutes: sport.periodMinutes, onCourt: sport.onCourt,
-           subAlert: { mode: 'half', minutes: 3 }, ...(team.gameDefaults || {}) };
+           subAlert: { mode: 'half', minutes: 3 }, minRule: !!sport.minimumRule, ...(team.gameDefaults || {}) };
 }
 
 /** Load the team, roster and the game in progress (creating a fresh pre-game if none). */
@@ -70,6 +70,18 @@ function available() {
 }
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const nowState = () => replayGame(M.game);
+
+/* ----- Minimum playing time (Stage 4b; the math is minimumStatus in gamelog.js) ----- */
+const ruleOn = () => !!M.game?.settings.minRule;
+function ruleStatus(r) { return ruleOn() ? minimumStatus(M.game, r, available().map(p => p.id)) : null; }
+const RULE_TAG = { now: 'Play now', keep: 'Keep on', must: 'Must go in', owed: 'Needs' };
+/** Tag for a player row: e.g. "Needs 2:30", "Play now · 1:10". */
+function ruleTag(st) {
+  if (!st || !RULE_TAG[st.state]) return null;
+  return { text: st.state === 'owed' ? `Needs ${formatClock(st.owed)}` : `${RULE_TAG[st.state]} · ${formatClock(st.owed)}`, cls: 'rule-' + st.state };
+}
+/** A short signature of everyone's rule state, to know when the screen needs redrawing. */
+function ruleSignature(ms) { return ms ? Object.entries(ms.players).map(([id, x]) => id + x.state).join() + ms.before + (ms.shortfall > 0) : ''; }
 
 /* =====================================================================
    2. RECORDING ACTIONS
@@ -196,6 +208,7 @@ function renderPregame(body) {
       <label class="field">Opponent<input id="gOpp" type="text" maxlength="40" placeholder="Optional" autocomplete="off"></label>
       <button class="field field-btn" id="gFormat"><span>Format</span><span class="field-value">${esc(settingsSummary(g.settings))} ›</span></button>
     </section>
+    ${ruleOn() ? pregameRuleNote() : ''}
     <h2 class="card-title">Starters <span>${n} of ${need}</span></h2>
     <p class="hint">Tap to pick ${need} starters. Press and hold a player for Absent, Injured or Sitting out.</p>
     ${roster.length ? '<ul class="players" id="pgList"></ul>'
@@ -221,12 +234,23 @@ function renderPregame(body) {
   }
 }
 
+/** "League rule: …" note on the pre-game screen, with the free time this roster leaves. */
+function pregameRuleNote() {
+  const len = periodSeconds(M.game), total = len * M.game.settings.periods;
+  const players = available().length, free = M.game.settings.onCourt * total * MIN_RULE.deadlineShare - players * len;
+  const line = players <= M.game.settings.onCourt ? ''
+    : free >= 0 ? ` With ${players} players that leaves ${formatClock(free)} of free time before mid-Q3.`
+    : ` With ${players} players there isn't enough time before mid-Q3 — ${formatClock(-free)} short; the rest is made up after.`;
+  return `<p class="rule-note">League rule: everyone plays a full ${M.game.settings.periods === 4 ? 'quarter' : 'period'} (${formatClock(len)}) by mid-Q3.${line}</p>`;
+}
+
 /** One player row: jersey number, name, optional minutes and tag. Solid and high-contrast. */
-function playerRow(p, { tag = '', cls = '', minutes = null } = {}) {
+function playerRow(p, { tag = '', cls = '', minutes = null, rule = null, met = false } = {}) {
   const li = document.createElement('li');
   li.className = 'prow ' + cls;
   li.innerHTML = `<span class="pnum">${esc(p.number || '–')}</span><span class="pname">${esc(p.name)}</span>`
-    + (tag ? `<span class="ptag">${esc(tag)}</span>` : '')
+    + (tag ? `<span class="ptag">${esc(tag)}</span>` : rule ? `<span class="ptag ${rule.cls}" data-rule="${p.id}">${esc(rule.text)}</span>` : '')
+    + (met ? '<span class="pmet" title="Full quarter played">✓</span>' : '')
     + (minutes != null ? `<span class="pmin" data-min="${p.id}">${formatClock(minutes, { up: false })}</span>` : '');
   return li;
 }
@@ -252,9 +276,12 @@ function renderLive(body) {
   const g = M.game, r = nowState();
   const onCourt = r.onCourt.map(playerById).filter(Boolean);
   const pairedOut = new Set(M.pairs.map(x => x.out)), pairedIn = new Set(M.pairs.map(x => x.in));
-  // Bench: everyone available who isn't on court, least minutes first
+  const ms = ruleStatus(r); M.ruleSig = ruleSignature(ms);
+  const urgency = id => { const st = ms?.players[id]?.state; return st === 'now' || st === 'must' ? 0 : st === 'owed' ? 1 : 2; };
+  // Bench: girls the league rule says must play first, then least minutes
   const bench = available().filter(p => !r.onCourt.includes(p.id))
-    .sort((a, b) => (r.played[a.id] || 0) - (r.played[b.id] || 0) || String(a.number).localeCompare(String(b.number), undefined, { numeric: true }));
+    .sort((a, b) => urgency(a.id) - urgency(b.id) || (r.played[a.id] || 0) - (r.played[b.id] || 0)
+      || String(a.number).localeCompare(String(b.number), undefined, { numeric: true }));
   const label = periodLabel(g, r.period);
   const mainBtn = r.periodOver
     ? `<button class="clock-btn next" id="gNext">${r.lastPeriod ? 'End game' : `Start ${periodLabel(g, r.period + 1)}`}</button>`
@@ -275,9 +302,10 @@ function renderLive(body) {
       ${mainBtn}
     </section>
 
+    ${ms ? `<div class="rule-bar ${ms.shortfall > 0 ? 'warn' : ''}" id="ruleBar">${ruleBarText(ms)}</div>` : ''}
     <h2 class="card-title">On court <span>${onCourt.length}</span></h2>
     <ul class="players" id="courtList"></ul>
-    <h2 class="card-title">Bench <span>least played first</span></h2>
+    <h2 class="card-title">Bench <span>${ms ? 'owed first, then least played' : 'least played first'}</span></h2>
     <ul class="players" id="benchList"></ul>
     ${bench.length ? '' : '<p class="hint">Nobody on the bench.</p>'}`;
 
@@ -288,23 +316,42 @@ function renderLive(body) {
 
   for (const p of onCourt) {
     const sel = M.out === p.id, out = pairedOut.has(p.id);
-    const li = playerRow(p, { minutes: r.played[p.id] || 0, tag: out ? 'Out' : sel ? 'Out?' : '', cls: (sel ? 'selected ' : '') + (out ? 'going-out' : '') });
+    const st = ms?.players[p.id];
+    const li = playerRow(p, { minutes: r.played[p.id] || 0, tag: out ? 'Out' : sel ? 'Out?' : '', rule: ruleTag(st), met: st?.state === 'met',
+      cls: (sel ? 'selected ' : '') + (out ? 'going-out' : '') });
     onTapOrHold(li, () => tapCourt(p.id), () => toast('Sub her out first, then press and hold on the bench'));
     $('courtList').appendChild(li);
   }
   for (const p of bench) {
     const inn = pairedIn.has(p.id);
-    const li = playerRow(p, { minutes: r.played[p.id] || 0, tag: inn ? 'In' : '', cls: (inn ? 'coming-in ' : '') + (M.out ? 'can-pick' : '') });
+    const st = ms?.players[p.id];
+    const li = playerRow(p, { minutes: r.played[p.id] || 0, tag: inn ? 'In' : '', rule: ruleTag(st), met: st?.state === 'met',
+      cls: (inn ? 'coming-in ' : '') + (M.out ? 'can-pick' : '') });
     onTapOrHold(li, () => tapBench(p.id), () => openPlayerMenu(p));
     $('benchList').appendChild(li);
   }
   renderSubBar();
 }
 
+/** One line above the lists: how the league minimum stands. */
+function ruleBarText(ms) {
+  const owed = Object.values(ms.players).filter(x => x.owed > 0 && x.state !== 'waived').length;
+  if (ms.before) {
+    const head = owed ? `${owed} still owed a full quarter · ${formatClock(ms.remaining)} of play before mid-Q3`
+                      : 'Everyone has a full quarter ✓';
+    return ms.shortfall > 0 ? `${head}<br><b>Not enough time for everyone — ${formatClock(ms.shortfall)} short. Make it up right after mid-Q3.</b>` : head;
+  }
+  return owed ? `<b>Past mid-Q3: ${owed} still short — they go in and stay until they have it.</b>` : 'Everyone has a full quarter ✓';
+}
+
 function tapCourt(id) {
   const i = M.pairs.findIndex(x => x.out === id);
   if (i >= 0) M.pairs.splice(i, 1);            // tap a queued player again = take that sub back
-  else M.out = M.out === id ? null : id;
+  else {
+    M.out = M.out === id ? null : id;
+    const st = M.out && ruleStatus(nowState())?.players[id];
+    if (st?.state === 'keep') toast(`${playerById(id).name} still needs ${formatClock(st.owed)} for her full quarter`);
+  }
   renderMinutes();
 }
 function tapBench(id) {
@@ -352,7 +399,13 @@ function renderFinal(body) {
     <h2 class="card-title">Minutes</h2>
     <ul class="players" id="finalList"></ul>
     <button class="big-btn" id="gNew">New game</button>`;
-  for (const p of rows) $('finalList').appendChild(playerRow(p, { minutes: r.played[p.id] || 0 }));
+  const ms = ruleStatus(r);
+  for (const p of rows) {
+    const st = ms?.players[p.id];
+    const short = st && st.owed > 0 && st.state !== 'waived';
+    $('finalList').appendChild(playerRow(p, { minutes: r.played[p.id] || 0, met: st?.state === 'met',
+      rule: short ? { text: `Short ${formatClock(st.owed)}`, cls: 'rule-must' } : null }));
+  }
   $('gUndo').onclick = undo;
   $('gNew').onclick = startNewGame;
 }
@@ -386,6 +439,12 @@ setInterval(() => {
   const t = $('gClockText');
   if (t) t.textContent = formatClock(r.clock);
   for (const el of document.querySelectorAll('[data-min]')) el.textContent = formatClock(r.played[el.dataset.min] || 0, { up: false });
+  const ms = ruleStatus(r);
+  if (ms) {
+    if (ruleSignature(ms) !== M.ruleSig) { renderMinutes(); return; }   // e.g. "Needs" → "Play now"
+    for (const el of document.querySelectorAll('[data-rule]')) { const t = ruleTag(ms.players[el.dataset.rule]); if (t) el.textContent = t.text; }
+    const bar = $('ruleBar'); if (bar) bar.innerHTML = ruleBarText(ms);
+  }
   if (r.running) checkSubAlert(r);
 }, 250);
 
@@ -480,9 +539,14 @@ function openPlayerMenu(p) {
   for (const b of d.querySelectorAll('[data-abs]')) {
     b.classList.toggle('active', b.dataset.abs === cur);
     b.hidden = b.dataset.abs === 'reactivate' ? !cur : false;
+    if (b.dataset.abs === 'reactivate') b.textContent = M.game.status === 'live' ? 'Arrived / back now' : 'Reactivate';
     b.onclick = async () => {
       d.close();
-      if (b.dataset.abs === 'reactivate') delete M.game.absences[p.id];
+      if (b.dataset.abs === 'reactivate') {
+        delete M.game.absences[p.id];
+        // Arriving during the game: remember when (after Q3 starts, the minimum doesn't apply)
+        if (M.game.status === 'live' && cur === 'absent') (M.game.arrivals ||= {})[p.id] = nowState().gameElapsed;
+      }
       else M.game.absences[p.id] = b.dataset.abs;
       M.game.starters = M.game.starters.filter(id => id !== p.id);
       M.pairs = M.pairs.filter(x => x.in !== p.id);
@@ -516,6 +580,7 @@ function openGameSettings() {
     $('gsEvery').hidden = s.subAlert.mode !== 'every';
     $('gsAlertMin').textContent = s.subAlert.minutes;
     $('gsHalfNote').textContent = s.subAlert.mode === 'half' ? `At ${formatClock(s.periodMinutes * 30)} left in each period.` : '';
+    for (const b of d.querySelectorAll('[data-minrule]')) b.classList.toggle('active', (b.dataset.minrule === 'on') === !!s.minRule);
     d.querySelector('.format-block').classList.toggle('locked', locked);
     $('gsLockedNote').hidden = !locked;
   };
@@ -524,6 +589,7 @@ function openGameSettings() {
   $('gsPeriodsDown').onclick = step('periods', -1, 1, 8);  $('gsPeriodsUp').onclick = step('periods', 1, 1, 8);
   $('gsMinDown').onclick = step('periodMinutes', -1, 1, 30); $('gsMinUp').onclick = step('periodMinutes', 1, 1, 30);
   for (const b of d.querySelectorAll('[data-alert]')) b.onclick = () => { s.subAlert.mode = b.dataset.alert; draw(); };
+  for (const b of d.querySelectorAll('[data-minrule]')) b.onclick = () => { s.minRule = b.dataset.minrule === 'on'; draw(); };
   $('gsAlertDown').onclick = () => { s.subAlert.minutes = Math.max(1, s.subAlert.minutes - 1); draw(); };
   $('gsAlertUp').onclick = () => { s.subAlert.minutes = Math.min(20, s.subAlert.minutes + 1); draw(); };
   $('gsCancel').onclick = () => d.close();
@@ -531,7 +597,7 @@ function openGameSettings() {
     d.close();
     M.game.settings = s;
     // Remember as this team's defaults for the next game
-    M.team.gameDefaults = { periods: s.periods, periodMinutes: s.periodMinutes, subAlert: s.subAlert };
+    M.team.gameDefaults = { periods: s.periods, periodMinutes: s.periodMinutes, subAlert: s.subAlert, minRule: s.minRule };
     M.team = await Data.saveTeam(M.team);
     markPassedAlerts();
     await saveGame(); renderMinutes();
