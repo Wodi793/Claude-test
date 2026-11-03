@@ -164,3 +164,42 @@ instead of glass).
 
 **Files the offline copy needs** (`next/sw.js` FILES) now include `styles.css`, `playbook.js`, `shell.js`,
 `../icon.svg`; cache version `penguins-preview-v18`.
+
+## Stage 2 approved by owner (2026-11-03)
+
+## Stage 3 — Teams, seasons, rosters; one backup (2026-11-03)
+
+**New files** (`next/`):
+
+| File | Contents |
+|---|---|
+| `sports.js` | Sport settings. Only basketball: 5 on court, roster up to 15, defaults 4 × 6 min (**placeholders until the rulebook**), "Quarter" |
+| `data.js` | Teams, players, games — and the record shapes, documented at the top (Team, Player, Game, Event). Playing time is always calculated from the event log |
+| `settings.js` | The Team screen: team name, season, roster, teams & seasons, backup |
+
+**⚠ Changes inside the Playbook's code** (`next/playbook.js`, both flagged to the owner beforehand):
+1. **Storage (section 10).** Database version 1 → 2: adds `teams`, `players`, `games` tables; creates only what's
+   missing, so existing plays are untouched. Adds general helpers (`DB.all/get/put/del/byTeam`).
+2. **Backup (section 12).** Export now writes one file (format version 2) with plays, teams, players and games.
+   Import merges each kind (newer copy wins) and still accepts version-1 files (plays only).
+
+**Minutes tab.** Shows the team name and season, a gear button for Team settings, and a roster summary. The
+game tracker is Stage 4.
+
+**Team screen behavior**
+- Roster sorted by jersey number; edit number/name in place; Active ⇄ Inactive; Remove (asks first).
+- Removed players are kept in storage (hidden from the roster) so past games still show their minutes.
+- One team record per season. "Start new season" copies the roster (players start active) and switches to it.
+- Teams & seasons list: tap to switch. "New team". "Delete this team and its games" (asks; plays unaffected).
+- A note appears if more than 15 players are active.
+
+**Tests**
+- Upgrade: an old (version 1) preview database with a saved play → play kept, new tables created.
+- Team screen: add/sort, edit, inactive, remove (kept in storage), rename season, new season copies roster,
+  switch teams, delete team.
+- Backup: export contains plays + teams + players + games; delete team → import brings it back; an old
+  plays-only backup still imports.
+- Baseline checklist 19/19 (two runs); tools/swipe; rotation/rail 10/10; line slider; upright logo; wake
+  re-measure; finger accuracy; tab switching keeps drawing/zoom/tools (iPhone + iPad). No errors.
+
+Cache version `penguins-preview-v19`; app version "19 preview".

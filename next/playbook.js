@@ -21,7 +21,7 @@ const THEMES = {
 
 const DEFAULT_WIDTH = 0.35;      // marker thickness for new lines, in feet on the court
 const MIN_WIDTH = 0.15, MAX_WIDTH = 1.2;   // range of the Line slider in the ••• menu
-const APP_VERSION = '18 preview';   // the preview copy (next/) — see BUILD-LOG.md
+const APP_VERSION = '19 preview';   // the preview copy (next/) — see BUILD-LOG.md
 const DB_NAME = 'penguins-playbook-preview';   // preview keeps its own plays, separate from the live app           // shown in the ••• menu; bump with each update
 const ZOOM_MAX = 6;              // how far you can zoom in (6× the fitted size)
 const ERASER_RADIUS_PX = 14;     // how close the eraser must come to a line, in screen points
@@ -642,15 +642,22 @@ function clearAll() {
    10. STORAGE (IndexedDB)
    "plays" holds saved plays; "meta" holds the work-in-progress drawing,
    so nothing is lost if iOS closes the app in the background.
+   Version 2 (Stage 3) adds "teams", "players" and "games" for the Minutes tab
+   (see data.js). Existing plays are untouched by the upgrade.
    ===================================================================== */
 const DB = (() => {
   let dbPromise = null;
   function open() {
     if (!dbPromise) dbPromise = new Promise((resolve, reject) => {
-      const req = indexedDB.open(DB_NAME, 1);
+      const req = indexedDB.open(DB_NAME, 2);
       req.onupgradeneeded = () => {
-        req.result.createObjectStore('plays', { keyPath: 'id' });
-        req.result.createObjectStore('meta');
+        // Create whatever is missing, so an existing database keeps its plays
+        const db = req.result, has = n => db.objectStoreNames.contains(n);
+        if (!has('plays')) db.createObjectStore('plays', { keyPath: 'id' });
+        if (!has('meta')) db.createObjectStore('meta');
+        if (!has('teams')) db.createObjectStore('teams', { keyPath: 'id' });
+        if (!has('players')) db.createObjectStore('players', { keyPath: 'id' }).createIndex('teamId', 'teamId');
+        if (!has('games')) db.createObjectStore('games', { keyPath: 'id' }).createIndex('teamId', 'teamId');
       };
       req.onsuccess = () => {
         const db = req.result;
@@ -683,6 +690,12 @@ const DB = (() => {
     deletePlay: id       => run('plays', 'readwrite', s => s.delete(id)),
     getMeta:    key      => run('meta',  'readonly',  s => s.get(key)),
     setMeta:    (key, v) => run('meta',  'readwrite', s => s.put(v, key)),
+    // General-purpose, for teams / players / games (used by data.js)
+    all:        store            => run(store, 'readonly',  s => s.getAll()),
+    get:        (store, id)      => run(store, 'readonly',  s => s.get(id)),
+    put:        (store, obj)     => run(store, 'readwrite', s => s.put(obj)),
+    del:        (store, id)      => run(store, 'readwrite', s => s.delete(id)),
+    byTeam:     (store, teamId)  => run(store, 'readonly',  s => s.index('teamId').getAll(teamId)),
   };
 })();
 
@@ -850,13 +863,20 @@ async function renderPlayList() {
 }
 
 /* =====================================================================
-   12. BACKUP: export all plays to one file, import them back
+   12. BACKUP: one file with everything — plays, teams, rosters, games —
+   and import it back. (Version 1 files, from before Stage 3, had plays only;
+   they still import.)
    ===================================================================== */
+const TEAM_STORES = ['teams', 'players', 'games'];
+
 async function exportBackup() {
   const plays = await DB.allPlays();
-  if (!plays.length) { toast('No saved plays to back up yet'); return; }
-  const data = { app: 'penguins-playbook', version: 1, exported: new Date().toISOString(), plays };
-  const fileName = `penguins-playbook-${new Date().toISOString().slice(0, 10)}.json`;
+  const team = {};
+  for (const st of TEAM_STORES) team[st] = await DB.all(st);
+  const total = plays.length + team.teams.length + team.players.length + team.games.length;
+  if (!total) { toast('Nothing to back up yet'); return; }
+  const data = { app: 'penguins-playbook', version: 2, exported: new Date().toISOString(), plays, ...team };
+  const fileName = `penguins-backup-${new Date().toISOString().slice(0, 10)}.json`;
   const file = new File([JSON.stringify(data)], fileName, { type: 'application/json' });
 
   // On iPhone/iPad, the share sheet ("Save to Files", AirDrop…) is the reliable way to save a file
@@ -870,29 +890,39 @@ async function exportBackup() {
   const a = Object.assign(document.createElement('a'), { href: url, download: fileName });
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
-  toast(`Exported ${plays.length} play${plays.length === 1 ? '' : 's'}`);
+  toast('Backup exported');
 }
 
-/** Import merges: new plays are added; a play already here is replaced only if the backup's copy is newer. */
+/** Import merges: new items are added; an item already here is replaced only if the backup's copy is newer. */
 async function importBackup(file) {
   let data;
   try { data = JSON.parse(await file.text()); } catch { data = null; }
   if (!data || !Array.isArray(data.plays)) {
-    ask({ title: 'Not a backup file', message: 'That file isn’t a Penguins Playbook backup.', okText: 'OK', noCancel: true });
+    ask({ title: 'Not a backup file', message: 'That file isn’t a Penguins backup.', okText: 'OK', noCancel: true });
     return;
   }
-  const existing = new Map((await DB.allPlays()).map(p => [p.id, p]));
-  let added = 0, updated = 0;
-  for (const p of data.plays) {
-    if (!p || typeof p.id !== 'string' || !COURTS[p.court] || !Array.isArray(p.strokes)) continue;
-    const mine = existing.get(p.id);
-    if (!mine) { await DB.putPlay(p); added++; }
-    else if ((p.updated || 0) > (mine.updated || 0)) { await DB.putPlay(p); updated++; }
-  }
+  const counts = [];
+  const merge = async (store, items, isValid, label) => {
+    if (!Array.isArray(items)) return;
+    const existing = new Map((await DB.all(store)).map(x => [x.id, x]));
+    let added = 0, updated = 0;
+    for (const x of items) {
+      if (!x || typeof x.id !== 'string' || !isValid(x)) continue;
+      const mine = existing.get(x.id);
+      if (!mine) { await DB.put(store, x); added++; }
+      else if ((x.updated || 0) > (mine.updated || 0)) { await DB.put(store, x); updated++; }
+    }
+    if (added || updated) counts.push(`${label}: ${added} added, ${updated} updated`);
+  };
+  await merge('plays', data.plays, p => COURTS[p.court] && Array.isArray(p.strokes), 'Plays');
+  await merge('teams', data.teams, t => typeof t.name === 'string', 'Teams');
+  await merge('players', data.players, p => typeof p.teamId === 'string', 'Players');
+  await merge('games', data.games, g => typeof g.teamId === 'string' && Array.isArray(g.events), 'Games');
   renderPlayList();
+  window.onBackupImported?.();   // lets the Minutes tab refresh (see data.js)
   ask({
     title: 'Backup imported',
-    message: `${added} new play${added === 1 ? '' : 's'} added, ${updated} updated. Plays you already had were kept.`,
+    message: (counts.length ? counts.join('. ') + '.' : 'Nothing new in that file.') + ' What you already had was kept.',
     okText: 'OK', noCancel: true,
   });
 }

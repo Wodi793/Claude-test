@@ -314,3 +314,53 @@ dialog .buttons button.danger { background: var(--danger); }
     linear-gradient(160deg, rgba(255,255,255,.16), rgba(255,255,255,.03) 45%, rgba(255,255,255,.06)),
     rgba(34, 22, 54, .78);
 }
+
+/* =====================================================================
+   MINUTES TAB + TEAM SETTINGS (Stage 3)
+   Lists and text stay solid and high-contrast; glass only on overlays.
+   ===================================================================== */
+.page-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 0 8px; }
+.team-name { font-family: var(--serif); font-size: 28px; font-weight: 600; line-height: 1.1; }
+.team-season { font-size: 15px; color: rgba(255,255,255,.75); margin-top: 2px; }
+.round-btn { width: 46px; height: 46px; border-radius: 50%; flex: none; }
+.coming { min-height: 60%; }
+
+.team-scroll { padding: 0 14px calc(env(safe-area-inset-bottom) + 24px); }
+.card { background: #221a30; border: 1px solid rgba(255,255,255,.10); border-radius: 18px; padding: 6px 14px; margin-bottom: 18px; }
+.card-title { font-family: var(--serif); font-weight: 600; font-size: 20px; margin: 4px 4px 8px; }
+.card-title span { font-family: var(--sans); font-size: 15px; color: rgba(255,255,255,.6); font-weight: 400; }
+.field { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px;
+  border-bottom: 1px solid rgba(255,255,255,.08); font-size: 16px; color: rgba(255,255,255,.8); }
+.field:last-child { border-bottom: 0; }
+.field input, .field-value { flex: 1; max-width: 62%; text-align: right; color: #fff; font-size: 17px; }
+.team-scroll input { font: inherit; font-size: 17px; color: #fff; background: transparent; border: 0;
+  -webkit-user-select: text; user-select: text; }
+.team-scroll input:focus { outline: none; }
+
+.roster { list-style: none; margin: 0; padding: 0; }
+.roster li { display: flex; align-items: center; gap: 8px; min-height: 54px; border-bottom: 1px solid rgba(255,255,255,.08); }
+.roster .num { width: 52px; flex: none; text-align: center; font-weight: 700; font-size: 18px;
+  background: #fff !important; color: #2a1745 !important; border-radius: 12px !important; height: 38px; }
+.roster .name { flex: 1; min-width: 0; font-size: 18px; font-weight: 600; }
+.roster li.inactive .name, .roster li.inactive .num { opacity: .45; }
+.chip { flex: none; height: 32px; padding: 0 12px; border-radius: 999px; font-size: 13px; font-weight: 600;
+  background: rgba(255,255,255,.14); }
+.roster li.inactive .chip { background: #000; color: rgba(255,255,255,.75); }
+.icon-btn { width: 40px; height: 40px; border-radius: 50%; flex: none; color: rgba(255,255,255,.7); }
+.add-player { display: flex; gap: 8px; align-items: center; padding: 10px 0 8px; }
+.add-player input { height: 44px; border-radius: 12px !important; background: rgba(0,0,0,.28) !important;
+  padding: 0 12px !important; border: 1px solid rgba(255,255,255,.18) !important; }
+#newNumber { width: 64px; flex: none; text-align: center; }
+#newName { flex: 1; min-width: 0; }
+.primary-btn { background: #fff !important; color: #2a1745; font-weight: 700; }
+.card .note { padding: 4px 0 6px; margin: 0; }
+
+.team-list { list-style: none; margin: 0; padding: 4px 0 0; }
+.team-row { width: 100%; min-height: 52px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
+  border-bottom: 1px solid rgba(255,255,255,.08); text-align: left; padding: 6px 0; }
+.team-row .tn { font-size: 17px; font-weight: 600; }
+.team-row .ts { font-size: 14px; color: rgba(255,255,255,.65); }
+.team-row.current .tn::before { content: "● "; color: #fff; }
+.row-btns { display: flex; gap: 8px; padding: 10px 0; }
+.row-btns .pill-btn { flex: 1; }
+.danger-btn { width: 100%; background: transparent !important; color: #ff8a87; border: 1px solid rgba(255,138,135,.4); margin-bottom: 12px; }
