@@ -77,6 +77,7 @@ window.updateThemeColor = updateThemeColor;
 function showTab(name) {
   if (!document.getElementById('tab-' + name)) return;
   App.tab = name;
+  document.getElementById('toast')?.classList.remove('show');   // a notice belongs to the tab it was shown on
   document.documentElement.dataset.tab = name;   // lets styles differ per tab (e.g. the switcher's glass)
   for (const el of document.querySelectorAll('.tab')) {
     const on = el.id === 'tab-' + name;

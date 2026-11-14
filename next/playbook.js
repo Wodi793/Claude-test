@@ -22,7 +22,7 @@ const THEMES = {
 
 const DEFAULT_WIDTH = 0.35;      // marker thickness for new lines, in feet on the court
 const MIN_WIDTH = 0.08, MAX_WIDTH = 1.2;   // range of the Line slider in the ••• menu
-const APP_VERSION = '49 preview';   // the preview copy (next/) — see BUILD-LOG.md
+const APP_VERSION = '50 preview';   // the preview copy (next/) — see BUILD-LOG.md
 const DB_NAME = 'penguins-playbook-preview';   // preview keeps its own plays, separate from the live app           // shown in the ••• menu; bump with each update
 const ZOOM_MAX = 6;              // how far you can zoom in (6× the fitted size)
 const ERASER_RADIUS_PX = 14;     // how close the eraser must come to a line, in screen points
@@ -1226,7 +1226,7 @@ screen.orientation?.addEventListener?.('change', refreshSoon);
   try {
     const draft = await DB.getMeta('draft');
     if (draft && COURTS[draft.court]) loadIntoState(draft);
-    else toast('Tip: pinch with two fingers to zoom');
+    else setTimeout(() => { if (document.documentElement.dataset.tab !== 'minutes' && document.documentElement.dataset.tab !== 'stats') toast('Tip: pinch with two fingers to zoom'); }, 300);   // only on the Playbook
   } catch { /* storage unavailable: app still works, just can't save */ }
 
   // Offline support (only works on a real web address, not when opening the file directly)

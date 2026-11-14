@@ -723,3 +723,17 @@ Also wanted: the option of a plain all-players list.
 - Stats settings "The five on court, in the pad": Auto (default — shown when this phone runs the game clock;
   otherwise all players, nothing to maintain), Always (stats-only keeper maintains them with Change), Off.
 - Tests: stats2 (Always), linked, stats1 pass; full suite passes.
+
+### Live version 50 (2026-11-14) — Stats ergonomics per screen
+Owner: scale it up appropriately for each screen size. Measured on 11 sizes (scratchpad ergo.js: button and
+tile sizes, the pad's share of the screen, bench rows visible, names cut off).
+- Pad buttons and on-court tiles scale with screen height (buttons 44 pt minimum → up to 68 pt; tiles 58 → 104).
+- Narrow phones (< 420 pt wide): the pad takes the full width (the five need it); the corner button floats just
+  above the pad's left corner. Narrowest (< 360): tighter game box so the score fits.
+- Big upright screens: pad capped at 720 pt and centered (iPad upright buttons were 225 pt wide).
+- Sideways (phones, open foldable, iPad): two columns — game + bench left, pad down the right under a STAT label.
+  Short sideways screens give the pad 55% and use smaller quarter buttons so names and the score fit.
+- Fixed: the Playbook's one-time "Tip: pinch…" could pop up on other tabs (toast moved to page level in v46);
+  now only on the Playbook, and any notice clears when you switch tabs.
+- Results: pad share 17–45% (was up to 66%); every screen keeps targets ≥ 44 pt; bench visible on all but the
+  smallest/shortest screens, where it scrolls. Full suite passes.

@@ -1546,3 +1546,81 @@ html[data-layout="tall"] .pad-btn { height: 52px; }
 .pad-court .crow.editing .stile { box-shadow: 0 0 0 3px var(--pink) !important; }
 html[data-layout="compact"] .pad-court .ctile .pnum { min-width: 24px; height: 24px; font-size: 12px; }
 html[data-layout="compact"] .pad-court .ctile .sname { font-size: 13px !important; }
+
+/* =====================================================================
+   STATS ERGONOMICS (owner: "scaled up appropriately… different answers for different
+   screens"). Measured on 11 screen sizes (scratchpad ergo.js). Rules:
+   • Touch targets never under 44 pt; they grow with the screen up to ~64–72 pt.
+   • Narrow phones (< 420 pt wide): the pad uses the full width (the five need it);
+     the corner button floats just above the pad's left corner instead of beside it.
+   • Sideways (any phone, the open foldable, iPad): two columns — game + bench on the
+     left, the pad down the right — so the pad never covers the bench.
+   • Big upright screens: the pad is capped at 720 pt wide and centered, so buttons stay
+     a thumb's size rather than stretching.
+   ===================================================================== */
+/* Sizes that scale with the screen's height */
+.pad-btn { height: clamp(44px, 6.6vh, 68px) !important; font-size: clamp(15px, 2.1vh, 20px) !important; }
+.pad-court .ctile { min-height: clamp(58px, 9vh, 104px) !important; }
+.pad-court .ctile .sname { font-size: clamp(12px, 1.75vh, 18px) !important; }
+.pad-court .ctile .pnum { min-width: clamp(22px, 3.2vh, 36px) !important; height: clamp(22px, 3.2vh, 36px) !important; font-size: clamp(12px, 1.6vh, 17px) !important; }
+.stile .sname { font-size: clamp(14px, 1.9vh, 19px); }
+.stile .pnum { min-width: clamp(26px, 3.6vh, 38px); height: clamp(26px, 3.6vh, 38px); }
+
+/* Narrow phones: pad full width; the corner button sits just above the pad's left corner */
+@media (max-width: 419px) and (orientation: portrait) {
+  html[data-tab="stats"] #statPad { left: max(10px, env(safe-area-inset-left)) !important; right: max(14px, calc(env(safe-area-inset-right) + 4px)) !important; }
+  html[data-tab="stats"] #tabbar { bottom: calc(var(--tabs-bottom, 12px) + var(--pad-h, 200px) + 10px); }
+  html[data-tab="stats"] #tab-stats .page-scroll { padding-bottom: calc(var(--pad-h, 200px) + var(--tabs-bottom, 12px) + 70px) !important; }
+  .pad-court .crow { gap: 4px; }
+  .pad-court .ctile { padding: 5px 4px !important; }
+}
+
+/* Big upright screens (open foldable, iPad upright): pad capped and centered */
+@media (min-width: 420px) and (orientation: portrait) {
+  html[data-tab="stats"]:not([data-layout="wide"]) #statPad {
+    left: max(calc(max(12px, env(safe-area-inset-left)) + 60px), calc(50% - 360px)) !important; right: max(18px, calc(50% - 360px)) !important; }
+}
+
+/* Sideways: game + bench on the left, the pad down the right (top of the column, under a STAT label) */
+@media (orientation: landscape) {
+  html[data-tab="stats"] #tab-stats .page-scroll { padding-right: calc(50% + 4px) !important; padding-bottom: calc(var(--tabs-bottom, 12px) + 70px) !important; }
+  html[data-tab="stats"] #statPad { left: calc(50% + 14px) !important; right: max(22px, calc(env(safe-area-inset-right) + 8px)) !important; max-width: none;
+    top: calc(env(safe-area-inset-top) + 16px + 38px); bottom: auto !important; max-height: calc(100% - env(safe-area-inset-top) - 16px - 38px - var(--tabs-bottom, 12px) - 8px); overflow-y: auto; }
+  html[data-tab="stats"] #statPad::before { content: 'Stat'; position: absolute; left: 0; top: -38px; height: 28px; display: flex; align-items: center;
+    color: #fff; font-size: 11px; font-weight: 900; letter-spacing: .18em; text-transform: uppercase; }
+  html[data-tab="stats"] #statPad { overflow: visible; }
+  html[data-tab="stats"] .pad-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+  html[data-tab="stats"] .sgrid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important; }
+}
+@media (orientation: landscape) and (max-height: 500px) {
+  .pad-btn { height: clamp(44px, 11vh, 56px) !important; }
+  .pad-court .ctile { min-height: 56px !important; }
+  html[data-tab="stats"] .gc-top { padding: 8px 12px; }
+  html[data-tab="stats"] .game-card .tt { padding: 4px; }
+}
+/* Narrowest phones: a tighter game box so the score always fits */
+@media (max-width: 359px) {
+  html[data-tab="stats"] .q-sel button { width: 32px; height: 34px; font-size: 12px; }
+  html[data-tab="stats"] .score b, html[data-tab="stats"] .score input { font-size: 22px; }
+  html[data-tab="stats"] .score input { width: 42px; }
+  html[data-tab="stats"] .gc-top { padding: 10px; gap: 6px; }
+}
+/* Short sideways screens (phones, the open foldable): the pad gets 55% so the five's names fit */
+@media (orientation: landscape) and (max-height: 500px) {
+  html[data-tab="stats"] #tab-stats .page-scroll { padding-right: calc(55% + 4px) !important; }
+  html[data-tab="stats"] #statPad { left: calc(45% + 12px) !important; }
+  html[data-tab="stats"] .q-sel { gap: 4px; }
+  html[data-tab="stats"] .q-sel button { width: 34px; height: 36px; font-size: 12px; }
+  html[data-tab="stats"] .score b, html[data-tab="stats"] .score input { font-size: 24px; }
+  html[data-tab="stats"] .score input { width: 46px; }
+  html[data-tab="stats"] .gc-top { padding: 8px 10px; gap: 6px; }
+}
+@media (orientation: landscape) and (max-height: 500px) {
+  html[data-tab="stats"] .q-sel button { width: 30px; height: 34px; font-size: 11px; }
+  html[data-tab="stats"] .q-sel { gap: 3px; }
+}
+@media (orientation: landscape) and (max-height: 500px) {
+  html[data-tab="stats"] .gc-top { padding: 8px 8px !important; gap: 4px !important; }
+  html[data-tab="stats"] .score { gap: 4px; }
+  html[data-tab="stats"] .score input { width: 42px; }
+}
