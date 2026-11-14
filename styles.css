@@ -1219,3 +1219,5 @@ html[data-layout="compact"] .sb-actions { left: max(14px, env(safe-area-inset-le
 .sub-pairs .pair i { font-style: normal; color: var(--ios-secondary); font-weight: 500; }
 #subConfirm:disabled { background: #e4dcef !important; color: var(--ios-secondary) !important; box-shadow: none !important; }
 .sub-pairs .nm { white-space: nowrap; }
+/* Bench: a sweep that starts on the number squares marks players; anywhere else scrolls the bench */
+#benchList .pnum { touch-action: none; }

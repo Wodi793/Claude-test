@@ -282,6 +282,8 @@ function onTapOrHold(el, onTap, onHold) {
    ===================================================================== */
 function renderLive(body) {
   const g = M.game, r = nowState();
+  // Redrawing must not jump the lists back to the top (e.g. after marking players further down)
+  const keep = ['.bench-scroll', '.sec-lists'].map(sel => [sel, document.querySelector(`#mBody ${sel}`)?.scrollTop || 0]);
   // On court: least played at the top, most played at the bottom — the girls due to come off
   // sit together at the bottom, and the spread shows at a glance. (They all gain time at the same
   // rate while the clock runs, so the order only changes when subs are made.)
@@ -360,7 +362,9 @@ function renderLive(body) {
     onTapOrHold(li, () => tapBench(p.id), () => openPlayerMenu(p));
     $('benchList').appendChild(li);
   }
-  dragSelect($('courtList'), id => M.outs.includes(id), (id, on) => markOut(id, on));
+  for (const [sel, top] of keep) { const el = document.querySelector(`#mBody ${sel}`); if (el) el.scrollTop = top; }
+  dragSelect($('courtList'), { isOn: id => M.outs.includes(id), set: markOut, cls: 'going-out' });
+  dragSelect($('benchList'), { isOn: id => M.ins.includes(id), set: markIn, cls: 'coming-in', handle: '.pnum' });
   renderTimeline($('liveTimeline'), g, M.roster, r);
   renderSubBar();
 }
@@ -388,11 +392,14 @@ function markOut(id, on) {
   if (!on && has) M.outs = M.outs.filter(x => x !== id);
 }
 function tapCourt(id) { markOut(id); renderMinutes(); }
-function tapBench(id) {
-  if (M.ins.includes(id)) M.ins = M.ins.filter(x => x !== id);
-  else M.ins.push(id);
-  renderMinutes();
+/** Mark / unmark a bench player to go in. on = true / false / undefined (toggle). */
+function markIn(id, on) {
+  const has = M.ins.includes(id);
+  if (on === undefined) on = !has;
+  if (on && !has) M.ins.push(id);
+  if (!on && has) M.ins = M.ins.filter(x => x !== id);
 }
+function tapBench(id) { markIn(id); renderMinutes(); }
 function toggleAllOut() {
   const on = nowState().onCourt;
   const all = on.length && on.every(id => M.outs.includes(id));
@@ -400,25 +407,45 @@ function toggleAllOut() {
   renderMinutes();
 }
 
-/** Drag a finger down the on-court list to mark (or unmark) several players in one sweep.
- *  The first row decides: if she wasn't marked, the sweep marks; if she was, it unmarks. */
-function dragSelect(list, isOn, set) {
+/** Drag a finger down a list to mark (or unmark) several players in one sweep.
+ *  The first row decides: if she wasn't marked, the sweep marks; if she was, it unmarks.
+ *  handle: where a sweep may start (on the bench only the number squares, so a swipe on the
+ *  names still scrolls the bench). Near the top or bottom edge of a scrolling list, the list
+ *  scrolls along so the sweep can carry on. */
+function dragSelect(list, { isOn, set, cls, handle = '.prow' }) {
   let drag = null, swallow = false;
+  const scrollerOf = el => { for (let n = el.parentElement; n; n = n.parentElement) {
+    const o = getComputedStyle(n).overflowY; if ((o === 'auto' || o === 'scroll') && n.scrollHeight > n.clientHeight) return n; } return null; };
   list.addEventListener('pointerdown', e => {
-    const li = e.target.closest('.prow'); swallow = false;
-    drag = li ? { li0: li, y0: e.clientY, active: false, on: !isOn(li.dataset.id), done: new Set() } : null;
+    swallow = false;
+    const li = e.target.closest('.prow');
+    drag = li && e.target.closest(handle) ? { li0: li, y0: e.clientY, x: e.clientX, y: e.clientY, active: false,
+      on: !isOn(li.dataset.id), done: new Set(), scroller: scrollerOf(list), raf: 0 } : null;
   });
   const apply = li => {
     if (drag.done.has(li)) return;
-    drag.done.add(li); set(li.dataset.id, drag.on); li.classList.toggle('going-out', drag.on);
+    drag.done.add(li); set(li.dataset.id, drag.on); li.classList.toggle(cls, drag.on);
+  };
+  const hit = () => { const li = document.elementFromPoint(drag.x, drag.y)?.closest('.prow'); if (li && list.contains(li)) apply(li); };
+  const edgeScroll = () => {
+    if (!drag?.active || !drag.scroller) return;
+    const r = drag.scroller.getBoundingClientRect(), edge = 56;
+    const dy = drag.y > r.bottom - edge ? Math.min(14, (drag.y - (r.bottom - edge)) / 3)
+             : drag.y < r.top + edge ? -Math.min(14, ((r.top + edge) - drag.y) / 3) : 0;
+    if (dy) { drag.scroller.scrollTop += dy; hit(); }
+    drag.raf = requestAnimationFrame(edgeScroll);
   };
   list.addEventListener('pointermove', e => {
     if (!drag) return;
-    if (!drag.active) { if (Math.abs(e.clientY - drag.y0) < 12) return; drag.active = true; apply(drag.li0); }
-    const li = document.elementFromPoint(e.clientX, e.clientY)?.closest('.prow');
-    if (li && list.contains(li)) apply(li);
+    drag.x = e.clientX; drag.y = e.clientY;
+    if (!drag.active) { if (Math.abs(e.clientY - drag.y0) < 12) return; drag.active = true; apply(drag.li0); edgeScroll(); }
+    hit();
   });
-  const end = () => { if (drag?.active) { swallow = true; setTimeout(() => { swallow = false; }, 400); renderMinutes(); } drag = null; };
+  const end = () => {
+    if (drag) cancelAnimationFrame(drag.raf);
+    if (drag?.active) { swallow = true; setTimeout(() => { swallow = false; }, 400); renderMinutes(); }
+    drag = null;
+  };
   list.addEventListener('pointerup', end); list.addEventListener('pointercancel', end);
   list.addEventListener('click', e => { if (swallow) { swallow = false; e.stopPropagation(); e.preventDefault(); } }, true);
 }

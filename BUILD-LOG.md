@@ -566,3 +566,12 @@ Owner: picking one off, then one on, back and forth, is too much swiping; wants 
 
 ### Live version 39 (2026-11-14)
 - Owner: sort the on-court girls least played → most played, so the ones due off sit together at the bottom and the spread is visible. Done (ties by jersey number). They all gain time at the same rate while the clock runs, so the order only changes when subs are made — rows never jump mid-play. Test courtsort.js.
+
+### Live version 40 (2026-11-14) — sweep on the bench too
+- Bench rows can be swept to mark several going in. The bench scrolls, so a sweep must START on the number
+  squares (`touch-action: none` on `#benchList .pnum`); a swipe that starts on a name still scrolls. Near the
+  top/bottom edge of the bench the list scrolls along (requestAnimationFrame) so a sweep can reach players off screen.
+- `dragSelect(list, { isOn, set, cls, handle })` now serves both lists; `markIn` added beside `markOut`.
+- Redraws keep the bench's (and the two-screen lists') scroll position — before, marking someone low on the bench
+  jumped the list back to the top.
+- Test benchsweep.js (name swipe selects nothing; number sweep selected all 8 incl. off-screen; list scrolled).
