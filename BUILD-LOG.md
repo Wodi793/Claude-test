@@ -363,3 +363,18 @@ anything); same game and clock throughout. Small-screen sub flow (664 pt). Regre
 rotation/rail 10/10, slider/logo, wake, finger accuracy, tabs, Stage 3/4/4b/5 tests — all pass; no name clashes.
 
 Cache `penguins-preview-v23`; app version "23 preview".
+
+## iPad Pencil / tap-offset investigation (2026-11-14)
+
+Reported on the live app (v16), M4 iPad Pro 13", sideways:
+taps on the tool rail register above the finger (must press below a button; hit Clear instead of Save);
+the Pencil can't press rail buttons but draws fine; wants Pencil squeeze = erase; wants a thinner line.
+
+- Screen check (sideways): inner 1600×1188 but screen 1200 tall (lvh 1200); safe T32 B20;
+  visual offset 0; scroll 0. The app is drawn in the top 1188 pt, leaving a 12 pt strip unused at the bottom.
+  Likely source of a fixed tap offset (iPadOS 26 home-screen web app bug; others report taps landing just below the target).
+- Squeeze / double-tap: Safari does not pass these to web pages (native apps only). Not possible.
+- Added `tap-test.html` (linked from Screen check) to measure the finger and Pencil offset, and
+  whether Pencil taps produce click events. Waiting on the user's results before changing the app.
+- Proposed (not yet approved): move Clear into the ••• menu; Pencil-aware rail buttons;
+  two-finger tap toggles the eraser; minimum line 0.15 → ~0.08 ft.
