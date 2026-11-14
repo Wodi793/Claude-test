@@ -22,7 +22,7 @@ const THEMES = {
 
 const DEFAULT_WIDTH = 0.35;      // marker thickness for new lines, in feet on the court
 const MIN_WIDTH = 0.08, MAX_WIDTH = 1.2;   // range of the Line slider in the ••• menu
-const APP_VERSION = 41;   // shown in the ••• menu; bump with each update (the preview in next/ has its own)
+const APP_VERSION = 42;   // shown in the ••• menu; bump with each update (the preview in next/ has its own)
 const DB_NAME = 'penguins-playbook';   // the live app's database (next/ uses 'penguins-playbook-preview')
 const ZOOM_MAX = 6;              // how far you can zoom in (6× the fitted size)
 const ERASER_RADIUS_PX = 14;     // how close the eraser must come to a line, in screen points
@@ -1025,10 +1025,13 @@ function updateUI() {
   document.querySelectorAll('[data-court]').forEach(b => b.classList.toggle('active', b.dataset.court === state.court));
   $('courtSeg').classList.toggle('half', state.court === 'half');
   document.querySelectorAll('[data-theme]').forEach(b => b.classList.toggle('active', b.dataset.theme === state.theme));
-  // Whatever peeks out around the app (rare) matches the border
-  document.documentElement.style.background = document.body.style.background = t.band;
-  $('scrim').classList.toggle('show', t.band === '#ffffff');   // shade behind the clock on a white border
+  // (What peeks out around the app takes the page color from styles.css, per tab — "FIT & FINISH".
+  //  It used to be set here, on the page itself, which painted the Minutes tab's edges white.)
+  // Shade behind the clock on a white border — only where the status bar is tall (iPhones with a notch or
+  // island, where the clock is white). On iPad the clock is dark and the shade only dimmed BURNS PARK.
+  $('scrim').classList.toggle('show', t.band === '#ffffff' && safeInsets().top >= 44);
   document.body.classList.toggle('light-band', t.band === '#ffffff');
+  window.updateThemeColor?.();
   requestRender();
 }
 

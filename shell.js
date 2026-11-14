@@ -44,6 +44,15 @@ const TAB_SHOWN = {
   playbook: () => requestRender(),   // repaint the court (cheap; nothing is reset)
 };
 
+/** iOS tints the strip behind the status bar (and the edges outside the app's own area) from the
+ *  page's "theme color". Keep it the color of what's on screen: purple on Minutes; on the Playbook,
+ *  the court's border color (white around the purple board, purple around the white board). */
+function updateThemeColor() {
+  const color = App.tab === 'playbook' && document.body.classList.contains('light-band') ? '#ffffff' : '#4e2a84';
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', color);
+}
+window.updateThemeColor = updateThemeColor;
+
 function showTab(name) {
   if (!document.getElementById('tab-' + name)) return;
   App.tab = name;
@@ -56,6 +65,7 @@ function showTab(name) {
   }
   for (const b of document.querySelectorAll('.tabbtn')) b.classList.toggle('active', b.dataset.tab === name);
   placeLens();
+  updateThemeColor();
   TAB_SHOWN[name]?.();
   try { localStorage.setItem('penguins.tab', name); } catch { /* not critical */ }
 }

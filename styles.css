@@ -52,7 +52,7 @@ html, body {
 /* Soft shade behind the clock/battery so they stay readable on a white border */
 #scrim {
   position: absolute; top: 0; left: 0; right: 0;
-  height: calc(env(safe-area-inset-top) + 10px);
+  height: env(safe-area-inset-top);   /* the status bar only — never over the names */
   background: linear-gradient(rgba(0,0,0,.38), rgba(0,0,0,0));
   pointer-events: none; display: none;
 }

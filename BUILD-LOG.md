@@ -589,3 +589,16 @@ Owner: on the small (folded) screen the sub box hid the bench so subs couldn't b
   strips are inside the app's drawable area.
 - Tests: multisub (updated texts), benchsweep, smallsub, game, layouts, rule, season, tabs, 8-screen, baseline,
   Pencil all pass.
+
+### Live version 42 (2026-11-14) — top and bottom edges
+Owner (iPad screenshots): a light glow at the top of Minutes and a gray haze at the top of the Playbook that
+fades BURNS PARK; white strip at the bottom of Minutes. Wants any edge effect to be intentional and consistent.
+- Gray haze on the Playbook = our #scrim (dark gradient behind the clock on a white border). Now only shown when
+  the status bar is tall (top inset ≥ 44, i.e. iPhones with a notch/island, where the clock is white), and only
+  as tall as the status bar (was + 10 pt, which reached the names). Not shown on iPad.
+- Light glow at the top of Minutes: iPadOS 26's own status-bar effect; tinted by the page's theme color.
+  theme-color now follows the page (shell.js updateThemeColor): purple on Minutes, the border color on the
+  Playbook (white around the purple board, purple around the white board). Default changed #151319 → #4e2a84.
+- White strip at the bottom of Minutes — real cause found: updateUI() set the html/body background to the
+  Playbook's border color as an inline style, overriding v36's per-tab CSS. Removed; CSS now decides per tab.
+- Tests: new edges.js (html/body colors per tab and board) and theme.js; full suite passes; live copy checked.
