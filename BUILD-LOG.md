@@ -756,3 +756,11 @@ purple iOS shows at the screen's top and bottom edges; and put the tab button "l
 - Tab button (now 42 pt) sits in a slim row of its own under the pad (Stats) and under Undo/Stop (Minutes,
   phones); those take the full width again. Sideways layouts unchanged (two columns).
 - Tests pass (stats2's "pad clear of button" now true by being above it).
+
+### Live version 53 (2026-11-14) — two purples only
+Owner: colors on Minutes inconsistent; only the court purple and the court's border purple should be used.
+- Audit (scratchpad colors.js / colors2.js, every visible element on Minutes pre-game, live, subbing, and
+  Stats) found four off-palette purples: #6a5a80 (secondary text), #43375a (stopped clock), #f1e9fb and
+  #e4dcef (lavender fills). Replaced: secondary text = border purple at 66%; stopped clock = border purple
+  (running stays near-black); light fills = court purple at 10–14%; separators = border purple at 14%.
+- After: only #4e2a84, #2b1550 (plus see-through tints of them), near-black outlines, pink, white.

@@ -1715,3 +1715,24 @@ html[data-layout="compact"][data-orient="port"] .sb-actions {
   left: max(14px, env(safe-area-inset-left)) !important; bottom: calc(var(--tabs-bottom, 12px) + var(--tabrow)) !important; }
 html[data-layout="compact"][data-orient="port"][data-live="yes"]:not([data-subbing="yes"]) .tab-page .page-scroll {
   padding-bottom: calc(var(--tabs-bottom, 12px) + var(--tabrow) + var(--actions-h) + 4px) !important; }
+
+/* =====================================================================
+   TWO PURPLES ONLY (owner): every purple is either the court purple (#4e2a84) or the
+   court's border purple (#2b1550) — or a see-through tint of one of them. Audited with
+   scratchpad colors.js; this replaces the four off-palette purples that had crept in
+   (gray-purple text #6a5a80, slate clock #43375a, lavenders #f1e9fb / #e4dcef).
+   White, pink and the near-black outline stay as they are.
+   ===================================================================== */
+:root {
+  --court: #4e2a84;
+  --border-purple: #2b1550;
+  --ios-secondary: rgba(43, 21, 80, .66);     /* border purple, softened for small print on white */
+  --lav-soft: rgba(78, 42, 132, .10);          /* court purple tint for light fills */
+  --ios-sep: rgba(43, 21, 80, .14);
+}
+.clock, .clock.over { color: var(--border-purple) !important; }   /* stopped: border purple; running: near-black */
+.clock.running { color: var(--blk) !important; }
+.big-btn:disabled, #subConfirm:disabled, .pad-btn.miss { background: rgba(78, 42, 132, .14) !important; }
+.big-btn:disabled, #subConfirm:disabled { color: var(--ios-secondary) !important; }
+.score input, .ptag, .ptag.rule-owed, .tl-track, .sheet.light .chip, .light .menu-btn:active, .tb:active { background: var(--lav-soft); }
+.score input::placeholder, #sOpp::placeholder { color: var(--ios-secondary); }
