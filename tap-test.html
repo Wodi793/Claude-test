@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Tap test</title>
+<!--
+  Diagnostic page (opened from Screen check, inside the home-screen app):
+  1. Where do taps land? Tap the center of each + with a finger, then with the Pencil.
+     A dot marks where iOS says you touched; the box shows the average miss, per input.
+  2. Does the Pencil press buttons? Tap the "Press me" button with finger and Pencil;
+     it counts which events arrive for each.
+  Page scrolling is blocked the same way the app blocks it.
+-->
+<style>
+  html, body { margin: 0; height: 100%; background: #f2f1f7; overflow: hidden;
+    font: 14px/1.35 -apple-system, system-ui, sans-serif; color: #17121f;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  #pad { position: fixed; inset: 0; touch-action: none; }
+  .t { position: absolute; width: 44px; height: 44px; margin: -22px 0 0 -22px; pointer-events: none; }
+  .t::before, .t::after { content: ''; position: absolute; background: #4e2a84; }
+  .t::before { left: 21px; top: 0; width: 2px; height: 44px; }
+  .t::after { top: 21px; left: 0; height: 2px; width: 44px; }
+  .t.done::before, .t.done::after { background: #1a9c4a; }
+  .dot { position: absolute; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%;
+    pointer-events: none; }
+  .dot.touch { background: #e53935; }
+  .dot.pen { background: #1e63d6; }
+  #panel { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: min(360px, 78vw); background: #fff; border-radius: 16px; padding: 14px 16px;
+    box-shadow: 0 6px 24px rgba(0,0,0,.18); }
+  #panel b { font-size: 16px; }
+  #panel p { margin: 6px 0; }
+  #out { font-variant-numeric: tabular-nums; margin: 8px 0; }
+  .row { display: flex; gap: 8px; margin-top: 10px; }
+  .row > * { flex: 1; font: inherit; font-size: 15px; padding: 11px 6px; border: 0; border-radius: 11px;
+    text-align: center; text-decoration: none; }
+  #press { background: #4e2a84; color: #fff; }
+  #press:active { background: #6b44a8; }
+  #reset { background: #e5e3ec; color: #17121f; }
+  #back { background: #e5e3ec; color: #17121f; }
+</style>
+</head>
+<body>
+<div id="pad"></div>
+<div id="panel">
+  <b>Tap test</b>
+  <p>1. Tap the <b>center of each +</b> with a <b>finger</b>. Then do them all again with the <b>Pencil</b>.</p>
+  <p>2. Tap <b>Press me</b> 3 times with a finger and 3 times with the Pencil.</p>
+  <p>Then screenshot the whole screen and send it to Claude.</p>
+  <div id="out"></div>
+  <div class="row"><button id="press">Press me</button><button id="reset">Start over</button></div>
+  <div class="row"><a id="back" href="./">Back to the court</a></div>
+</div>
+<script>
+  'use strict';
+  const pad = document.getElementById('pad'), out = document.getElementById('out');
+  // Same scroll blocking as the app
+  document.addEventListener('gesturestart', e => e.preventDefault());
+  document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+
+  let targets = [], taps = [];
+  const btn = { touch: {}, pen: {}, mouse: {} };
+  const kind = t => (t === 'pen' ? 'Pencil' : t === 'touch' ? 'Finger' : 'Mouse');
+
+  function layoutTargets() {
+    pad.querySelectorAll('.t').forEach(n => n.remove());
+    const w = innerWidth, h = innerHeight;
+    // Columns near the left, middle and right edge (the tool rail lives on the right);
+    // rows from top to bottom — where any up/down drift would show
+    const xs = [70, w / 2, w - 70], ys = [70, h * 0.25, h * 0.75, h - 70];
+    targets = [];
+    for (const y of ys) for (const x of xs) {
+      const r = document.getElementById('panel').getBoundingClientRect();
+      if (x > r.left - 30 && x < r.right + 30 && y > r.top - 30 && y < r.bottom + 30) continue;   // behind the panel
+      const n = document.createElement('i'); n.className = 't';
+      n.style.left = x + 'px'; n.style.top = y + 'px'; pad.appendChild(n);
+      targets.push({ x, y, n });
+    }
+  }
+
+  pad.addEventListener('pointerdown', e => {
+    const x = e.clientX, y = e.clientY;
+    let best = null, bd = Infinity;
+    for (const t of targets) { const d = Math.hypot(t.x - x, t.y - y); if (d < bd) { bd = d; best = t; } }
+    const dot = document.createElement('i'); dot.className = 'dot ' + (e.pointerType === 'pen' ? 'pen' : 'touch');
+    dot.style.left = x + 'px'; dot.style.top = y + 'px'; pad.appendChild(dot);
+    if (best && bd < 90) { best.n.classList.add('done'); taps.push({ type: e.pointerType, dx: x - best.x, dy: y - best.y, top: best.y }); }
+    show();
+  });
+
+  // Button: count each event per input type
+  const pressEl = document.getElementById('press');
+  let lastType = 'touch';
+  for (const ev of ['pointerdown', 'pointerup', 'click']) {
+    pressEl.addEventListener(ev, e => {
+      const t = ev === 'click' ? lastType : (lastType = e.pointerType || 'touch');
+      btn[t][ev] = (btn[t][ev] || 0) + 1; show();
+    });
+  }
+  document.getElementById('reset').onclick = () => {
+    taps = []; for (const k in btn) btn[k] = {};
+    pad.querySelectorAll('.dot').forEach(n => n.remove());
+    layoutTargets(); show();
+  };
+
+  function avg(list, k) { return list.reduce((s, t) => s + t[k], 0) / list.length; }
+  function show() {
+    const lines = [];
+    for (const type of ['touch', 'pen']) {
+      const l = taps.filter(t => t.type === type);
+      if (!l.length) { lines.push(`${kind(type)}: no taps yet`); continue; }
+      const topHalf = l.filter(t => t.top < innerHeight / 2), bottomHalf = l.filter(t => t.top >= innerHeight / 2);
+      lines.push(`<b>${kind(type)}</b> (${l.length} taps): lands ${fmt(avg(l, 'dy'), 'below', 'above')}, ${fmt(avg(l, 'dx'), 'right', 'left')}`
+        + (topHalf.length && bottomHalf.length ? `<br>&nbsp;&nbsp;top half ${fmt(avg(topHalf, 'dy'), 'below', 'above')} · bottom half ${fmt(avg(bottomHalf, 'dy'), 'below', 'above')}` : ''));
+    }
+    for (const type of ['touch', 'pen']) {
+      const b = btn[type];
+      lines.push(`Press me, ${kind(type)}: down ${b.pointerdown || 0} · up ${b.pointerup || 0} · click ${b.click || 0}`);
+    }
+    const vv = window.visualViewport;
+    lines.push(`<small>inner ${innerWidth}×${innerHeight} · scroll ${Math.round(scrollY)} · visual @${vv ? Math.round(vv.offsetTop) : '–'}</small>`);
+    out.innerHTML = lines.join('<br>');
+  }
+  function fmt(v, pos, neg) { const r = Math.round(v); return r === 0 ? `on target (0)` : `${Math.abs(r)} pt ${r > 0 ? pos : neg}`; }
+
+  layoutTargets(); show();
+  addEventListener('resize', () => { layoutTargets(); show(); });
+</script>
+</body>
+</html>
