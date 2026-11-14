@@ -621,3 +621,6 @@ Owner, with screenshots from the foldable (folded: portrait and sideways; open: 
 - Below the app's own area (open foldable): the Minutes page is extended by `--lost-h` (screen height iOS
   leaves below the app's area) so it's page, not white; the controls stay above it.
 - Tests: topin.js (new), duo.js (foldable/iPad sizes), full suite pass; live copy checked.
+
+### Live version 44 (2026-11-14) — equal box widths
+- Owner: all boxes on the game screen should be the same width (clock vs chart differed). Measured (widths.js): lists were 4–10 pt narrower than the clock/chart (different shadow allowances), and folded-sideways columns were 45/55. Now every box keeps exactly 6 pt on its right for its shadow, the page right padding is 2 pt less than the left, and sideways columns are 50/50. Verified equal widths on 6 layouts; suite passes.

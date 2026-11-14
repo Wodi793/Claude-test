@@ -1300,3 +1300,27 @@ html[data-layout="compact"][data-orient="land"][data-live="yes"] .tab-page .page
 }
 .sub-row .pill-btn { white-space: nowrap; padding: 0 8px; } .sub-row #subConfirm { min-width: 0; }
 html[data-orient="land"] .sub-row .pill-btn { font-size: 15px; }
+
+/* =====================================================================
+   EQUAL WIDTHS (owner): every box on the game screen is the same width as the others in
+   its column, and the two sideways columns are the same width. One rule for the hard
+   shadow: each box keeps 6 px on its right for it (no other per-box allowances), and the
+   page's right padding is 2 px less than its left so the shadow's edge lines up with the margin.
+   ===================================================================== */
+.tab-page .page-scroll .page-head, .tab-page .page-scroll .card, .tab-page .page-scroll .players,
+.tab-page .page-scroll .scoreboard, .tab-page .page-scroll .big-btn, .tab-page .page-scroll .tl-card {
+  margin-right: 6px !important; }
+.players { margin-right: 6px; }
+html[data-layout="wide"] .sec-lists, html[data-layout="wide"] .sec-tl,
+html[data-layout="compact"][data-orient="land"] .sec-lists { padding-right: 0; }
+.tab-page .page-scroll { padding-left: 20px; padding-right: 18px; }
+html[data-layout="compact"][data-live="yes"] .tab-page .page-scroll { padding-left: 14px; padding-right: 12px; }
+html[data-layout="wide"][data-live="yes"] .tab-page .page-scroll { padding-left: 24px; padding-right: 22px; }
+html[data-layout="compact"] .sb-actions { left: max(14px, env(safe-area-inset-left)); right: max(18px, calc(env(safe-area-inset-right) + 4px)); }
+html[data-layout="wide"][data-live="yes"] .live, html[data-layout="compact"][data-orient="land"][data-live="yes"] .live {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
+@media (orientation: landscape) and (max-height: 600px) {
+  html[data-layout="wide"][data-live="yes"] .live { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
+  html[data-layout="wide"] #subBar { right: calc(50% + 12px); }
+}
+html[data-layout="compact"][data-orient="land"] #subBar { right: calc(50% + 9px); }
