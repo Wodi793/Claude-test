@@ -391,3 +391,16 @@ the Pencil can't press rail buttons but draws fine; wants Pencil squeeze = erase
 - **Thinnest line** 0.15 → 0.08 ft; slider step 0.05 → 0.01.
 - **Tap offset:** not changed yet — waiting on tap-test results.
 - Tests: new Pencil/two-tap test 15/15; baseline all pass; tabs, game, layouts, rule, season pass; no name clashes.
+
+### Version 25 preview — dark-purple border around the court (2026-11-14)
+Owner: dark purple strip around the court like B (1.5 ft); the court must NOT get smaller;
+the white border and letters may shrink; letters must be spaced away from the strip.
+- Purple board only: `THEMES.purple.apron = '#2b1550'`, `APRON = 1.5` ft, drawn just outside the boundary line.
+  White board unchanged (no answer from owner; my recommendation).
+- Court size unchanged (PLAIN_BAND unchanged). On the tight sides the strip runs to the screen edge.
+- Names: new `placeNames(L, theme)` sizes and centers PENGUINS / BURNS PARK in the white space left
+  outside the strip, `NAME_GAP = 0.4` ft clear of it. `MIN_BORDER_LETTERS` 2 → 1.25 ft so small screens keep
+  the names in the border instead of faint on the floor.
+- Letter sizes now: iPad sideways full 4.5 ft (same), half 2.3 ft (was 4.5); iPad upright half 1.5 ft (was ~3.7);
+  iPhone unchanged (4.3–4.5).
+- Noticed, not changed: the floating tab bar covers PENGUINS at the bottom when names are at the ends (since Stage 2).

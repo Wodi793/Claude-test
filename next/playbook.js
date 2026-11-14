@@ -13,20 +13,22 @@ const PURPLE = '#4e2a84';
 // Two board styles. "ink" is the board-color marker: white on purple, purple on white.
 // Lines drawn with it switch color when you switch boards; picked colors stay as picked.
 const THEMES = {
-  purple: { floor: PURPLE, band: '#ffffff', lines: '#ffffff', lettering: PURPLE, ink: '#ffffff',
+  purple: { floor: PURPLE, band: '#ffffff', lines: '#ffffff', lettering: PURPLE, ink: '#ffffff', apron: '#2b1550',
             oldPens: ['#ffffff', '#ffd84d', '#ff6b6b', '#7fd3ff'] },   // for plays saved before v2
-  white:  { floor: '#fbfafd', band: PURPLE, lines: PURPLE, lettering: '#ffffff', ink: PURPLE,
+  white:  { floor: '#fbfafd', band: PURPLE, lines: PURPLE, lettering: '#ffffff', ink: PURPLE, apron: null,
             oldPens: [PURPLE, '#1c1b22', '#d62839', '#1f6fd1'] },
 };
 
 const DEFAULT_WIDTH = 0.35;      // marker thickness for new lines, in feet on the court
 const MIN_WIDTH = 0.08, MAX_WIDTH = 1.2;   // range of the Line slider in the ••• menu
-const APP_VERSION = '24 preview';   // the preview copy (next/) — see BUILD-LOG.md
+const APP_VERSION = '25 preview';   // the preview copy (next/) — see BUILD-LOG.md
 const DB_NAME = 'penguins-playbook-preview';   // preview keeps its own plays, separate from the live app           // shown in the ••• menu; bump with each update
 const ZOOM_MAX = 6;              // how far you can zoom in (6× the fitted size)
 const ERASER_RADIUS_PX = 14;     // how close the eraser must come to a line, in screen points
+const APRON = 1.5;               // dark-purple out-of-bounds strip around the court (feet; purple board only)
+const NAME_GAP = 0.4;            // space kept between that strip and PENGUINS / BURNS PARK (feet)
 const PLAIN_BAND = 0.75;         // minimum border (feet) around the court: thin, but not zero
-const MIN_BORDER_LETTERS = 2;    // letter size (feet) needed to write PENGUINS in the border;
+const MIN_BORDER_LETTERS = 1.25;   // letter size (feet) needed to write PENGUINS in the border;
                                  // with less room, it goes on the court floor instead
 const MAX_LETTERS = 4.5;         // biggest letter size (feet) in the border
 const FLOOR_LETTERS = 3.5;       // letter size (feet) of the wordmark on the floor
@@ -227,14 +229,24 @@ function chooseLayout(courtKey, availW, availH) {
   L.W = availW / L.scale; L.H = availH / L.scale;            // whole area, in feet
   L.ox = (L.W - L.dw) / 2; L.oy = (L.H - L.dh) / 2;           // court centered in it
   L.ch = c.h;
+  return L;
+}
 
+/** Where the names go for this board style. The dark strip (purple board) takes the inner
+    part of the border, so the names get the white part outside it, kept NAME_GAP clear of it.
+    The court itself never shrinks for this. Worked out once per layout and board style. */
+function placeNames(L, theme) {
+  if (L.namesFor === theme) return;
+  const apron = THEMES[theme].apron ? APRON + NAME_GAP : 0;
+  const bandY = L.oy - apron, bandX = L.ox - apron;   // white space left for letters
   // Biggest letters that fit: in the top/bottom border, or in the side borders
   const fit = (band, room) => Math.min((band - 0.5) / 0.85, (room * 0.85) / longestName());
-  const ends = fit(L.oy, L.dw), sides = fit(L.ox, L.dh);
+  const ends = fit(bandY, L.dw), sides = fit(bandX, L.dh);
   const size = Math.min(MAX_LETTERS, Math.max(ends, sides));
   L.letters = size >= MIN_BORDER_LETTERS ? (ends >= sides ? 'ends' : 'sides') : 'floor';
   L.letterSize = size;
-  return L;
+  L.nameY = bandY / 2; L.nameX = bandX / 2;   // centered in the white space
+  L.namesFor = theme;
 }
 
 /* =====================================================================
@@ -374,17 +386,22 @@ function render() {
 
   // Board feet: team name in the border
   ctx.setTransform(d * view.k, 0, 0, d * view.k, d * view.tx, d * view.ty);
+  placeNames(L, state.theme);
   if (L.letters === 'ends') {
-    drawTeamName(ctx, L.W / 2, L.oy / 2, 0, t.lettering, L.letterSize, SCHOOL_NAME);
-    drawTeamName(ctx, L.W / 2, L.H - L.oy / 2, 0, t.lettering, L.letterSize, TEAM_NAME);
+    drawTeamName(ctx, L.W / 2, L.nameY, 0, t.lettering, L.letterSize, SCHOOL_NAME);
+    drawTeamName(ctx, L.W / 2, L.H - L.nameY, 0, t.lettering, L.letterSize, TEAM_NAME);
   } else if (L.letters === 'sides') {
-    drawTeamName(ctx, L.ox / 2, L.H / 2, -Math.PI / 2, t.lettering, L.letterSize, TEAM_NAME);
-    drawTeamName(ctx, L.W - L.ox / 2, L.H / 2, Math.PI / 2, t.lettering, L.letterSize, SCHOOL_NAME);
+    drawTeamName(ctx, L.nameX, L.H / 2, -Math.PI / 2, t.lettering, L.letterSize, TEAM_NAME);
+    drawTeamName(ctx, L.W - L.nameX, L.H / 2, Math.PI / 2, t.lettering, L.letterSize, SCHOOL_NAME);
   }
 
   // Court feet: the court and the drawings, turned if the layout says so
   ctx.translate(L.ox, L.oy);
   if (L.turned) ctx.transform(0, 1, -1, 0, L.ch, 0);
+  if (t.apron) {   // dark out-of-bounds strip just outside the boundary line
+    const c = COURTS[state.court];
+    ctx.fillStyle = t.apron; ctx.fillRect(-APRON, -APRON, c.w + 2 * APRON, c.h + 2 * APRON);
+  }
   drawCourt(ctx, state.court, t);
   if (L.letters === 'floor') drawFloorNames(ctx, state.court, t);
   drawPenguin(ctx, state.court, t);
