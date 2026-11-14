@@ -472,3 +472,21 @@ more negative space; pull it all together — "high-end Berlin design studio… 
   there; slimmer header so all five on court fit on an 11" iPad too. Timeline label removed everywhere.
 - Playbook not changed.
 - Tests: layouts (all five visible everywhere), game, season, rule, tabs, baseline pass.
+
+### Version 31 preview — fitted to each screen (2026-11-14)
+Owner's use: a coach times the game on a phone (often the foldable iPhone, folded, upright); the iPad is mainly
+for drawing plays, held sideways. Wants: folded = clean narrow face that scales across iPhones; unfolded upright
+and sideways both good; sideways = "two screens": clock + who's in | the playing-time chart, each scrolling,
+growing on the iPad; iPad turns. No sharing needed. "Make it beautiful."
+- New "SCREENS" section. Court and bench now sit in a `.sec-lists` wrapper (minutes.js), `display: contents`
+  everywhere except the two-screen layout.
+- Compact (any iPhone upright, folded): only urgent rule tags show (Play now / Must stay); "Needs 2:40" hidden.
+  Type and rows scale with width/height; very narrow (≤ 360) and very short (≤ 640, SE) tweaks — on the SE the
+  rule line hides so the bench keeps room.
+- Wide (unfolded sideways, iPad sideways): header hidden during a game; two equal columns split at the middle
+  (where a foldable's hinge is), each filling the height and scrolling on its own: left = clock card, then on
+  court + bench; right = the chart, full height. Rows, numbers and chart grow with the screen height.
+  Sub queue sits under the left column.
+- Tall (unfolded upright, iPad upright): header hidden during a game so all five on court fit; rows scale up.
+- Checked at 320×568, 360×780, 440×956, 669×927, 927×669, 1194×834, 1376×1032, 1032×1376: clock, Start/Stop
+  and all five on court visible everywhere; the chart visible in the two-screen layouts. All other tests pass.

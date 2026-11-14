@@ -311,6 +311,7 @@ function renderLive(body) {
         </div>
       </section>
       ${ms ? `<div class="rule-bar sec-rule ${ms.shortfall > 0 ? 'warn' : ''}" id="ruleBar">${ruleBarText(ms)}</div>` : ''}
+      <div class="sec-lists">
       <section class="sec-court">
         <h2 class="card-title">On court <span>${onCourt.length}</span></h2>
         <ul class="players" id="courtList"></ul>
@@ -320,6 +321,7 @@ function renderLive(body) {
         <div class="bench-scroll scrollable"><ul class="players" id="benchList"></ul>
           ${bench.length ? '' : '<p class="hint">Nobody on the bench.</p>'}</div>
       </section>
+      </div>
       <section class="sec-tl">
         <section class="card tl-card" id="liveTimeline"></section>
       </section>
