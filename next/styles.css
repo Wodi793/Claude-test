@@ -1736,3 +1736,31 @@ html[data-layout="compact"][data-orient="port"][data-live="yes"]:not([data-subbi
 .big-btn:disabled, #subConfirm:disabled { color: var(--ios-secondary) !important; }
 .score input, .ptag, .ptag.rule-owed, .tl-track, .sheet.light .chip, .light .menu-btn:active, .tb:active { background: var(--lav-soft); }
 .score input::placeholder, #sOpp::placeholder { color: var(--ios-secondary); }
+
+/* ----- Box score sheet ----- */
+.box-score-line { margin: 2px 4px 14px; color: #fff; font-size: 20px; }
+.box-score-line b { font-weight: 900; }
+.box-score-line span { opacity: .7; margin: 0 4px; }
+.box-card { padding: 0 !important; overflow: hidden; }
+.box-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.box-table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; color: var(--blk); font-size: 15px; }
+.box-table th { font-size: 11px; font-weight: 900; letter-spacing: .1em; color: var(--border-purple); padding: 10px 8px 8px; text-align: center; border-bottom: 2px solid var(--blk); white-space: nowrap; }
+.box-table td { padding: 9px 8px; text-align: center; font-weight: 600; white-space: nowrap; }
+.box-table tbody tr:nth-child(even) { background: rgba(78, 42, 132, .06); }
+.box-table .bn { color: var(--court); font-weight: 900; width: 34px; padding-left: 12px; text-align: left; }
+.box-table .bp { text-align: left; font-weight: 800; position: sticky; left: 0; background: inherit; }
+.box-table tbody .bp { background: #fff; }
+.box-table tbody tr:nth-child(even) .bp { background: #f6f3fa; }
+.box-table tfoot td { border-top: 2px solid var(--blk); font-weight: 900; }
+.box-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 6px 0 4px; }
+.box-actions .pill-btn { min-height: 50px; font-size: 16px; font-weight: 800; }
+.box-actions .pill-btn:disabled { opacity: .5; }
+#pastBox { width: 100%; min-height: 48px; margin: 0 0 12px; }
+@media (max-width: 520px) {
+  .box-table { font-size: 14px; }
+  .box-table th { padding: 10px 4px 8px; font-size: 10px; letter-spacing: .06em; }
+  .box-table td { padding: 9px 4px; }
+  .box-table .bn { width: 22px; padding-left: 10px; }
+  .box-table .bp { max-width: 84px; overflow: hidden; text-overflow: ellipsis; }
+}
+.box-table th.bp { text-transform: uppercase; }

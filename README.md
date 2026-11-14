@@ -16,6 +16,7 @@ home screen. No accounts, no server: everything is stored on the device.
 | `sports.js`, `data.js`, `settings.js` | Sport settings; teams, players and games; the Team sheet |
 | `gamelog.js`, `minutes.js`, `readouts.js` | Game clock and event log; the Minutes screens; timelines and season view |
 | `stats.js` | The Stats tab: tap a player, then a stat; team totals; Stats settings (which buttons show) |
+| `boxscore.js` | A game's box score on screen, and as a picture (PNG) or PDF to send from the share sheet |
 | `screen-check.html`, `tap-test.html` | Diagnostic pages (••• → Screen check) |
 | `manifest.webmanifest` | Home-screen name, icon and colors |
 | `sw.js` | Service worker — keeps a copy of the app on the device for offline use |

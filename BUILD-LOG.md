@@ -764,3 +764,18 @@ Owner: colors on Minutes inconsistent; only the court purple and the court's bor
   #e4dcef (lavender fills). Replaced: secondary text = border purple at 66%; stopped clock = border purple
   (running stays near-black); light fills = court purple at 10–14%; separators = border purple at 14%.
 - After: only #4e2a84, #2b1550 (plus see-through tints of them), near-black outlines, pink, white.
+
+## Stats stage S2a — box score, live version 54 (2026-11-14)
+Owner: after a game with stats there's no stats sheet; wants one that can be texted (PDF ideal, any document fine).
+- New `boxscore.js`. Box score sheet: title (opponent, date), score line, table — # · player · MIN (if the game
+  has minutes) · PTS · REB · OR · DR · AST · (STL/BLK/TO only if anyone has one) · PF · (TECH if any) ·
+  (FG / 3PT / FT made-attempted if any misses were tracked) — and a Team row. Minutes-only games show "–" for
+  stats; stats-only games have no MIN column; a note says which.
+- Open it from: Stats ••• → Box score; the Minutes final screen ("Box score"); a past game in Season.
+- Send picture / Send PDF: the sheet draws a 1200-px picture (court-purple header lettered like the court,
+  score, zebra table, legend) as PNG, and wraps the same drawing (JPEG) in a hand-written one-page PDF —
+  no libraries. Files are made when the sheet opens, so the buttons open the iOS share sheet immediately
+  (Messages, AirDrop, Mail, Save to Files); on a computer they download.
+- Verified: PNG 1200 × 1098; PDF opens in pdfinfo/pdftoppm (1 page, 612 × 560 pt); test box.js (full game,
+  minutes-only, stats-only); suite passes; no name clashes.
+- Next (S2b): season stats — totals, per-game averages, points per 10 minutes, blanks where data is missing.

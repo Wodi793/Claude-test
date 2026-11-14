@@ -116,6 +116,7 @@ async function openPastGame(id, roster) {
   $('pastTitle').textContent = new Date(g.date).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
     + (g.opponent ? ` · vs ${g.opponent}` : '');
   renderTimeline($('pastTimeline'), g, roster);
+  $('pastBox').onclick = () => openBoxScore(g);
   $('pastDelete').onclick = async () => {
     const ok = await ask({ title: 'Delete this game?', message: 'Its minutes leave the season totals. This can’t be undone.', okText: 'Delete', danger: true });
     if (!ok) return;

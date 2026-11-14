@@ -224,6 +224,25 @@
 </section>
 
 <!-- A past game: timeline and minutes -->
+<!-- Box score: one game's numbers; send as a picture or a PDF (boxscore.js) -->
+<section id="boxSheet" class="sheet light" hidden>
+  <header>
+    <h1>Box score</h1>
+    <button class="pill-btn" id="btnCloseBox" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </header>
+  <div class="scrollable team-scroll">
+    <p class="season-title" id="boxTitle"></p>
+    <p class="box-score-line" id="boxScoreLine"></p>
+    <section class="card box-card"><div class="box-scroll"><table class="box-table" id="boxTable"></table></div></section>
+    <p class="note" id="boxNote"></p>
+    <div class="box-actions">
+      <button class="pill-btn primary-btn" id="boxPng">Send picture</button>
+      <button class="pill-btn" id="boxPdf">Send PDF</button>
+    </div>
+    <p class="note">Opens the share sheet: Messages, AirDrop, Mail or Save to Files.</p>
+  </div>
+</section>
+
 <section id="pastSheet" class="sheet light" hidden>
   <header>
     <h1>Game</h1>
@@ -232,6 +251,7 @@
   <div class="scrollable team-scroll">
     <p class="season-title" id="pastTitle"></p>
     <section class="card tl-card" id="pastTimeline"></section>
+    <button class="pill-btn primary-btn" id="pastBox">Box score</button>
     <button class="pill-btn danger-btn" id="pastDelete">Delete this game</button>
   </div>
 </section>
@@ -253,6 +273,7 @@
 <dialog id="statsMenu" class="glass menu-dialog light">
   <h2>Stats</h2>
   <div class="menu-list">
+    <button class="menu-btn" id="smBox">Box score</button>
     <button class="menu-btn" id="smOpponent">Opponent</button>
     <button class="menu-btn" id="smSettings">Stats settings</button>
     <button class="menu-btn" id="smNew">Start a new game</button>
@@ -323,6 +344,7 @@
 <script src="readouts.js"></script>
 <script src="minutes.js"></script>
 <script src="stats.js"></script>
+<script src="boxscore.js"></script>
 <script src="shell.js"></script>
 </body>
 </html>

@@ -517,6 +517,7 @@ function renderFinal(body) {
     <ul class="players" id="finalList"></ul>
     <h2 class="card-title">Game timeline</h2>
     <section class="card tl-card" id="finalTimeline"></section>
+    <button class="big-btn" id="gBox">Box score</button>
     <button class="big-btn" id="gNew">New game</button>`;
   renderTimeline($('finalTimeline'), g, M.roster, r);
   const ms = ruleStatus(r);
@@ -528,6 +529,7 @@ function renderFinal(body) {
   }
   $('gUndo').onclick = undoGameAction;
   $('gNew').onclick = startNewGame;
+  $('gBox').onclick = () => openBoxScore(M.game);
 }
 
 /** Draw whichever screen fits the game's status. */
