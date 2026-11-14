@@ -1121,3 +1121,69 @@ html[data-tab="playbook"] #tabbar, .light-band #tabbar { background: #fff; borde
   -webkit-backdrop-filter: none; backdrop-filter: none; }
 html[data-tab="playbook"] .tabbtn:not(.active) { color: #4e2a84; }
 #playList .pill-btn { box-shadow: none; }   /* buttons inside a card: outline only */
+
+/* =====================================================================
+   POLISH (owner, after preview 32): the Playbook's menus set the standard —
+   apply the same rules to every menu, pop-up, sheet and control in the app.
+     • Buttons in lists: white, 2 px black outline, left-aligned, bold; no fill.
+     • Titles of pop-ups: the court lettering (heavy, spaced capitals, deep purple).
+     • Text boxes: pale lavender with a black outline.
+     • Steppers and switches: outlined; pink = what's on.
+     • Small square buttons (•••, gear): white, outlined — no lavender circles.
+   ===================================================================== */
+/* Pop-up titles */
+.menu-dialog h2, html[data-tab="minutes"] #modal h2, #modal h2 {
+  font-family: -apple-system, system-ui, sans-serif; font-weight: 900; text-transform: uppercase;
+  letter-spacing: .1em; font-size: 18px; color: #2b1550; margin-bottom: 6px; }
+.menu-dialog { padding: 18px; }
+.menu-dialog p, .menu-dialog .gs-note { font-size: 13px; }
+
+/* List buttons in pop-ups and sheets */
+.light .menu-btn, .menu-dialog .menu-btn, .sheet.light .menu-btn {
+  background: #fff; color: var(--blk); border: 2px solid var(--blk); border-radius: 6px; box-shadow: none;
+  justify-content: flex-start; padding: 0 14px; min-height: 48px; font-size: 16px; font-weight: 700; }
+.light .menu-btn:active, .menu-dialog .menu-btn:active { background: var(--lav-soft); }
+.menu-dialog .menu-btn.danger-text, .menu-dialog .menu-btn.danger { color: #d62839; }
+.menu-dialog .menu-btn.active { background: var(--pink); color: #fff; }
+.menu-list { display: flex; flex-direction: column; gap: 8px; }
+/* The last button of a pop-up (Cancel / Close): centered, set apart */
+.menu-dialog > .menu-btn:last-child, .menu-dialog .menu-list + .menu-btn, .menu-dialog .buttons button { justify-content: center; }
+
+/* Pop-up buttons (both tabs) */
+#modal .buttons button, .menu-dialog .buttons button {
+  background: #fff !important; color: var(--blk) !important; border: 2px solid var(--blk) !important; border-radius: 6px !important;
+  font-weight: 700; box-shadow: none; }
+#modal .buttons button.primary, .menu-dialog .buttons button.primary, .menu-dialog .primary-btn {
+  background: var(--pink) !important; color: #fff !important; box-shadow: 3px 3px 0 var(--blk) !important; }
+#modal .buttons button.danger { background: #d62839 !important; color: #fff !important; box-shadow: 3px 3px 0 var(--blk) !important; }
+
+/* Text boxes (both tabs) */
+#modal input, html[data-tab="minutes"] #modal input, .sheet.light .add-player input, .sheet.light .team-scroll .add-player input {
+  background: var(--lav-soft) !important; color: var(--blk) !important; border: 2px solid var(--blk) !important;
+  border-radius: 6px !important; }
+#modal input::placeholder, .sheet.light .add-player input::placeholder { color: var(--ios-secondary); }
+
+/* Steppers: an outlined box, − and + as square buttons */
+.light .stepper, .menu-dialog .stepper { background: #fff; border: 2px solid var(--blk); border-radius: 6px; padding: 2px; gap: 2px; }
+.light .stepper button, .menu-dialog .stepper button { color: var(--blk); border-radius: 4px; width: 38px; height: 36px; }
+.light .stepper button:active, .menu-dialog .stepper button:active { background: var(--lav-soft); }
+.light .stepper b, .menu-dialog .stepper b { color: var(--blk); font-weight: 900; }
+
+/* Segmented switches in pop-ups and sheets: outlined, pink when on, text never cut off */
+.light .seg, .menu-dialog .seg, .sheet.light .seg { background: #fff; border: 2px solid var(--blk); border-radius: 6px; padding: 2px; }
+.light .seg button, .menu-dialog .seg button { font-size: 13px; font-weight: 700; padding: 0 9px; line-height: 1.15; white-space: normal; }
+.light .seg button.active, .menu-dialog .seg button.active { background: var(--pink); color: #fff; }
+
+/* Small square buttons: ••• on the clock card, gear in the header, sheet close buttons */
+.tab-page .round-btn, .scoreboard .round-btn, .tab-page .page-head .round-btn, #gMenu {
+  width: 44px; height: 44px; border-radius: 6px !important; background: #fff; color: var(--blk);
+  border: 2px solid var(--blk); box-shadow: none; }
+#gMenu svg { color: var(--blk); }
+
+/* Team sheet details */
+.sheet.light .chip { background: #fff; color: var(--blk); border: 1.5px solid var(--blk); font-weight: 700; }
+.sheet.light .roster li.inactive .chip { background: var(--blk); color: #fff; }
+.sheet.light .icon-btn { color: var(--blk); }
+.sheet.light .team-row .tn { font-weight: 800; color: #2b1550; }
+.sheet.light .team-row.current .tn::before { color: var(--pink); }
+.menu-dialog .buttons button.primary-btn { background: var(--pink) !important; color: #fff !important; box-shadow: 3px 3px 0 var(--blk) !important; }

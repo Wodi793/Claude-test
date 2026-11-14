@@ -505,3 +505,13 @@ screen; "compress the white a little, make the border a little bigger".
   with court-lettering title and labels; Saved plays sheet on court purple with white outlined cards; toast,
   pop-ups and the corner switch match Minutes. Court drawing unchanged.
 - Tests: Playbook baseline, Pencil/two-tap, tabs, layouts, game, 8-screen check all pass; no name clashes.
+
+### Version 33 preview — one polish standard everywhere (2026-11-14)
+Owner liked the Playbook's menus and buttons in preview 32: apply the same design logic to the rest of the app.
+- New last section "POLISH": every pop-up title in the court lettering; list buttons white, outlined, left-aligned,
+  bold (destructive ones red); pop-up buttons white outlined, main one pink with a hard shadow, delete red;
+  text boxes pale lavender with a black outline (both tabs — the Minutes "Adjust clock" box had been purple);
+  steppers and switches outlined, pink when on; the ••• and gear buttons square and outlined; Team sheet chips,
+  icons and the current-team dot aligned with the rest.
+- Audit script (scratchpad audit.js) photographs every Minutes-side menu, sheet and pop-up.
+- Tests: Playbook baseline, Pencil, tabs, layouts, game, season, rule, 8-screen check all pass.
