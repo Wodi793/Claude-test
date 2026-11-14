@@ -529,3 +529,8 @@ start URL "./"), so no reinstall and no data loss.
 Tests on the live copy: baseline, tabs, layouts, game, rule, season, 8-screen check pass; Pencil test passed 3/3
 on rerun (one earlier run timed out in test setup, not reproducible).
 Next: owner runs the tap test on the iPad (••• → Screen check → Tap test).
+
+### Live version 35 (2026-11-14)
+I misread "End game is red." as a request; the owner did not want it red. Reverted: "End game now" in the Game
+menu is plain again (live and preview 35). "Discard this game" keeps its red text, as it was before.
+Lesson: when a short message could be a complaint or a request, ask.
