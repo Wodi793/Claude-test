@@ -515,3 +515,6 @@ Owner liked the Playbook's menus and buttons in preview 32: apply the same desig
   icons and the current-team dot aligned with the rest.
 - Audit script (scratchpad audit.js) photographs every Minutes-side menu, sheet and pop-up.
 - Tests: Playbook baseline, Pencil, tabs, layouts, game, season, rule, 8-screen check all pass.
+
+### Version 34 preview (2026-11-14)
+- Owner: "End game is red." The Game menu's "End game now" now uses the red danger text, like "Discard this game".
