@@ -518,3 +518,14 @@ Owner liked the Playbook's menus and buttons in preview 32: apply the same desig
 
 ### Version 34 preview (2026-11-14)
 - Owner: "End game is red." The Game menu's "End game now" now uses the red danger text, like "Discard this game".
+
+## Published: live version 34 (2026-11-14, owner: "Publish")
+Everything from previews 28–34 (loud → sharp look, header lockup, pre-game order, screen fitting incl. the
+two-screen sideways layout, Playbook restyle, bigger court on lopsided screens, wider dark band, one polish
+standard, End game in red). Save point: branch `save/live-v27`.
+Same steps as Stage 7: copied next/ to the root; fixed icon paths, Screen check link, title, DB_NAME
+'penguins-playbook', APP_VERSION 34, sw.js VERSION 'penguins-v34'. Manifest unchanged (name "Penguins",
+start URL "./"), so no reinstall and no data loss.
+Tests on the live copy: baseline, tabs, layouts, game, rule, season, 8-screen check pass; Pencil test passed 3/3
+on rerun (one earlier run timed out in test setup, not reproducible).
+Next: owner runs the tap test on the iPad (••• → Screen check → Tap test).

@@ -750,3 +750,440 @@ html[data-layout="compact"] .sec-rule br { display: none; }
   html[data-layout="compact"][data-orient="port"] .pnum { min-width: 32px; height: 32px; font-size: 15px; }
   html[data-layout="compact"][data-orient="port"] .sec-court .card-title, html[data-layout="compact"][data-orient="port"] .sec-bench .card-title { margin: 4px 12px 3px; }
 }
+
+/* =====================================================================
+   LOUD TEAM SIDE (owner, after preview 28): purple, hot pink and white, with black
+   outlines — "loud", "sassy", more definition and contrast than the light (v27) or
+   dark (v28) looks. Same layout as Stage 6; only colors, outlines and the header change.
+     page          = court purple (#4e2a84)
+     cards, rows   = white, 2px black outline, hard black drop shadow
+     hot pink      = the main buttons (Start, Confirm), the quarter badge, picked / coming-in rows, urgent tags
+     black         = Stop, a girl marked to come out, outlines
+     header        = BURNS PARK PENGUINS in the court's lettering (heavy, spaced capitals, deep purple)
+   ===================================================================== */
+:root {
+  --blk: #14091f;                 /* near-black outline */
+  --pink: #ff2e93;                /* hot pink */
+  --pink-soft: #ffe0ef;
+  --lav-soft: #f1e9fb;
+  --line: 2px solid var(--blk);
+  --pop: 3px 3px 0 var(--blk);    /* hard drop shadow */
+  --ios-bg: #4e2a84;
+  --ios-card: #ffffff;
+  --ios-sep: rgba(20, 9, 31, .12);
+  --ios-label: #14091f;
+  --ios-secondary: #6a5a80;
+  --ios-fill: var(--lav-soft);
+  --tint: #4e2a84;
+  --ios-red: #d62839;
+}
+
+/* ----- Text that sits on the purple page: white ----- */
+.tab-page .card-title, .sheet.light .card-title, .tab-page .card-title span, .sheet.light .card-title span,
+.tab-page .hint, .tab-page .note, .sheet.light .note, .rule-note, .sheet.light h1, .season-title,
+.final-date { color: #fff; }
+.tab-page .card-title span, .sheet.light .card-title span, .tab-page .hint, .tab-page .note, .sheet.light .note,
+.rule-note { color: rgba(255, 255, 255, .82); }
+.sheet.light { background: #4e2a84; }
+
+/* ----- Header card: BURNS PARK PENGUINS, lettered like the court ----- */
+.page-head { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 8px 10px;
+  background: #fff; border: var(--line); box-shadow: var(--pop); border-radius: 16px; padding: 12px 14px; margin-bottom: 14px; }
+.page-head .team-title { display: contents; }
+.page-head .team-name { grid-column: 1 / -1; font-family: -apple-system, system-ui, "Helvetica Neue", Arial, sans-serif;
+  font-weight: 900; text-transform: uppercase; letter-spacing: .19em; color: #2b1550; line-height: 1.05;
+  font-size: clamp(17px, calc((100vw - 76px) / 17.5), 34px); white-space: nowrap; overflow: hidden; }
+.page-head .team-season { grid-column: 1; margin: 0; color: var(--ios-secondary); }
+.tab-page .page-head .season-btn, .tab-page .page-head .round-btn { background: #fff; color: #4e2a84; border: var(--line); }
+/* Wide screens: name, season and buttons on one line (keeps the game higher on the screen) */
+@media (min-width: 700px) {
+  .page-head { grid-template-columns: auto 1fr auto auto; padding: 10px 14px; }
+  .page-head .team-name { grid-column: 1; font-size: 30px; }
+  .page-head .team-season { grid-column: 2; padding-left: 8px; }
+}
+
+/* ----- Cards: white, outlined, hard shadow ----- */
+.tab-page .card, .sheet.light .card, .players, .scoreboard, .rule-bar, .tl-card, .season-card {
+  background: #fff; color: var(--ios-label); border: var(--line); box-shadow: var(--pop); }
+.players { margin-right: 3px; }   /* room for the shadow */
+
+/* ----- Buttons ----- */
+.tab-page .primary-btn, .sheet.light .primary-btn, .light .primary-btn, #subBar .primary-btn,
+html[data-tab="minutes"] #modal .buttons button.primary, .big-btn, .clock-btn.go, .clock-btn.next {
+  background: var(--pink) !important; color: #fff !important; border: var(--line); box-shadow: var(--pop); }
+.big-btn:disabled { background: #e4dcef !important; color: var(--ios-secondary) !important; box-shadow: none; }
+.clock-btn.stop { background: var(--blk); color: #fff; border: var(--line); box-shadow: 3px 3px 0 var(--pink); }
+.undo-btn { background: #fff; color: var(--blk); border: var(--line); }
+.tab-page .pill-btn, .sheet.light .pill-btn, .light .pill-btn, #subBar .pill-btn { background: #fff; color: var(--blk); border: var(--line); }
+.period-chip { background: var(--pink); color: #fff; border: var(--line); }
+.tab-page .seg, .light .seg { background: var(--lav-soft); border: var(--line); }
+.tab-page .seg button, .light .seg button { color: var(--blk); }
+.tab-page .seg button.active, .light .seg button.active { background: var(--pink); color: #fff; }
+.light .menu-btn { background: var(--lav-soft); color: var(--blk); border: var(--line); }
+.light .menu-btn.active { background: var(--pink); color: #fff; }
+.sheet.light .danger-btn { background: #fff !important; color: var(--ios-red); border: var(--line) !important; }
+
+/* ----- Player rows ----- */
+.pnum, .sheet.light .roster .num { background: #4e2a84 !important; color: #fff !important; }
+.pmin { color: var(--blk); }
+.ptag, .ptag.rule-owed { background: var(--lav-soft); color: #4e2a84; }
+.ptag.rule-now, .ptag.rule-must { background: var(--pink); color: #fff; }
+.ptag.rule-keep { background: #4e2a84; color: #fff; }
+.pmet { color: var(--pink); }
+.prow.picked, .prow.coming-in { background: var(--pink); color: #fff; box-shadow: none; }
+.prow.selected, .prow.going-out { background: var(--blk); color: #fff; }
+.prow.picked .pnum, .prow.coming-in .pnum { background: #fff !important; color: var(--pink) !important; }
+.prow.selected .pnum, .prow.going-out .pnum { background: #fff !important; color: var(--blk) !important; }
+.prow.picked .pmin, .prow.coming-in .pmin, .prow.selected .pmin, .prow.going-out .pmin,
+.prow.selected .pmet, .prow.going-out .pmet, .prow.coming-in .pmet { color: #fff; }
+.prow.picked .ptag, .prow.coming-in .ptag { background: #fff; color: var(--pink); }
+.prow.selected .ptag, .prow.going-out .ptag,
+.prow.selected .ptag.rule-now, .prow.going-out .ptag.rule-keep { background: #fff; color: var(--blk); }
+
+/* ----- Team sheet bits ----- */
+.sheet.light .chip { background: var(--lav-soft); color: var(--blk); }
+.sheet.light .roster li.inactive .chip { background: var(--blk); color: #fff; }
+
+/* ----- Overlays (menus, sub queue, pop-ups, thumb bar, corner switch): white, outlined ----- */
+.light.glass, .light .glass, #subBar, html[data-tab="minutes"] #tabbar, html[data-tab="minutes"] #modal,
+html[data-layout="compact"] .sb-actions {
+  background: #fff; -webkit-backdrop-filter: none; backdrop-filter: none;
+  border: var(--line); box-shadow: 4px 4px 0 var(--blk); color: var(--ios-label); }
+html[data-layout="compact"][data-orient="land"] .sb-actions { background: none; border: 0; box-shadow: none; }
+html[data-tab="minutes"] .tabbtn:not(.active) { color: #4e2a84; }
+
+/* ----- Timeline and season table ----- */
+.tl-head, .st-head { color: var(--ios-secondary); }
+.tl-key { color: var(--ios-secondary); }
+.tl-key i.deadline { border-left-color: var(--blk); }
+.tl-track { background: var(--lav-soft); }
+.tl-track i { background: #4e2a84; }
+.tl-track i.live { background: var(--pink); }
+.tl-lines i.deadline { border-left-color: var(--blk); }
+.tl-lines i.now { border-left-color: var(--pink); }
+.tl-name b, .st-name b { color: #4e2a84; }
+.st-name em, .st-row.behind .st-fair { background: var(--pink); color: #fff; }
+/* Sheet text on the purple background (titles, summaries) is white; text inside white cards stays dark */
+.sheet.light p, .sheet.light .season-title { color: #fff; }
+.sheet.light p.note, .sheet.light .season-title + .note { color: rgba(255, 255, 255, .82); }
+.sheet.light .card p { color: var(--ios-secondary); }
+
+/* =====================================================================
+   SHARP (owner, after preview 29): "elegant, polished, high-end — sharp."
+   Builds on LOUD: same colors, tighter system.
+     • Corners: 6 px (cards, buttons), 4 px (tags) — crisp, not bubbly.
+     • One outline (2 px black) and one hard shadow (4 px) everywhere.
+     • Type: the court's lettering (900 weight, wide-spaced capitals) for the header,
+       sheet titles and section labels; everything else plain. Small print is small.
+     • More air: 20–24 px between blocks, roomier cards.
+   ===================================================================== */
+:root { --r: 6px; --pop: 4px 4px 0 var(--blk); }
+.page-scroll { padding-left: 20px; padding-right: 20px; padding-top: 20px; }
+
+/* Cards, rows, buttons, overlays: one corner, one outline, one shadow */
+.tab-page .card, .sheet.light .card, .players, .scoreboard, .rule-bar, .tl-card, .season-card,
+.page-head, .big-btn, .clock-btn, .undo-btn, .tab-page .primary-btn, .sheet.light .primary-btn,
+.tab-page .pill-btn, .sheet.light .pill-btn, .light .pill-btn, #subBar .pill-btn, #subBar .primary-btn,
+.light .menu-btn, .tab-page .seg, .light .seg, .sheet.light .danger-btn,
+.light.glass, .light .glass, #subBar, html[data-tab="minutes"] #modal, html[data-layout="compact"] .sb-actions,
+html[data-tab="minutes"] #modal .buttons button, .tab-page .page-head .season-btn {
+  border-radius: var(--r) !important; }
+.tab-page .seg button, .light .seg button { border-radius: 4px; }
+.ptag, .period-chip, .st-name em, .st-row.behind .st-fair { border-radius: 4px; }
+.pnum, .sheet.light .roster .num { border-radius: 4px !important; }
+.tab-page .card, .sheet.light .card, .players, .scoreboard, .tl-card, .season-card, .page-head { box-shadow: var(--pop); }
+.players { margin-right: 4px; }
+.tab-page .card, .sheet.light .card, .players, .scoreboard, .tl-card, .season-card, .page-head, .big-btn { margin-bottom: 22px; }
+
+/* Header: BURNS PARK over a big PENGUINS, lettered like the court */
+.page-head { padding: 16px 18px; gap: 12px 10px; }
+.page-head .team-name { display: flex; flex-direction: column; letter-spacing: 0; font-size: inherit; line-height: 1; overflow: visible; }
+.page-head .tn-school { font-size: 13px; font-weight: 900; letter-spacing: .32em; color: #4e2a84; margin-bottom: 4px; }
+.page-head .tn-team { font-size: clamp(40px, 13.5vw, 64px); font-weight: 900; letter-spacing: .1em; color: #2b1550; margin-right: -.1em; }
+.page-head .team-season { font-size: 13px; }
+@media (min-width: 700px) {
+  .page-head { grid-template-columns: auto 1fr auto auto; padding: 16px 20px; }
+  .page-head .team-name { grid-column: 1; grid-row: 1 / span 2; }
+  .page-head .tn-team { font-size: 56px; }
+  .page-head .team-season { grid-column: 2; grid-row: 1 / span 2; align-self: end; padding: 0 0 8px 14px; }
+  .page-head .season-btn, .page-head .round-btn { grid-row: 1 / span 2; }
+}
+
+/* Section labels and sheet titles: the court's lettering, small */
+.tab-page .card-title, .sheet.light .card-title { font-size: 11px; font-weight: 900; letter-spacing: .18em; margin: 26px 2px 10px; }
+.tab-page .card-title span, .sheet.light .card-title span { font-size: 11px; font-weight: 600; letter-spacing: .02em; text-transform: none; margin-left: 6px; }
+.sheet.light h1 { font-weight: 900; text-transform: uppercase; letter-spacing: .12em; font-size: 28px; }
+.sheet.light .season-title { font-weight: 800; }
+
+/* Small print (pre-game rules and how-to) */
+.small-print, .tab-page .hint.small-print, .rule-note.small-print { font-size: 12px; line-height: 1.45; margin: 0 2px 14px;
+  color: rgba(255, 255, 255, .72); }
+.pregame .big-btn { margin-bottom: 14px; }
+.pregame > .card { margin-top: 18px; }
+
+/* Rows: a little more air */
+.prow { min-height: 58px; padding: 0 18px 0 14px; gap: 14px; }
+.ptag { font-size: 12px; font-weight: 800; letter-spacing: .02em; }
+.pmin { font-weight: 800; }
+
+/* Clock card */
+.scoreboard { padding: 18px 20px 20px; }
+.clock { letter-spacing: -.03em; font-weight: 800; }
+.period-chip { font-size: 13px; letter-spacing: .1em; font-weight: 900; padding: 6px 10px; }
+.clock-btn, .big-btn { font-weight: 900; letter-spacing: .04em; text-transform: uppercase; font-size: 18px; }
+
+/* iPad sideways: a 2 × 2 grid — clock | timeline on top (same height), on court | bench below.
+   The rule summary is left out here (the tags on each player say the same thing). */
+html[data-layout="wide"] .page-scroll { padding: 24px 28px; }
+html[data-layout="wide"] .live { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 28px;
+  grid-template-areas: "sb tl" "court bench"; align-items: stretch; }
+html[data-layout="wide"] .sec-rule { display: none; }
+html[data-layout="wide"] .sec-tl { position: static; display: flex; }
+html[data-layout="wide"] .sec-tl .tl-card { flex: 1; margin-bottom: 22px; padding: 16px 18px 10px; }
+html[data-layout="wide"] .sec-sb { display: flex; flex-direction: column; margin-bottom: 22px; }
+html[data-layout="wide"] .sec-sb .clock { flex: 1; display: flex; align-items: center; justify-content: center;
+  font-size: clamp(110px, 12vw, 170px); margin: 6px 0 12px; }
+html[data-layout="wide"] .sec-court, html[data-layout="wide"] .sec-bench { align-self: start; }
+html[data-layout="wide"] .sec-court .card-title, html[data-layout="wide"] .sec-bench .card-title { margin-top: 4px; }
+.tl-row { height: 28px; }
+/* iPad sideways: a slimmer header and timeline so all five on court stay on screen (smaller iPads too) */
+html[data-layout="wide"] .page-scroll { padding-top: 16px; }
+html[data-layout="wide"] .page-head { padding: 10px 18px; }
+html[data-layout="wide"] .page-head .tn-team { font-size: 42px; }
+html[data-layout="wide"] .tl-row { height: 26px; }
+html[data-layout="wide"] .sec-court .card-title, html[data-layout="wide"] .sec-bench .card-title { margin: 0 2px 10px; }
+.sheet.light .chip { border-radius: 4px; }
+
+/* =====================================================================
+   SCREENS (owner, after preview 30): how the game screen fits each device.
+     • Folded / any iPhone upright (compact): one clean, narrow face — clock on top,
+       the five on court, the bench scrolling, Undo + Start/Stop by the thumb.
+       Only the urgent rule tags show here (Play now / Must stay); "Needs 2:40" hides.
+     • Unfolded upright, iPad upright (tall): one column, scaled up.
+     • Unfolded sideways, iPad sideways (wide): TWO SCREENS, split down the middle
+       (where a foldable's hinge is): left = clock + who's in + bench, right = the
+       playing-time chart. Each side fills the height and scrolls on its own.
+       Sizes grow with the screen.
+   ===================================================================== */
+.sec-lists { display: contents; }   /* just a wrapper; only the two-screen layout uses it as a box */
+
+/* ----- Compact: a calmer, narrower face ----- */
+html[data-layout="compact"] .ptag.rule-owed { display: none; }
+html[data-layout="compact"] .players { margin-bottom: 0; }
+html[data-layout="compact"][data-live="yes"] .page-scroll { padding-left: 14px; padding-right: 14px; padding-top: 10px; }
+html[data-layout="compact"] .sec-sb { margin-bottom: 12px; padding: 10px 14px; }
+html[data-layout="compact"] .clock { font-size: clamp(48px, 17vw, 76px); }
+html[data-layout="compact"] .prow { min-height: clamp(46px, 6.2vh, 58px); padding: 0 14px 0 10px; gap: 12px; }
+html[data-layout="compact"] .pname { font-size: clamp(16px, 4.6vw, 19px); }
+html[data-layout="compact"] .pmin { font-size: clamp(16px, 4.6vw, 19px); margin-left: auto; }
+html[data-layout="compact"] .pnum { min-width: 34px; height: 34px; font-size: 16px; }
+html[data-layout="compact"] .sec-court .card-title, html[data-layout="compact"] .sec-bench .card-title { margin: 10px 2px 6px; }
+html[data-layout="compact"] .sec-court .players { margin-bottom: 4px; }
+html[data-layout="compact"] .sb-actions { left: max(14px, env(safe-area-inset-left)); right: max(14px, env(safe-area-inset-right)); padding: 8px; }
+/* Very narrow (folded cover screens, iPhone SE): drop the period-chip padding, smaller tags */
+@media (max-width: 360px) {
+  html[data-layout="compact"] .ptag { font-size: 11px; padding: 3px 6px; }
+  html[data-layout="compact"] .prow { padding: 0 10px 0 8px; gap: 10px; }
+  html[data-layout="compact"] .sb-actions .clock-btn { font-size: 18px; }
+}
+
+/* ----- Wide: two screens ----- */
+html[data-layout="wide"][data-live="yes"] .page-head { display: none; }
+html[data-layout="wide"][data-live="yes"] .tab-page .page-scroll { overflow: hidden; padding: 20px 24px;
+  padding-bottom: calc(var(--tabs-bottom, 12px) + 58px + var(--subbar-h, 0px)); }
+html[data-layout="wide"][data-live="yes"] #mBody { height: 100%; max-width: none; }
+html[data-layout="wide"][data-live="yes"] .live { height: 100%; max-width: none; display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas: "sb tl" "lists tl"; column-gap: 48px; align-items: stretch; }
+html[data-layout="wide"] .sec-sb { grid-area: sb; margin-bottom: 18px; }
+html[data-layout="wide"] .sec-sb .clock { flex: none; font-size: clamp(84px, min(11vw, 17vh), 200px); margin: 4px 0 14px; }
+html[data-layout="wide"] .sec-lists { grid-area: lists; display: block; overflow-y: auto; min-height: 0;
+  padding: 0 6px 6px 0; -webkit-overflow-scrolling: touch; }
+html[data-layout="wide"] .sec-court .card-title { margin-top: 2px; }
+html[data-layout="wide"] .sec-tl { grid-area: tl; min-height: 0; overflow-y: auto; padding: 0 6px 6px 0; display: block; }
+html[data-layout="wide"] .sec-tl .tl-card { min-height: calc(100% - 6px); margin: 0; padding: clamp(14px, 2vh, 24px) clamp(14px, 1.6vw, 24px) 12px; }
+/* Bigger screens, bigger rows and type */
+html[data-layout="wide"] .prow { min-height: clamp(52px, 7vh, 76px); }
+html[data-layout="wide"] .pname, html[data-layout="wide"] .pmin { font-size: clamp(17px, 2.3vh, 24px); }
+html[data-layout="wide"] .pnum { min-width: clamp(34px, 4.6vh, 48px); height: clamp(34px, 4.6vh, 48px); font-size: clamp(16px, 2.1vh, 22px); }
+html[data-layout="wide"] .tl-row { height: clamp(28px, 4.6vh, 50px); }
+html[data-layout="wide"] .tl-track { height: clamp(14px, 2.2vh, 24px); }
+html[data-layout="wide"] .tl-name, html[data-layout="wide"] .tl-total { font-size: clamp(13px, 1.9vh, 19px); }
+html[data-layout="wide"] .tl-name { width: clamp(84px, 9vw, 140px); }
+html[data-layout="wide"] .tl-total { width: clamp(44px, 4.5vw, 64px); }
+html[data-layout="wide"] .tl-head { font-size: clamp(11px, 1.5vh, 14px); height: clamp(20px, 3vh, 30px); }
+html[data-layout="wide"] .tl-overlay { inset: clamp(20px, 3vh, 30px) 0 0 0; }
+/* The sub queue sits under the left screen, not across the middle */
+html[data-layout="wide"] #subBar { left: 24px; right: calc(50% + 24px); max-width: none; margin: 0; }
+
+/* ----- Tall (unfolded upright, iPad upright): scale up a little ----- */
+html[data-layout="tall"] .prow { min-height: clamp(54px, 5.6vh, 68px); }
+html[data-layout="tall"] .pname, html[data-layout="tall"] .pmin { font-size: clamp(17px, 2vh, 22px); }
+/* Tall during a game: the header steps aside (as on the other screens) so all five on court fit */
+html[data-layout="tall"][data-live="yes"] .page-head { display: none; }
+/* Very short phones (iPhone SE): the rule line steps aside so the bench keeps room to scroll
+   (the urgent tags on each player still show the rule) */
+@media (max-height: 640px) {
+  html[data-layout="compact"][data-orient="port"] .sec-rule { display: none; }
+  html[data-layout="compact"][data-orient="port"] .clock { font-size: 40px; }
+  html[data-layout="compact"][data-orient="port"] .prow { min-height: 42px; }
+}
+
+/* =====================================================================
+   PLAYBOOK, SHARP (owner, after preview 31): the Playbook's tools and menus in the
+   same language as Minutes — white, a 2 px black outline, a hard shadow, 6 px corners,
+   the court's lettering for titles. Hot pink only for what's switched on (the tool in
+   use, Full/Half, Purple/White, the slider) and the main button in a pop-up.
+   The court itself is unchanged.
+   ===================================================================== */
+/* Rail */
+#rail, .light-band #rail { background: #fff; border: 2px solid var(--blk); box-shadow: 4px 4px 0 var(--blk);
+  border-radius: 6px; padding: 5px; gap: 3px; -webkit-backdrop-filter: none; backdrop-filter: none; }
+#rail svg, .glass#rail svg { filter: none; color: #2b1550; }
+.tb { border-radius: 4px; color: #2b1550; }
+.tb:active { background: var(--lav-soft); }
+.tb.active { background: var(--pink); box-shadow: none; }
+.tb.active svg { color: #fff; }
+.tb:disabled { opacity: .28; }
+.sep { width: 70%; height: 2px; background: var(--blk); opacity: .12; margin: 2px 0; }
+.dot { box-shadow: 0 0 0 2px var(--blk); }
+.tb.active .dot { box-shadow: 0 0 0 2px #fff; }
+.rainbow .dot span { box-shadow: 0 0 0 1.5px var(--blk); }
+#btnSave.unsaved::after { background: var(--pink); box-shadow: none; border: 1.5px solid #fff; }
+/* Full | Half */
+.courtseg { background: var(--lav-soft); border-radius: 4px; box-shadow: none; padding: 2px; }
+.courtseg .lens { background: var(--pink); border: 0; box-shadow: none; border-radius: 3px; left: 2px; right: 2px; top: 2px;
+  -webkit-backdrop-filter: none; backdrop-filter: none; }
+.cs { color: #2b1550; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; font-size: 11px; border-radius: 3px; }
+.cs.active { color: #fff; text-shadow: none; }
+.cs .icon { color: inherit; }
+/* The tab that peeks out at the edge */
+#grab span, .light-band #grab span { width: 8px; background: #fff; border: 2px solid var(--blk); border-radius: 4px;
+  box-shadow: 2px 2px 0 var(--blk); -webkit-backdrop-filter: none; backdrop-filter: none; }
+
+/* ••• menu */
+#more { background: #fff; color: var(--blk); border: 2px solid var(--blk); box-shadow: 5px 5px 0 var(--blk);
+  border-radius: 6px; padding: 16px; gap: 12px; -webkit-backdrop-filter: none; backdrop-filter: none; }
+#more svg { filter: none; }
+#playName { font-family: -apple-system, system-ui, sans-serif; font-weight: 900; text-transform: uppercase;
+  letter-spacing: .12em; font-size: 17px; color: #2b1550; text-shadow: none; }
+#more .setting { color: var(--blk); font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: .14em; }
+#more .seg { background: var(--lav-soft); border: 2px solid var(--blk); border-radius: 6px; box-shadow: none; padding: 2px; }
+#more .seg button { color: var(--blk); border-radius: 4px; font-size: 14px; font-weight: 700; min-height: 32px; }
+#more .seg button.active { background: var(--pink); color: #fff; box-shadow: none; }
+#more .menu-btn { background: #fff; color: var(--blk); border: 2px solid var(--blk); border-radius: 6px; box-shadow: none;
+  font-size: 15px; font-weight: 700; }
+#more .menu-btn:active { background: var(--lav-soft); }
+#more .menu-btn.danger { color: #d62839; }
+#widthRange::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: var(--blk); box-shadow: none; }
+#widthRange::-webkit-slider-thumb { width: 24px; height: 24px; margin-top: -10px; background: var(--pink);
+  border: 2px solid var(--blk); box-shadow: 2px 2px 0 var(--blk); }
+#widthPreview { box-shadow: 0 0 0 1.5px var(--blk); }
+#version { color: var(--ios-secondary); }
+#screenCheck { color: #4e2a84; }
+
+/* Toast */
+#toast, .light-band #toast { background: #fff; color: #2b1550; border: 2px solid var(--blk); box-shadow: 3px 3px 0 var(--blk);
+  border-radius: 6px; font-weight: 700; -webkit-backdrop-filter: none; backdrop-filter: none; }
+
+/* Saved plays sheet */
+#plays { background: #4e2a84; -webkit-backdrop-filter: none; backdrop-filter: none; }
+#plays header { padding: 16px 20px 10px; }
+#plays h1 { font-family: -apple-system, system-ui, sans-serif; font-weight: 900; text-transform: uppercase;
+  letter-spacing: .12em; font-size: 28px; color: #fff; }
+#plays .actions { padding: 6px 20px 16px; gap: 12px; }
+#plays .pill-btn { background: #fff; color: var(--blk); border: 2px solid var(--blk); border-radius: 6px;
+  box-shadow: 3px 3px 0 var(--blk); font-weight: 700; }
+#plays .pill-btn svg { color: #2b1550; }
+#plays .note { color: rgba(255, 255, 255, .78); padding: 0 22px 10px; font-size: 12px; }
+#playList { padding: 0 24px 24px 20px; }
+#playList li { background: #fff; color: var(--blk); border: 2px solid var(--blk); border-radius: 6px;
+  box-shadow: 4px 4px 0 var(--blk); margin-bottom: 14px; }
+#playList li.current { box-shadow: 4px 4px 0 var(--pink); border-color: var(--blk); }
+#playList .name { font-family: -apple-system, system-ui, sans-serif; font-weight: 800; font-size: 17px; color: #2b1550; }
+#playList .meta { color: var(--ios-secondary); }
+#playList button { color: #2b1550; }
+#plays .empty { color: rgba(255, 255, 255, .8); }
+
+/* Pop-ups while on the Playbook: the same white card as on Minutes */
+html[data-tab="playbook"] #modal { background: #fff; color: var(--blk); border: 2px solid var(--blk);
+  box-shadow: 5px 5px 0 var(--blk); border-radius: 6px; -webkit-backdrop-filter: none; backdrop-filter: none; }
+#modal h2 { font-family: -apple-system, system-ui, sans-serif; font-weight: 900; text-transform: uppercase;
+  letter-spacing: .1em; font-size: 18px; color: #2b1550; }
+html[data-tab="playbook"] #modal p { color: var(--ios-secondary); }
+html[data-tab="playbook"] #modal input { background: var(--lav-soft); color: var(--blk); border: 2px solid var(--blk); border-radius: 6px; }
+html[data-tab="playbook"] #modal .buttons button { background: #fff; color: var(--blk); border: 2px solid var(--blk); border-radius: 6px; font-weight: 700; }
+html[data-tab="playbook"] #modal .buttons button.primary { background: var(--pink); color: #fff; box-shadow: 3px 3px 0 var(--blk); }
+html[data-tab="playbook"] #modal .buttons button.danger { background: #d62839; color: #fff; }
+
+/* Corner switch on the Playbook: the same white button as on Minutes */
+html[data-tab="playbook"] #tabbar, .light-band #tabbar { background: #fff; border: 2px solid var(--blk); box-shadow: 3px 3px 0 var(--blk);
+  -webkit-backdrop-filter: none; backdrop-filter: none; }
+html[data-tab="playbook"] .tabbtn:not(.active) { color: #4e2a84; }
+#playList .pill-btn { box-shadow: none; }   /* buttons inside a card: outline only */
+
+/* =====================================================================
+   POLISH (owner, after preview 32): the Playbook's menus set the standard —
+   apply the same rules to every menu, pop-up, sheet and control in the app.
+     • Buttons in lists: white, 2 px black outline, left-aligned, bold; no fill.
+     • Titles of pop-ups: the court lettering (heavy, spaced capitals, deep purple).
+     • Text boxes: pale lavender with a black outline.
+     • Steppers and switches: outlined; pink = what's on.
+     • Small square buttons (•••, gear): white, outlined — no lavender circles.
+   ===================================================================== */
+/* Pop-up titles */
+.menu-dialog h2, html[data-tab="minutes"] #modal h2, #modal h2 {
+  font-family: -apple-system, system-ui, sans-serif; font-weight: 900; text-transform: uppercase;
+  letter-spacing: .1em; font-size: 18px; color: #2b1550; margin-bottom: 6px; }
+.menu-dialog { padding: 18px; }
+.menu-dialog p, .menu-dialog .gs-note { font-size: 13px; }
+
+/* List buttons in pop-ups and sheets */
+.light .menu-btn, .menu-dialog .menu-btn, .sheet.light .menu-btn {
+  background: #fff; color: var(--blk); border: 2px solid var(--blk); border-radius: 6px; box-shadow: none;
+  justify-content: flex-start; padding: 0 14px; min-height: 48px; font-size: 16px; font-weight: 700; }
+.light .menu-btn:active, .menu-dialog .menu-btn:active { background: var(--lav-soft); }
+.menu-dialog .menu-btn.danger-text, .menu-dialog .menu-btn.danger { color: #d62839; }
+.menu-dialog .menu-btn.active { background: var(--pink); color: #fff; }
+.menu-list { display: flex; flex-direction: column; gap: 8px; }
+/* The last button of a pop-up (Cancel / Close): centered, set apart */
+.menu-dialog > .menu-btn:last-child, .menu-dialog .menu-list + .menu-btn, .menu-dialog .buttons button { justify-content: center; }
+
+/* Pop-up buttons (both tabs) */
+#modal .buttons button, .menu-dialog .buttons button {
+  background: #fff !important; color: var(--blk) !important; border: 2px solid var(--blk) !important; border-radius: 6px !important;
+  font-weight: 700; box-shadow: none; }
+#modal .buttons button.primary, .menu-dialog .buttons button.primary, .menu-dialog .primary-btn {
+  background: var(--pink) !important; color: #fff !important; box-shadow: 3px 3px 0 var(--blk) !important; }
+#modal .buttons button.danger { background: #d62839 !important; color: #fff !important; box-shadow: 3px 3px 0 var(--blk) !important; }
+
+/* Text boxes (both tabs) */
+#modal input, html[data-tab="minutes"] #modal input, .sheet.light .add-player input, .sheet.light .team-scroll .add-player input {
+  background: var(--lav-soft) !important; color: var(--blk) !important; border: 2px solid var(--blk) !important;
+  border-radius: 6px !important; }
+#modal input::placeholder, .sheet.light .add-player input::placeholder { color: var(--ios-secondary); }
+
+/* Steppers: an outlined box, − and + as square buttons */
+.light .stepper, .menu-dialog .stepper { background: #fff; border: 2px solid var(--blk); border-radius: 6px; padding: 2px; gap: 2px; }
+.light .stepper button, .menu-dialog .stepper button { color: var(--blk); border-radius: 4px; width: 38px; height: 36px; }
+.light .stepper button:active, .menu-dialog .stepper button:active { background: var(--lav-soft); }
+.light .stepper b, .menu-dialog .stepper b { color: var(--blk); font-weight: 900; }
+
+/* Segmented switches in pop-ups and sheets: outlined, pink when on, text never cut off */
+.light .seg, .menu-dialog .seg, .sheet.light .seg { background: #fff; border: 2px solid var(--blk); border-radius: 6px; padding: 2px; }
+.light .seg button, .menu-dialog .seg button { font-size: 13px; font-weight: 700; padding: 0 9px; line-height: 1.15; white-space: normal; }
+.light .seg button.active, .menu-dialog .seg button.active { background: var(--pink); color: #fff; }
+
+/* Small square buttons: ••• on the clock card, gear in the header, sheet close buttons */
+.tab-page .round-btn, .scoreboard .round-btn, .tab-page .page-head .round-btn, #gMenu {
+  width: 44px; height: 44px; border-radius: 6px !important; background: #fff; color: var(--blk);
+  border: 2px solid var(--blk); box-shadow: none; }
+#gMenu svg { color: var(--blk); }
+
+/* Team sheet details */
+.sheet.light .chip { background: #fff; color: var(--blk); border: 1.5px solid var(--blk); font-weight: 700; }
+.sheet.light .roster li.inactive .chip { background: var(--blk); color: #fff; }
+.sheet.light .icon-btn { color: var(--blk); }
+.sheet.light .team-row .tn { font-weight: 800; color: #2b1550; }
+.sheet.light .team-row.current .tn::before { color: var(--pink); }
+.menu-dialog .buttons button.primary-btn { background: var(--pink) !important; color: #fff !important; box-shadow: 3px 3px 0 var(--blk) !important; }
