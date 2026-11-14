@@ -20,8 +20,8 @@ const THEMES = {
 };
 
 const DEFAULT_WIDTH = 0.35;      // marker thickness for new lines, in feet on the court
-const MIN_WIDTH = 0.15, MAX_WIDTH = 1.2;   // range of the Line slider in the ••• menu
-const APP_VERSION = '23 preview';   // the preview copy (next/) — see BUILD-LOG.md
+const MIN_WIDTH = 0.08, MAX_WIDTH = 1.2;   // range of the Line slider in the ••• menu
+const APP_VERSION = '24 preview';   // the preview copy (next/) — see BUILD-LOG.md
 const DB_NAME = 'penguins-playbook-preview';   // preview keeps its own plays, separate from the live app           // shown in the ••• menu; bump with each update
 const ZOOM_MAX = 6;              // how far you can zoom in (6× the fitted size)
 const ERASER_RADIUS_PX = 14;     // how close the eraser must come to a line, in screen points
@@ -432,7 +432,9 @@ const input = {
   touches: new Map(),             // fingers on the screen
   nav: null, navLock: false,      // pinch/pan gesture in progress
   penSeen: false,
+  twoTap: null,                   // a possible two-finger tap (switches marker / eraser)
 };
+const TWO_TAP = { join: 250, total: 350, slop: 12 };   // ms for the 2nd finger to land; ms to lift both; points of movement allowed
 
 function localPoint(e) {
   const r = canvas.getBoundingClientRect();
@@ -454,6 +456,7 @@ canvas.addEventListener('pointerdown', e => {
   }
   hideTools();   // touching the court puts the tools away (and still draws)
   if (e.pointerType === 'touch') {
+    trackTwoTap(e.pointerId, pt);
     input.touches.set(e.pointerId, pt);
     if (input.penSeen || input.touches.size > 1 || input.navLock) {
       if (input.drawType === 'touch') cancelDrawing();
@@ -475,6 +478,8 @@ canvas.addEventListener('pointermove', e => {
   if (e.pointerId === edgeSwipeId) { swipeMove(e.clientX); return; }
   if (e.pointerType === 'touch' && input.touches.has(e.pointerId)) {
     input.touches.set(e.pointerId, localPoint(e));
+    const tt = input.twoTap, p0 = tt?.starts.get(e.pointerId), p1 = input.touches.get(e.pointerId);
+    if (p0 && Math.hypot(p1.x - p0.x, p1.y - p0.y) > TWO_TAP.slop) input.twoTap = null;
     if (input.nav) { updateNav(); return; }
   }
   if (e.pointerId !== input.drawId) return;
@@ -490,6 +495,7 @@ function pointerEnd(e) {
     if (input.touches.size === 0) { input.nav = null; input.navLock = false; }
     else startNav();   // re-anchor on the remaining finger(s)
   }
+  if (e.pointerType === 'touch' && input.touches.size === 0) finishTwoTap(e.type === 'pointerup');
   if (e.pointerId === input.drawId) endDraw();
 }
 canvas.addEventListener('pointerup', pointerEnd);
@@ -509,6 +515,28 @@ document.addEventListener('gesturestart', e => e.preventDefault());
 document.addEventListener('touchmove', e => {
   if (!e.target.closest('.scrollable, input')) e.preventDefault();
 }, { passive: false });
+
+/* ----- two-finger tap: switch between marker and eraser -----
+   (Safari doesn't pass the Pencil's squeeze or double-tap to web apps, so this stands in.)
+   Both fingers must land within TWO_TAP.join ms, barely move, and lift within TWO_TAP.total ms.
+   Any small zoom/pan the tap caused is undone. */
+function trackTwoTap(id, pt) {
+  const now = performance.now();
+  if (input.touches.size === 0) {
+    input.twoTap = { t0: now, starts: new Map([[id, pt]]), view: { k: view.k, tx: view.tx, ty: view.ty } };
+  } else if (input.twoTap && input.touches.size === 1 && now - input.twoTap.t0 < TWO_TAP.join) {
+    input.twoTap.starts.set(id, pt);
+  } else {
+    input.twoTap = null;   // a third finger, or the second came too late
+  }
+}
+function finishTwoTap(lifted) {
+  const tt = input.twoTap; input.twoTap = null;
+  if (!lifted || !tt || tt.starts.size !== 2 || performance.now() - tt.t0 > TWO_TAP.total) return;
+  Object.assign(view, tt.view); requestRender();
+  state.tool = state.tool === 'eraser' ? 'pen' : 'eraser';
+  updateUI(); toast(state.tool === 'eraser' ? 'Eraser' : 'Marker');
+}
 
 /* ----- pinch / pan ----- */
 function touchCenter() {
@@ -1059,6 +1087,30 @@ drawer.addEventListener('click', e => {
   if (swallowClick) { swallowClick = false; e.preventDefault(); e.stopPropagation(); }
 }, true);
 $('grab').onclick = () => (toolsOpen() ? hideTools() : showTools());
+
+/* Apple Pencil on buttons: iPadOS doesn't reliably turn a Pencil tap into a "click"
+   on a web page, so a Pencil press-and-release on the same button presses it here.
+   If iPadOS does send its own click as well, that one is ignored (no double press). */
+const PRESSABLE = 'button, label, a, [role="button"]';
+let penPress = null, penPressed = null;
+document.addEventListener('pointerdown', e => {
+  if (e.pointerType !== 'pen') return;
+  const el = e.target.closest?.(PRESSABLE);
+  penPress = el && !el.disabled ? { el, x: e.clientX, y: e.clientY } : null;
+}, true);
+document.addEventListener('pointerup', e => {
+  if (e.pointerType !== 'pen' || !penPress) return;
+  const p = penPress; penPress = null;
+  if (Math.hypot(e.clientX - p.x, e.clientY - p.y) > 8) return;   // a swipe, not a press
+  if (document.elementFromPoint(e.clientX, e.clientY)?.closest(PRESSABLE) !== p.el) return;
+  penPressed = p.el; setTimeout(() => { penPressed = null; }, 600);
+  p.el.click();
+}, true);
+document.addEventListener('click', e => {
+  if (e.isTrusted && penPressed && penPressed.contains(e.target)) {
+    penPressed = null; e.preventDefault(); e.stopPropagation();
+  }
+}, true);
 $('btnMore').onclick = () => { $('more').hidden = !$('more').hidden; };
 
 // Ink, color picker, eraser
@@ -1076,7 +1128,7 @@ $('btnEraser').onclick = () => { state.tool = state.tool === 'eraser' ? 'pen' : 
 // Actions
 $('btnUndo').onclick = undo;
 $('btnRedo').onclick = redo;
-$('btnClear').onclick = clearAll;
+$('btnClear').onclick = () => { $('more').hidden = true; clearAll(); };
 $('btnSave').onclick = save;
 
 // More menu
@@ -1087,7 +1139,7 @@ document.querySelectorAll('[data-theme]').forEach(b => b.onclick = () => {
   if (b.dataset.theme !== state.theme) { state.theme = b.dataset.theme; markDirty(); }
 });
 const widthRange = $('widthRange');
-Object.assign(widthRange, { min: MIN_WIDTH, max: MAX_WIDTH, step: 0.05 });
+Object.assign(widthRange, { min: MIN_WIDTH, max: MAX_WIDTH, step: 0.01 });
 widthRange.addEventListener('input', () => {
   state.width = round2(+widthRange.value); state.tool = 'pen';
   updateUI(); scheduleDraftSave();

@@ -378,3 +378,16 @@ the Pencil can't press rail buttons but draws fine; wants Pencil squeeze = erase
   whether Pencil taps produce click events. Waiting on the user's results before changing the app.
 - Proposed (not yet approved): move Clear into the ••• menu; Pencil-aware rail buttons;
   two-finger tap toggles the eraser; minimum line 0.15 → ~0.08 ft.
+
+### Version 24 preview — iPad Pencil fixes (2026-11-14, owner: "Do it")
+- **Clear** moved off the rail into the ••• menu ("Clear the court", pink text), away from Save. Undo still restores it.
+  Baseline B15 now opens ••• to clear.
+- **Apple Pencil presses buttons:** a Pencil press-and-release on the same button (< 8 pt movement) calls `click()`;
+  a real click that also arrives within 600 ms is ignored, so nothing is pressed twice. Applies to every button,
+  label and link in the app (playbook.js, after the drawer wiring). Cause of the original failure not confirmed.
+- **Two-finger tap = switch marker / eraser** (stand-in for Pencil squeeze, which Safari doesn't expose):
+  both fingers down within 250 ms, < 12 pt movement, lifted within 350 ms; any zoom/pan from the tap is undone;
+  toast says "Eraser" / "Marker". Pinches and slow holds don't toggle.
+- **Thinnest line** 0.15 → 0.08 ft; slider step 0.05 → 0.01.
+- **Tap offset:** not changed yet — waiting on tap-test results.
+- Tests: new Pencil/two-tap test 15/15; baseline all pass; tabs, game, layouts, rule, season pass; no name clashes.
