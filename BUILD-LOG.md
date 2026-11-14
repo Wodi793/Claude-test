@@ -624,3 +624,22 @@ Owner, with screenshots from the foldable (folded: portrait and sideways; open: 
 
 ### Live version 44 (2026-11-14) — equal box widths
 - Owner: all boxes on the game screen should be the same width (clock vs chart differed). Measured (widths.js): lists were 4–10 pt narrower than the clock/chart (different shadow allowances), and folded-sideways columns were 45/55. Now every box keeps exactly 6 pt on its right for its shadow, the page right padding is 2 pt less than the left, and sideways columns are 50/50. Verified equal widths on 6 layouts; suite passes.
+
+### Live version 45 (2026-11-14) — game screen, round 3: one visual signature
+Owner: PENGUINS bigger and less tied to the corner (top band); chart lost on the open foldable sideways;
+clock box jammed into the corner while the other boxes sit lower under their labels — add a "Game clock" label;
+stopped clock too light; Start button's hard shadow inconsistent; Q3 badge rectangular while others are square;
+"All 5 off"/"Top 5 on" hang over the boxes; small screen: clock abrupt at the top; put PENGUINS in the purple
+strips iOS keeps.
+- Every block has a 28 pt label row + 10 pt gap: GAME CLOCK (CSS ::before on the clock box), ON COURT, BENCH.
+  Box tops line up across the two columns; the clock gets space at the top on phones.
+- Label-row buttons sit inside the row (26 pt, no shadow). Buttons inside the clock box: outline only.
+- Quarter badge: 44 × 44 square, same as the ••• button.
+- Stopped clock #43375a (was the light secondary gray); running stays near-black.
+- The open foldable sideways is only ~412 pt tall, so it counts as a phone on its side: sideways screens ≥ 380 pt
+  tall now show the chart under the clock; wide screens always do.
+- Top-band brand: centered, up to 30 pt, wider spacing.
+- Side strip (folded foldable): new #lvwProbe (100lvw) measures the strip iOS keeps beside the app; on Minutes the
+  team name is painted into the page background there, written down the strip below the clock/Wi-Fi
+  (shell.js paintSideBrand). Unverifiable in the test browser — to be confirmed on the phone.
+- Tests: all pass; widths still equal; no name clashes.

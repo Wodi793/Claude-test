@@ -44,6 +44,26 @@ const TAB_SHOWN = {
   playbook: () => requestRender(),   // repaint the court (cheap; nothing is reset)
 };
 
+/** The folded foldable keeps a strip beside the app (with the clock and Wi-Fi at its top) that the
+ *  app can't put content in — but the page's own background does reach it. On Minutes, the team name
+ *  is painted into that background, written down the strip, below the clock and Wi-Fi.
+ *  Nothing happens where there's no such strip. */
+function paintSideBrand() {
+  const root = document.documentElement;
+  const full = document.getElementById('lvwProbe')?.getBoundingClientRect().width || 0;
+  const strip = isStandalone ? full - window.innerWidth : 0;
+  if (App.tab !== 'minutes' || strip < 30) { root.style.backgroundImage = ''; return; }
+  const name = (document.getElementById('mBrand')?.textContent || 'Penguins').toUpperCase();
+  const h = window.innerHeight, size = Math.min(30, strip * 0.42);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${strip}" height="${h}">` +
+    `<text x="0" y="0" transform="translate(${strip / 2} ${h * 0.62}) rotate(90)" text-anchor="middle" dominant-baseline="central" ` +
+    `fill="#fff" font-family="-apple-system, system-ui, sans-serif" font-weight="900" font-size="${size}" letter-spacing="${size * 0.3}">${name}</text></svg>`;
+  root.style.backgroundImage = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+  root.style.backgroundRepeat = 'no-repeat';
+  root.style.backgroundPosition = `${window.innerWidth}px 0`;
+  root.style.backgroundSize = `${strip}px ${h}px`;
+}
+
 /** iOS tints the strip behind the status bar (and the edges outside the app's own area) from the
  *  page's "theme color". Keep it the color of what's on screen: purple on Minutes; on the Playbook,
  *  the court's border color (white around the purple board, purple around the white board). */
@@ -66,6 +86,7 @@ function showTab(name) {
   for (const b of document.querySelectorAll('.tabbtn')) b.classList.toggle('active', b.dataset.tab === name);
   placeLens();
   updateThemeColor();
+  paintSideBrand();
   TAB_SHOWN[name]?.();
   try { localStorage.setItem('penguins.tab', name); } catch { /* not critical */ }
 }
@@ -88,6 +109,7 @@ function placeTabbar() {
   document.documentElement.style.setProperty('--tabs-bottom', Math.max(8, bottomBar - hidden + 6) + 'px');
   document.documentElement.style.setProperty('--lost-h', Math.max(0, hidden) + 'px');   // screen below the app's area
   document.documentElement.dataset.tallTop = safeInsets().top >= 70 ? 'yes' : 'no';      // e.g. the open foldable
+  paintSideBrand();
 }
 
 for (const b of document.querySelectorAll('.tabbtn')) b.onclick = () => showTab(b.dataset.tab);
