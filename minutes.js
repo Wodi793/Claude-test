@@ -282,7 +282,12 @@ function onTapOrHold(el, onTap, onHold) {
    ===================================================================== */
 function renderLive(body) {
   const g = M.game, r = nowState();
-  const onCourt = r.onCourt.map(playerById).filter(Boolean);
+  // On court: least played at the top, most played at the bottom — the girls due to come off
+  // sit together at the bottom, and the spread shows at a glance. (They all gain time at the same
+  // rate while the clock runs, so the order only changes when subs are made.)
+  const onCourt = r.onCourt.map(playerById).filter(Boolean)
+    .sort((a, b) => (r.played[a.id] || 0) - (r.played[b.id] || 0)
+      || String(a.number).localeCompare(String(b.number), undefined, { numeric: true }));
   const pairedOut = new Set(M.outs), pairedIn = new Set(M.ins);
   const ms = ruleStatus(r); M.ruleSig = ruleSignature(ms);
   const urgency = id => { const st = ms?.players[id]?.state; return st === 'now' || st === 'must' ? 0 : st === 'owed' ? 1 : 2; };

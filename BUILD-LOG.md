@@ -563,3 +563,6 @@ Owner: picking one off, then one on, back and forth, is too much swiping; wants 
 - Undo takes back a whole confirmed batch as one action (unchanged mechanism: one action id).
 - Tests: new multisub.js (11/11: sweep, All off/Clear, partial counts, confirm, undo); existing tests switched to
   the new state; full suite passes on preview and live copy.
+
+### Live version 39 (2026-11-14)
+- Owner: sort the on-court girls least played → most played, so the ones due off sit together at the bottom and the spread is visible. Done (ties by jersey number). They all gain time at the same rate while the clock runs, so the order only changes when subs are made — rows never jump mid-play. Test courtsort.js.
