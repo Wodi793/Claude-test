@@ -545,3 +545,7 @@ the bottom; "margins look shitty"), and: put Clear back on the rail, between the
   drawn by iOS itself — waiting on a Screen check from the folded phone.
 - Margins: right padding includes the 4 px hard shadow, so left and right margins look equal.
 - Publishing is now scripted (scratchpad publish.py). Tests on the live copy: baseline, Pencil, game, 8 screens pass.
+
+### Live version 37 (2026-11-14)
+- Owner screenshot (foldable, 5 subs queued): the Cancel / Confirm bar is missing; a thin black bar shows below the bench; white band at the bottom still there. Not reproducible in Chromium at 703×1000, 669×927, 402×874, 1194×834 (bar shows, 198 pt tall, buttons present). Asked owner for version number, folded/unfolded, and whether the bar ever appears.
+- Fixed: the sub bar showed "# Name" for players with no number; now just the name.

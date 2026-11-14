@@ -390,7 +390,7 @@ function renderSubBar() {
   document.documentElement.dataset.subbing = live ? 'yes' : 'no';
   const room = () => document.documentElement.style.setProperty('--subbar-h', bar.hidden ? '0px' : bar.offsetHeight + 12 + 'px');
   if (!live) { room(); return; }
-  const name = id => { const p = playerById(id); return p ? `#${esc(p.number)} ${esc(p.name)}` : '?'; };
+  const name = id => { const p = playerById(id); return p ? (p.number ? `#${esc(p.number)} ` : '') + esc(p.name) : '?'; };   // no "#" when she has no number yet
   bar.innerHTML = `
     <div class="sub-pairs">${M.pairs.map(x => `<span class="pair"><b>${name(x.out)}</b> ↓ <b>${name(x.in)}</b> ↑</span>`).join('')}
       ${M.out ? `<span class="pair pending"><b>${name(M.out)}</b> ↓ — tap a bench player</span>` : ''}</div>
