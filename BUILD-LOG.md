@@ -643,3 +643,24 @@ strips iOS keeps.
   team name is painted into the page background there, written down the strip below the clock/Wi-Fi
   (shell.js paintSideBrand). Unverifiable in the test browser — to be confirmed on the phone.
 - Tests: all pass; widths still equal; no name clashes.
+
+## Stats tab — decisions so far (2026-11-14, not built yet)
+Owner's answers:
+- One app: Stats is the third tab. Each phone does one job per game (e.g. one coach minutes, another stats).
+- Moving data: a game file by AirDrop, Messages or email (versatility; simplicity is key).
+- Team ownership: head-coach model. The head coach owns the team template (roster) and sends it to assistant
+  coaches; game files come back and merge into the head coach's copy. Owner is the head coach.
+- Track: points (1/2/3 made); misses optional ("Track misses", off by default, invisible when off);
+  offensive + defensive rebounds, aggregated; assists; personal fouls; technical fouls (counted, no rules,
+  invisible if unused); turnovers, blocks, steals and other standard box-score stats available. A Stats
+  settings checklist picks which buttons appear. Team totals for everything.
+- Opponent: final score box; live opponent scoring available but hidden by default.
+- Foul-out limit: not in the rules summary; no rule logic — counts only.
+- Tap order: player first, then stat. Corrections: Undo last + edit the box score after the game.
+- Reports: box score per game; season totals, per-game averages, per-minute rates (points per 10 min).
+  Internal only (no sharing).
+- Independence: every feature works on whatever data exists. Minutes-only games and stats-only games both
+  work; missing data shows as blanks, never an error.
+- Hand entry after a game: stats grid, with an optional minutes column.
+- Open: clock on the stats phone (recommended: no clock, a Q1–Q4 selector); owner's last message was cut off.
+Planned stages: S1 in-game stats screen + data; S2 reports; S3 game file export/import/merge; S4 hand entry.
