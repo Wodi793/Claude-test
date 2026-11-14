@@ -490,3 +490,18 @@ growing on the iPad; iPad turns. No sharing needed. "Make it beautiful."
 - Tall (unfolded upright, iPad upright): header hidden during a game so all five on court fit; rows scale up.
 - Checked at 320×568, 360×780, 440×956, 669×927, 927×669, 1194×834, 1376×1032, 1032×1376: clock, Start/Stop
   and all five on court visible everywhere; the chart visible in the two-screen layouts. All other tests pass.
+
+### Version 32 preview — Playbook in the same look; bigger court on the foldable (2026-11-14)
+Owner: make the Playbook match (strong; limited pink, mainly menus and buttons); on the foldable, smaller borders
+so the court is bigger; centered with equal borders everywhere, but on the open foldable sideways use the whole
+screen; "compress the white a little, make the border a little bigger".
+- Court fit (fitView): still centered on the real screen by default. New: when iOS takes a big strip on one side
+  only (the foldable's camera/clock side), keeping it symmetric wastes the same again on the other side; if using
+  the whole usable span in that one direction makes the court ≥ 4% bigger, do that (the other direction stays
+  centered). Affects the foldable (both ways) and phones sideways; regular iPhones upright and iPads unchanged.
+- Dark band APRON 1.5 → 2 ft (more purple frame, less white). Court size unchanged.
+- Playbook restyle ("PLAYBOOK, SHARP" in styles.css): white rail with black outline and hard shadow, square
+  buttons, pink = tool in use / Full-Half / Purple-White / slider / main pop-up button; ••• menu as a white card
+  with court-lettering title and labels; Saved plays sheet on court purple with white outlined cards; toast,
+  pop-ups and the corner switch match Minutes. Court drawing unchanged.
+- Tests: Playbook baseline, Pencil/two-tap, tabs, layouts, game, 8-screen check all pass; no name clashes.

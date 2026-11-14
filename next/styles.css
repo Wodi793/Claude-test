@@ -1028,3 +1028,96 @@ html[data-layout="tall"][data-live="yes"] .page-head { display: none; }
   html[data-layout="compact"][data-orient="port"] .clock { font-size: 40px; }
   html[data-layout="compact"][data-orient="port"] .prow { min-height: 42px; }
 }
+
+/* =====================================================================
+   PLAYBOOK, SHARP (owner, after preview 31): the Playbook's tools and menus in the
+   same language as Minutes — white, a 2 px black outline, a hard shadow, 6 px corners,
+   the court's lettering for titles. Hot pink only for what's switched on (the tool in
+   use, Full/Half, Purple/White, the slider) and the main button in a pop-up.
+   The court itself is unchanged.
+   ===================================================================== */
+/* Rail */
+#rail, .light-band #rail { background: #fff; border: 2px solid var(--blk); box-shadow: 4px 4px 0 var(--blk);
+  border-radius: 6px; padding: 5px; gap: 3px; -webkit-backdrop-filter: none; backdrop-filter: none; }
+#rail svg, .glass#rail svg { filter: none; color: #2b1550; }
+.tb { border-radius: 4px; color: #2b1550; }
+.tb:active { background: var(--lav-soft); }
+.tb.active { background: var(--pink); box-shadow: none; }
+.tb.active svg { color: #fff; }
+.tb:disabled { opacity: .28; }
+.sep { width: 70%; height: 2px; background: var(--blk); opacity: .12; margin: 2px 0; }
+.dot { box-shadow: 0 0 0 2px var(--blk); }
+.tb.active .dot { box-shadow: 0 0 0 2px #fff; }
+.rainbow .dot span { box-shadow: 0 0 0 1.5px var(--blk); }
+#btnSave.unsaved::after { background: var(--pink); box-shadow: none; border: 1.5px solid #fff; }
+/* Full | Half */
+.courtseg { background: var(--lav-soft); border-radius: 4px; box-shadow: none; padding: 2px; }
+.courtseg .lens { background: var(--pink); border: 0; box-shadow: none; border-radius: 3px; left: 2px; right: 2px; top: 2px;
+  -webkit-backdrop-filter: none; backdrop-filter: none; }
+.cs { color: #2b1550; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; font-size: 11px; border-radius: 3px; }
+.cs.active { color: #fff; text-shadow: none; }
+.cs .icon { color: inherit; }
+/* The tab that peeks out at the edge */
+#grab span, .light-band #grab span { width: 8px; background: #fff; border: 2px solid var(--blk); border-radius: 4px;
+  box-shadow: 2px 2px 0 var(--blk); -webkit-backdrop-filter: none; backdrop-filter: none; }
+
+/* ••• menu */
+#more { background: #fff; color: var(--blk); border: 2px solid var(--blk); box-shadow: 5px 5px 0 var(--blk);
+  border-radius: 6px; padding: 16px; gap: 12px; -webkit-backdrop-filter: none; backdrop-filter: none; }
+#more svg { filter: none; }
+#playName { font-family: -apple-system, system-ui, sans-serif; font-weight: 900; text-transform: uppercase;
+  letter-spacing: .12em; font-size: 17px; color: #2b1550; text-shadow: none; }
+#more .setting { color: var(--blk); font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: .14em; }
+#more .seg { background: var(--lav-soft); border: 2px solid var(--blk); border-radius: 6px; box-shadow: none; padding: 2px; }
+#more .seg button { color: var(--blk); border-radius: 4px; font-size: 14px; font-weight: 700; min-height: 32px; }
+#more .seg button.active { background: var(--pink); color: #fff; box-shadow: none; }
+#more .menu-btn { background: #fff; color: var(--blk); border: 2px solid var(--blk); border-radius: 6px; box-shadow: none;
+  font-size: 15px; font-weight: 700; }
+#more .menu-btn:active { background: var(--lav-soft); }
+#more .menu-btn.danger { color: #d62839; }
+#widthRange::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: var(--blk); box-shadow: none; }
+#widthRange::-webkit-slider-thumb { width: 24px; height: 24px; margin-top: -10px; background: var(--pink);
+  border: 2px solid var(--blk); box-shadow: 2px 2px 0 var(--blk); }
+#widthPreview { box-shadow: 0 0 0 1.5px var(--blk); }
+#version { color: var(--ios-secondary); }
+#screenCheck { color: #4e2a84; }
+
+/* Toast */
+#toast, .light-band #toast { background: #fff; color: #2b1550; border: 2px solid var(--blk); box-shadow: 3px 3px 0 var(--blk);
+  border-radius: 6px; font-weight: 700; -webkit-backdrop-filter: none; backdrop-filter: none; }
+
+/* Saved plays sheet */
+#plays { background: #4e2a84; -webkit-backdrop-filter: none; backdrop-filter: none; }
+#plays header { padding: 16px 20px 10px; }
+#plays h1 { font-family: -apple-system, system-ui, sans-serif; font-weight: 900; text-transform: uppercase;
+  letter-spacing: .12em; font-size: 28px; color: #fff; }
+#plays .actions { padding: 6px 20px 16px; gap: 12px; }
+#plays .pill-btn { background: #fff; color: var(--blk); border: 2px solid var(--blk); border-radius: 6px;
+  box-shadow: 3px 3px 0 var(--blk); font-weight: 700; }
+#plays .pill-btn svg { color: #2b1550; }
+#plays .note { color: rgba(255, 255, 255, .78); padding: 0 22px 10px; font-size: 12px; }
+#playList { padding: 0 24px 24px 20px; }
+#playList li { background: #fff; color: var(--blk); border: 2px solid var(--blk); border-radius: 6px;
+  box-shadow: 4px 4px 0 var(--blk); margin-bottom: 14px; }
+#playList li.current { box-shadow: 4px 4px 0 var(--pink); border-color: var(--blk); }
+#playList .name { font-family: -apple-system, system-ui, sans-serif; font-weight: 800; font-size: 17px; color: #2b1550; }
+#playList .meta { color: var(--ios-secondary); }
+#playList button { color: #2b1550; }
+#plays .empty { color: rgba(255, 255, 255, .8); }
+
+/* Pop-ups while on the Playbook: the same white card as on Minutes */
+html[data-tab="playbook"] #modal { background: #fff; color: var(--blk); border: 2px solid var(--blk);
+  box-shadow: 5px 5px 0 var(--blk); border-radius: 6px; -webkit-backdrop-filter: none; backdrop-filter: none; }
+#modal h2 { font-family: -apple-system, system-ui, sans-serif; font-weight: 900; text-transform: uppercase;
+  letter-spacing: .1em; font-size: 18px; color: #2b1550; }
+html[data-tab="playbook"] #modal p { color: var(--ios-secondary); }
+html[data-tab="playbook"] #modal input { background: var(--lav-soft); color: var(--blk); border: 2px solid var(--blk); border-radius: 6px; }
+html[data-tab="playbook"] #modal .buttons button { background: #fff; color: var(--blk); border: 2px solid var(--blk); border-radius: 6px; font-weight: 700; }
+html[data-tab="playbook"] #modal .buttons button.primary { background: var(--pink); color: #fff; box-shadow: 3px 3px 0 var(--blk); }
+html[data-tab="playbook"] #modal .buttons button.danger { background: #d62839; color: #fff; }
+
+/* Corner switch on the Playbook: the same white button as on Minutes */
+html[data-tab="playbook"] #tabbar, .light-band #tabbar { background: #fff; border: 2px solid var(--blk); box-shadow: 3px 3px 0 var(--blk);
+  -webkit-backdrop-filter: none; backdrop-filter: none; }
+html[data-tab="playbook"] .tabbtn:not(.active) { color: #4e2a84; }
+#playList .pill-btn { box-shadow: none; }   /* buttons inside a card: outline only */

@@ -22,11 +22,11 @@ const THEMES = {
 
 const DEFAULT_WIDTH = 0.35;      // marker thickness for new lines, in feet on the court
 const MIN_WIDTH = 0.08, MAX_WIDTH = 1.2;   // range of the Line slider in the ••• menu
-const APP_VERSION = '31 preview';   // the preview copy (next/) — see BUILD-LOG.md
+const APP_VERSION = '32 preview';   // the preview copy (next/) — see BUILD-LOG.md
 const DB_NAME = 'penguins-playbook-preview';   // preview keeps its own plays, separate from the live app           // shown in the ••• menu; bump with each update
 const ZOOM_MAX = 6;              // how far you can zoom in (6× the fitted size)
 const ERASER_RADIUS_PX = 14;     // how close the eraser must come to a line, in screen points
-const APRON = 1.5;               // dark-purple out-of-bounds strip around the court (feet; purple board only)
+const APRON = 2;                 // dark-purple out-of-bounds strip around the court (feet; purple board only)
 const NAME_GAP = 0.4;            // space kept between that strip and PENGUINS / BURNS PARK (feet)
 const PLAIN_BAND = 0.75;         // minimum border (feet) around the court: thin, but not zero
 const MIN_BORDER_LETTERS = 1.25;   // letter size (feet) needed to write PENGUINS in the border;
@@ -336,8 +336,20 @@ function fitView() {
     const half = Math.min(mid - lo, hi - mid);
     return half > 40 ? [mid - half, mid + half] : [lo, hi];   // (fallback for odd cases)
   };
-  const [left, right] = centered(ins.left + pad, view.cw - ins.right - pad, screenW / 2);
-  const [top, bottom] = centered(ins.top + pad, view.ch - ins.bottom - pad, screenH / 2);
+  const fullX = [ins.left + pad, view.cw - ins.right - pad], fullY = [ins.top + pad, view.ch - ins.bottom - pad];
+  const symX = centered(...fullX, screenW / 2), symY = centered(...fullY, screenH / 2);
+
+  // Normally the court is centered on the real screen (equal borders on opposite sides).
+  // But where iOS takes a big strip on one side only (the foldable's camera / clock side),
+  // staying symmetric wastes that much again on the other side. Then — if it makes the court
+  // clearly bigger (4%+) — use the whole usable span in that one direction; the other
+  // direction stays centered on the screen. (Owner, after preview 31: "use the whole screen".)
+  const scaleOf = (x, y) => chooseLayout(state.court, x[1] - x[0], y[1] - y[0]).scale;
+  let [[left, right], [top, bottom]] = [symX, symY];
+  const base = scaleOf(symX, symY);
+  const options = [[fullX, symY], [symX, fullY]].map(([x, y]) => ({ x, y, k: scaleOf(x, y) }))
+    .filter(o => o.k > base * 1.04).sort((a, b) => b.k - a.k);
+  if (options.length) [[left, right], [top, bottom]] = [options[0].x, options[0].y];
 
   const w = right - left, h = bottom - top;
   layout = chooseLayout(state.court, w, h);
