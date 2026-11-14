@@ -22,7 +22,7 @@ const THEMES = {
 
 const DEFAULT_WIDTH = 0.35;      // marker thickness for new lines, in feet on the court
 const MIN_WIDTH = 0.08, MAX_WIDTH = 1.2;   // range of the Line slider in the ••• menu
-const APP_VERSION = 35;   // shown in the ••• menu; bump with each update (the preview in next/ has its own)
+const APP_VERSION = 36;   // shown in the ••• menu; bump with each update (the preview in next/ has its own)
 const DB_NAME = 'penguins-playbook';   // the live app's database (next/ uses 'penguins-playbook-preview')
 const ZOOM_MAX = 6;              // how far you can zoom in (6× the fitted size)
 const ERASER_RADIUS_PX = 14;     // how close the eraser must come to a line, in screen points
@@ -284,7 +284,7 @@ function sizeApp() {
   root.setProperty('--app-h', h + 'px');
   // Tool buttons: 44pt, smaller only if the whole rail wouldn't fit this height.
   // (Measured here, because CSS screen-height units are unreliable in the home-screen app.)
-  root.setProperty('--b', Math.max(20, Math.min(44, (h - 80) / 9.5)) + 'px');
+  root.setProperty('--b', Math.max(20, Math.min(44, (h - 80) / 10.5)) + 'px');
 }
 
 /** The phone's real screen height, if iOS has cut the bottom off the app's area
@@ -1158,7 +1158,7 @@ $('btnEraser').onclick = () => { state.tool = state.tool === 'eraser' ? 'pen' : 
 // Actions
 $('btnUndo').onclick = undo;
 $('btnRedo').onclick = redo;
-$('btnClear').onclick = () => { $('more').hidden = true; clearAll(); };
+$('btnClear').onclick = clearAll;   // on the rail, between the eraser and Undo — away from Save
 $('btnSave').onclick = save;
 
 // More menu

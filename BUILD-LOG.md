@@ -534,3 +534,14 @@ Next: owner runs the tap test on the iPad (••• → Screen check → Tap te
 I misread "End game is red." as a request; the owner did not want it red. Reverted: "End game now" in the Game
 menu is plain again (live and preview 35). "Discard this game" keeps its red text, as it was before.
 Lesson: when a short message could be a complaint or a request, ask.
+
+### Live version 36 (2026-11-14)
+Owner, from the foldable (screenshots: folded showed a gray strip on the right; unfolded showed a white band at
+the bottom; "margins look shitty"), and: put Clear back on the rail, between the eraser and Undo, so Save stays apart.
+- Clear the court: moved from the ••• menu to the rail (after the eraser, before Undo). Rail buttons sized for one
+  more button ((h − 80) / 10.5). Test updated.
+- The page's color now also fills whatever is outside the app's own box (html/body background: purple on Minutes;
+  the border color on the Playbook). Should remove the white band; the gray strip on the folded screen may be
+  drawn by iOS itself — waiting on a Screen check from the folded phone.
+- Margins: right padding includes the 4 px hard shadow, so left and right margins look equal.
+- Publishing is now scripted (scratchpad publish.py). Tests on the live copy: baseline, Pencil, game, 8 screens pass.

@@ -1187,3 +1187,21 @@ html[data-tab="playbook"] .tabbtn:not(.active) { color: #4e2a84; }
 .sheet.light .team-row .tn { font-weight: 800; color: #2b1550; }
 .sheet.light .team-row.current .tn::before { color: var(--pink); }
 .menu-dialog .buttons button.primary-btn { background: var(--pink) !important; color: #fff !important; box-shadow: 3px 3px 0 var(--blk) !important; }
+
+/* =====================================================================
+   FIT & FINISH (owner, from the foldable, live v35)
+   • Whatever iOS shows outside the app's own box (a strip at the bottom or side on some
+     screens) gets the page's color, not dark gray or white: purple on Minutes, the
+     border color on the Playbook.
+   • Margins: every box has a 4 px hard shadow on its right, which made the right margin
+     look smaller than the left. The right padding now includes the shadow, so the
+     margins look equal.
+   ===================================================================== */
+html[data-tab="minutes"], html[data-tab="minutes"] body { background: #4e2a84; }
+html[data-tab="playbook"], html[data-tab="playbook"] body { background: #fff; }
+html[data-tab="playbook"]:has(body:not(.light-band)), html[data-tab="playbook"] body:not(.light-band) { background: #4e2a84; }   /* white board: its border is purple */
+.page-scroll { padding-right: 24px; }
+html[data-layout="compact"][data-live="yes"] .page-scroll { padding-left: 14px; padding-right: 18px; }
+html[data-layout="wide"][data-live="yes"] .tab-page .page-scroll { padding-left: 24px; padding-right: 28px; }
+html[data-layout="compact"] .sb-actions { left: max(14px, env(safe-area-inset-left)); right: max(18px, calc(env(safe-area-inset-right) + 4px)); }
+.sheet.light .team-scroll, .sheet.light .scrollable { padding-right: 4px; }
