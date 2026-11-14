@@ -5,7 +5,7 @@
    refreshed at the same time. With no internet, the saved copy is used.
 
    If you add a new file to the app, add it to FILES below and bump VERSION. */
-const VERSION = 'penguins-v48';
+const VERSION = 'penguins-v49';
 const FILES = ['./', './index.html', './styles.css', './playbook.js', './shell.js', './sports.js', './data.js', './settings.js', './gamelog.js', './readouts.js', './minutes.js', './stats.js',
                './manifest.webmanifest',
                './icon.svg', './icon-180.png', './icon-512.png'];

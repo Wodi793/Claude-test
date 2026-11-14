@@ -713,3 +713,13 @@ Owner: Stats must run on the same time and the same five as Minutes, live.
   iPad showing both side by side; or a live-sync service (server, internet at the gym, accounts, kids' names on
   a third party) — not recommended.
 - Test linked.js: quarter from clock, five from clock, sub reflected live, stat clock-stamped, next quarter followed.
+
+### Live version 49 (2026-11-14) — the five inside the pad; Auto / Always / Off
+Owner: with the five at the top and the pad at the bottom, the hand travels the whole screen; who's in should
+sit close to the stat buttons. A stats-only keeper must be able to swap players within Stats (Change does this).
+Also wanted: the option of a plain all-players list.
+- The on-court five now sit inside the floating pad, directly above the stat buttons, with Change beside them
+  (stats-only phones); the bench grid scrolls above.
+- Stats settings "The five on court, in the pad": Auto (default — shown when this phone runs the game clock;
+  otherwise all players, nothing to maintain), Always (stats-only keeper maintains them with Change), Off.
+- Tests: stats2 (Always), linked, stats1 pass; full suite passes.

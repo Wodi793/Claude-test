@@ -40,7 +40,9 @@ const STAT_TYPES = [
 const STAT_BY_KEY = Object.fromEntries(STAT_TYPES.map(t => [t.key, t]));
 const OPP_PAD = [{ key: 'opp2', pad: 'Them +2', pts: 2 }, { key: 'opp3', pad: '+3', pts: 3 }, { key: 'opp1', pad: '+1', pts: 1 }];
 // Owner's starting set: points, both rebounds, assists, fouls. Misses and live opponent scoring start off.
-const STAT_DEFAULTS = { shown: ['pts2', 'pts3', 'pts1', 'oreb', 'dreb', 'ast', 'pf'], misses: false, opponentLive: false };
+// courtRow: 'auto' = show the five in the pad when this phone runs the game clock, all players otherwise;
+//           'always' = always show the five (a stats-only keeper sets them with Change); 'off' = all players.
+const STAT_DEFAULTS = { shown: ['pts2', 'pts3', 'pts1', 'oreb', 'dreb', 'ast', 'pf'], misses: false, opponentLive: false, courtRow: 'auto' };
 
 function statSettings(team = M.team) { return { ...STAT_DEFAULTS, ...(team?.stats || {}) }; }
 /** The buttons on the pad, in catalog order. Misses come as a set, only when "Track misses" is on. */
@@ -145,7 +147,10 @@ function renderStats() {
   for (const k of ['ast', 'stl', 'blk', 'tov', 'pf', 'tf']) if (shown.includes(k))
     cells.push(`<div class="tt"><b>${tot.team[k] || 0}</b><span>${{ ast: 'Ast', stl: 'Stl', blk: 'Blk', tov: 'TO', pf: 'Fouls', tf: 'Tech' }[k]}</span></div>`);
 
-  const court = statsCourt(g), need = g.settings.onCourt;
+  // The five on court sit in the pad, right above the stat buttons (owner: short reach from girl to stat)
+  const showRow = set.courtRow === 'always' || (set.courtRow === 'auto' && linked);
+  if (!showRow) S.editCourt = false;
+  const court = showRow ? statsCourt(g) : [], need = g.settings.onCourt;
   if (linked) S.editCourt = false;
   const bench = roster.filter(p => !court.includes(p.id));
   const when = new Date(g.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
@@ -165,13 +170,8 @@ function renderStats() {
           ${cells.length ? `<div class="team-totals">${cells.join('')}</div>` : ''}
         </div>
       </section>
-      <section class="sec-court">
-        <h2 class="card-title">On court <span>${court.length}${linked ? ' · from the game clock' : ''}</span>
-          ${linked ? '' : `<button class="mini-btn" id="sCourtEdit">${S.editCourt ? 'Done' : 'Change'}</button>`}</h2>
-        <ul class="crow ${S.editCourt ? 'editing' : ''}" id="sCourt"></ul>
-      </section>
       <section class="sec-players">
-        <h2 class="card-title">${court.length ? 'Bench' : 'Players'}</h2>
+        <h2 class="card-title">${showRow ? 'Bench' : 'Players'}</h2>
         ${roster.length ? '<ul class="sgrid" id="sGrid"></ul>' : '<div class="card empty-card">No players yet — add them in Team.</div>'}
       </section>
     </div>`;
@@ -192,17 +192,8 @@ function renderStats() {
     };
     return li;
   };
-  const crow = document.getElementById('sCourt');
-  for (const id of court) crow.appendChild(tile(playerById(id), 'stile ctile'));
-  for (let k = court.length; k < need; k++) {   // empty places in the five
-    const li = document.createElement('li'); li.className = 'ctile empty';
-    li.textContent = S.editCourt ? 'Tap a player' : '';
-    if (!S.editCourt && !linked) li.onclick = () => { S.editCourt = true; S.sel = null; renderStats(); };
-    crow.appendChild(li);
-  }
   const grid = document.getElementById('sGrid');
   for (const p of bench) grid?.appendChild(tile(p, 'stile'));
-  document.getElementById('sCourtEdit')?.addEventListener('click', () => { S.editCourt = !S.editCourt; S.sel = null; renderStats(); });
   document.querySelectorAll('.q-sel button').forEach(b => b.onclick = async () => { g.statPeriod = +b.dataset.q; await saveGame(); renderStats(); });
   const opp = document.getElementById('sOpp');
   opp.onchange = async () => { const v = opp.value.trim(); g.oppScore = v === '' ? null : Math.max(0, parseInt(v, 10) || 0); await saveGame(); renderStats(); };
@@ -212,11 +203,26 @@ function renderStats() {
   const sel = !S.editCourt && S.sel && playerById(S.sel);
   const hasUndo = g.events.some(e => e.type === 'stat');
   document.getElementById('statPad').innerHTML = `
+    ${showRow ? `<div class="pad-court">
+      <div class="pc-head"><span>On court${linked ? ' <i>from the game clock</i>' : ''}</span>
+        ${linked ? '' : `<button class="mini-btn" id="sCourtEdit">${S.editCourt ? 'Done' : 'Change'}</button>`}</div>
+      <ul class="crow ${S.editCourt ? 'editing' : ''}" id="sCourt"></ul></div>` : ''}
     <div class="pad-head"><span class="pad-who">${S.editCourt ? 'Setting who’s on court' : sel ? `<b>${esc(sel.number ? '#' + sel.number + ' ' : '')}${esc(sel.name)}</b>` : 'Tap a player'}</span>
       <button class="undo-btn" id="sUndo" ${hasUndo ? '' : 'disabled'} aria-label="Undo last stat">
         <svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Undo</button></div>
     <div class="pad-grid">${pad.map(t => `<button class="pad-btn ${t.group}" data-stat="${t.key}" ${sel ? '' : 'disabled'}>${t.pad}</button>`).join('')}</div>
     ${set.opponentLive ? `<div class="pad-grid opp">${OPP_PAD.map(o => `<button class="pad-btn opp" data-stat="${o.key}">${o.pad}</button>`).join('')}</div>` : ''}`;
+  if (showRow) {
+    const crow = document.getElementById('sCourt');
+    for (const id of court) crow.appendChild(tile(playerById(id), 'stile ctile'));
+    for (let k = court.length; k < need; k++) {   // empty places in the five
+      const li = document.createElement('li'); li.className = 'ctile empty';
+      li.textContent = S.editCourt ? 'Tap a bench player' : 'Tap to set';
+      if (!S.editCourt && !linked) li.onclick = () => { S.editCourt = true; S.sel = null; renderStats(); };
+      crow.appendChild(li);
+    }
+    document.getElementById('sCourtEdit')?.addEventListener('click', () => { S.editCourt = !S.editCourt; S.sel = null; renderStats(); });
+  }
   document.querySelectorAll('#statPad .pad-btn').forEach(b => b.onclick = () => recordStat(b.dataset.stat));
   document.getElementById('sUndo').onclick = undoStat;
   document.documentElement.style.setProperty('--pad-h', document.getElementById('statPad').offsetHeight + 'px');
@@ -255,10 +261,17 @@ function openStatSheet() {
       ${row('misses', 'Track misses', set.misses, 'Adds Miss 2, Miss 3 and Miss FT')}
       ${row('opponentLive', 'Score the other team live', set.opponentLive, 'Adds Them +2 / +3 / +1. Otherwise type their final score.')}
     </section>
+    <h2 class="card-title">The five on court, in the pad</h2>
+    <section class="card check-card">
+      ${row('courtRow:auto', 'Auto', set.courtRow === 'auto', 'When this phone also runs the game clock. Otherwise, all players.')}
+      ${row('courtRow:always', 'Always', set.courtRow === 'always', 'On a stats-only phone, set them with Change.')}
+      ${row('courtRow:off', 'Off', set.courtRow === 'off', 'All players, one list.')}
+    </section>
     <p class="note">These apply to every game for this team. Stats already recorded are kept either way.</p>`;
   document.querySelectorAll('#statSheetBody .check-row').forEach(b => b.onclick = async () => {
     const s = statSettings(), k = b.dataset.k;
     if (k === 'misses' || k === 'opponentLive') s[k] = !s[k];
+    else if (k.startsWith('courtRow:')) s.courtRow = k.split(':')[1];
     else s.shown = s.shown.includes(k) ? s.shown.filter(x => x !== k) : [...s.shown, k];
     M.team.stats = s; M.team = await Data.saveTeam(M.team);
     openStatSheet(); renderStats();

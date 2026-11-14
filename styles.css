@@ -1532,3 +1532,17 @@ html:not([data-layout="wide"]) .pad-grid { grid-template-columns: repeat(4, minm
 html[data-layout="tall"] .pad-btn { height: 52px; }
 .q-sel.linked button:disabled { opacity: 1; }   /* following the game clock: shown, not tappable */
 .q-sel.linked button:not(.on) { opacity: .45; }
+/* The five on court inside the pad, right above the stat buttons */
+.pad-court { margin: -2px 0 10px; padding-bottom: 10px; border-bottom: 1px solid var(--ios-sep); }
+.pc-head { display: flex; align-items: center; justify-content: space-between; height: 28px; margin-bottom: 6px; }
+.pc-head span { font-size: 11px; font-weight: 900; letter-spacing: .18em; text-transform: uppercase; color: var(--blk); }
+.pc-head span i { font-style: normal; font-weight: 600; letter-spacing: .02em; text-transform: none; color: var(--ios-secondary); margin-left: 6px; }
+.pc-head .mini-btn { height: 26px; padding: 0 10px; border: 2px solid var(--blk); border-radius: 6px; background: #fff; color: var(--blk);
+  font-size: 10px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; box-shadow: none; }
+.pad-court .crow { margin: 0; gap: 6px; }
+.pad-court .ctile { box-shadow: none !important; min-height: 66px; padding: 6px !important; gap: 3px; }
+.pad-court .ctile.sel { box-shadow: none !important; }
+.pad-court .ctile.empty { border-color: var(--ios-sep); border: 2px dashed rgba(20, 9, 31, .25); color: var(--ios-secondary); }
+.pad-court .crow.editing .stile { box-shadow: 0 0 0 3px var(--pink) !important; }
+html[data-layout="compact"] .pad-court .ctile .pnum { min-width: 24px; height: 24px; font-size: 12px; }
+html[data-layout="compact"] .pad-court .ctile .sname { font-size: 13px !important; }
