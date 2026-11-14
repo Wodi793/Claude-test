@@ -1490,3 +1490,43 @@ html[data-layout="compact"] .pad-grid { grid-template-columns: repeat(4, minmax(
 html[data-layout="compact"] .pad-head { min-height: 36px; margin-bottom: 6px; }
 html[data-layout="compact"] .pad-head .undo-btn { height: 36px; min-height: 36px; }
 html[data-layout="compact"] #statPad { padding: 8px; }
+
+/* =====================================================================
+   STATS, ROUND 2 (owner): the five on the floor in one row at the top; one slim game box;
+   the corner button beside the pad (no row of its own); team name in the top band;
+   purple, not black, below the app's area.
+   ===================================================================== */
+html[data-tab="stats"], html[data-tab="stats"] body { background: #4e2a84; }
+/* Game box: quarters + score on top, team totals underneath (one box) */
+.game-card { display: block !important; padding: 0 !important; }
+.gc-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; }
+.game-card .team-totals { border-top: 1px solid var(--ios-sep); border-radius: 0; box-shadow: none; border-left: 0; border-right: 0; border-bottom: 0; }
+.game-card .tt { padding: 7px 4px; }
+.game-card .tt b { font-size: 18px; }
+.game-card .tt i { font-size: 10px; }
+/* On court: five across */
+.crow { list-style: none; margin: 0 6px 0 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.ctile { display: flex !important; flex-direction: column; align-items: flex-start; gap: 4px; padding: 8px !important; min-height: 84px; }
+.ctile .pnum { min-width: 30px; height: 30px; font-size: 15px; }
+.ctile .sname { font-size: 14px !important; max-width: 100%; }
+.ctile .sline { font-size: 10px !important; max-width: 100%; white-space: normal !important; line-height: 1.2; }
+.ctile.empty { border: 2px dashed rgba(255, 255, 255, .55); border-radius: 6px; color: rgba(255, 255, 255, .8); font-size: 11px; font-weight: 700;
+  align-items: center; justify-content: center; text-align: center; background: transparent; box-shadow: none; cursor: pointer; }
+/* Setting the five: the ones on court are outlined in pink */
+.crow.editing .stile, .stile.oncourt { box-shadow: 0 0 0 3px var(--pink), 4px 4px 0 var(--blk) !important; }
+.stile.oncourt .pnum { background: var(--pink) !important; }
+/* Corner button beside the pad, not under it: the pad goes to the bottom, starting right of the button */
+html:not([data-layout="wide"]) #statPad { bottom: var(--tabs-bottom, 12px); left: calc(max(12px, env(safe-area-inset-left)) + 60px); max-width: none; }
+#tab-stats .page-scroll { padding-bottom: calc(var(--pad-h, 200px) + var(--tabs-bottom, 12px) + 16px) !important; }
+/* Team name in the tall top band on Stats too */
+html[data-tall-top="yes"][data-tab="stats"] #sBrand {
+  display: flex; align-items: center; justify-content: center; position: absolute; top: 0; left: 0; right: 0;
+  height: env(safe-area-inset-top); color: #fff; font-weight: 900; text-transform: uppercase; letter-spacing: .32em; padding-left: .32em;
+  font-size: min(30px, calc(env(safe-area-inset-top) * .4)); white-space: nowrap; pointer-events: none; }
+
+/* Minutes on a phone: Undo + Start/Stop also sit beside the corner button, at the bottom */
+html[data-layout="compact"][data-orient="port"] .sb-actions { bottom: var(--tabs-bottom, 12px) !important; left: calc(max(12px, env(safe-area-inset-left)) + 60px) !important; }
+html[data-layout="compact"][data-orient="port"][data-live="yes"]:not([data-subbing="yes"]) .tab-page .page-scroll {
+  padding-bottom: calc(var(--tabs-bottom, 12px) + var(--actions-h) + 4px) !important; }
+html:not([data-layout="wide"]) .pad-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+html[data-layout="tall"] .pad-btn { height: 52px; }

@@ -685,3 +685,20 @@ Owner: "No clock is fine, go ahead with stage 1."
 - Tests: new stats1.js (record, totals, quarters, opponent score, Stats Undo vs Minutes Undo, settings, tab
   menu); all older tests updated for the tab menu and passing; no name clashes.
 - Next (S2): box score after a game; season totals, averages, per-10-minute rates — blanks where data is missing.
+
+### Live version 47 (2026-11-14) — Stats round 2
+Owner (open foldable screenshot): the pad covers the players; show only the five on the floor, in one row at
+the top, with their lines; streamline the top; drop "now tap a stat"; corner button wastes a row; put something
+in the top band; black bar at the bottom.
+- ON COURT row: the five across, each with her line. If this phone is also running the game clock, the five come
+  from Minutes ("from the game clock"); otherwise the stats keeper sets them with Change (label-row button):
+  tap players to put on / take off (max five; saved as `game.statsCourt`), Done. Empty places are dashed;
+  tapping one starts Change. BENCH grid below (scrolls).
+- One game box: quarters + score on top, team totals (Reb with O/D, Ast, Fouls, …) underneath. "TEAM" label and
+  the hint text removed.
+- Corner button beside the pad: on phones the pad sits at the bottom, starting right of the button; the pad has
+  four buttons per row. Same on Minutes phones: Undo + Start/Stop beside the button at the bottom (the bench
+  gains a row). iPad/sideways unchanged (pad at the top of the right column).
+- Team name in the tall top band on Stats too (#sBrand). Below the app's area: purple on Stats (was the dark body color).
+- Tests: stats2.js (new: Change, sixth refused, five visible above the pad, pad clear of the button, 3 screens);
+  full suite passes.

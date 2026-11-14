@@ -10,6 +10,7 @@ async function refreshTeamUI() {
   TeamUI.team = await Data.currentTeam();
   const t = TeamUI.team, roster = await Data.players(t.id);
   $('mBrand').textContent = t.name;
+  $('sBrand').textContent = t.name;
   $('mTeamName').innerHTML = `<span class="tn-school">${esc(SCHOOL_NAME)}</span><span class="tn-team">${esc(t.name)}</span>`;   // BURNS PARK over PENGUINS (capitals via CSS)
   $('mTeamSeason').textContent = `${SPORTS[t.sport]?.name || ''} · ${t.season}`;
   if (!$('teamSheet').hidden) renderTeamSheet(roster);

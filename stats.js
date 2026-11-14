@@ -76,7 +76,15 @@ const hasStats = game => (game.events || []).some(e => e.type === 'stat');
 /* =====================================================================
    3. RECORDING AND UNDO
    ===================================================================== */
-const S = { sel: null };   // the player tapped, waiting for a stat
+const S = { sel: null, editCourt: false };   // the player tapped (waiting for a stat); setting the five?
+
+/** Who's on the floor, for the top row. If this phone is also running the game clock, Minutes knows;
+ *  otherwise the stats keeper sets the five with "Change" (saved with the game as statsCourt). */
+function statsCourtLinked(g = M.game) { return g.status !== 'pregame' && g.events.some(isMinutesEvent); }
+function statsCourt(g = M.game) {
+  const ok = id => M.roster.some(p => p.id === id && !p.removed && p.active && !g.absences?.[id]);
+  return (statsCourtLinked(g) ? replayGame(g).onCourt : (g.statsCourt || [])).filter(ok).slice(0, g.settings.onCourt);
+}
 
 /** Quarter for new entries: the one picked here; else, if this phone runs the clock, the game's. */
 function statPeriod(game = M.game) {
@@ -128,13 +136,16 @@ function renderStats() {
   const roster = M.roster.filter(p => !p.removed && p.active && !g.absences?.[p.id]);
   if (S.sel && !roster.some(p => p.id === S.sel)) S.sel = null;
 
-  // Team totals: points first, then each stat on the pad (rebounds as one total with O/D)
-  const cells = [`<div class="tt big"><b>${tot.team.pts}</b><span>Pts</span></div>`];
+  // Team totals beside the score: rebounds (with O/D), then each other stat on the pad
+  const cells = [];
   if (shown.includes('oreb') || shown.includes('dreb'))
-    cells.push(`<div class="tt"><b>${tot.team.reb}</b><span>Reb</span><i>${tot.team.oreb || 0} O · ${tot.team.dreb || 0} D</i></div>`);
+    cells.push(`<div class="tt"><b>${tot.team.reb}</b><span>Reb</span><i>${tot.team.oreb || 0}O · ${tot.team.dreb || 0}D</i></div>`);
   for (const k of ['ast', 'stl', 'blk', 'tov', 'pf', 'tf']) if (shown.includes(k))
     cells.push(`<div class="tt"><b>${tot.team[k] || 0}</b><span>${{ ast: 'Ast', stl: 'Stl', blk: 'Blk', tov: 'TO', pf: 'Fouls', tf: 'Tech' }[k]}</span></div>`);
 
+  const linked = statsCourtLinked(g), court = statsCourt(g), need = g.settings.onCourt;
+  if (linked) S.editCourt = false;
+  const bench = roster.filter(p => !court.includes(p.id));
   const when = new Date(g.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   body.innerHTML = `
     <div class="stats">
@@ -142,42 +153,64 @@ function renderStats() {
         <h2 class="card-title">Game <span>${g.opponent ? 'vs ' + esc(g.opponent) + ' · ' : ''}${when}</span>
           <button class="mini-btn" id="sMenu" aria-label="Stats menu">•••</button></h2>
         <div class="card game-card">
-          <div class="q-sel" role="group" aria-label="Quarter">
-            ${Array.from({ length: periods }, (_, i) => `<button class="${q === i + 1 ? 'on' : ''}" data-q="${i + 1}">${periodLabel(g, i + 1)}</button>`).join('')}
+          <div class="gc-top">
+            <div class="q-sel" role="group" aria-label="Quarter">
+              ${Array.from({ length: periods }, (_, i) => `<button class="${q === i + 1 ? 'on' : ''}" data-q="${i + 1}">${periodLabel(g, i + 1)}</button>`).join('')}
+            </div>
+            <div class="score"><span class="us"><b>${tot.team.pts}</b><i>Us</i></span><span class="dash">–</span>
+              <label class="them"><input id="sOpp" inputmode="numeric" maxlength="3" placeholder="–" value="${g.oppScore ?? (tot.opp ?? '')}"><i>Them</i></label></div>
           </div>
-          <div class="score"><span class="us"><b>${tot.team.pts}</b><i>Us</i></span><span class="dash">–</span>
-            <label class="them"><input id="sOpp" inputmode="numeric" maxlength="3" placeholder="–" value="${g.oppScore ?? (tot.opp ?? '')}"><i>Them</i></label></div>
+          ${cells.length ? `<div class="team-totals">${cells.join('')}</div>` : ''}
         </div>
       </section>
-      <section class="sec-team">
-        <h2 class="card-title">Team</h2>
-        <div class="card team-totals">${cells.join('')}</div>
+      <section class="sec-court">
+        <h2 class="card-title">On court <span>${court.length}${linked ? ' · from the game clock' : ''}</span>
+          ${linked ? '' : `<button class="mini-btn" id="sCourtEdit">${S.editCourt ? 'Done' : 'Change'}</button>`}</h2>
+        <ul class="crow ${S.editCourt ? 'editing' : ''}" id="sCourt"></ul>
       </section>
       <section class="sec-players">
-        <h2 class="card-title">Players <span>${S.sel ? 'now tap a stat' : 'tap a player, then a stat'}</span></h2>
+        <h2 class="card-title">${court.length ? 'Bench' : 'Players'}</h2>
         ${roster.length ? '<ul class="sgrid" id="sGrid"></ul>' : '<div class="card empty-card">No players yet — add them in Team.</div>'}
       </section>
     </div>`;
 
-  const grid = document.getElementById('sGrid');
-  for (const p of roster) {
+  const tile = (p, cls) => {
     const li = document.createElement('li');
-    li.className = 'stile' + (S.sel === p.id ? ' sel' : '');
+    li.className = cls + (S.sel === p.id && !S.editCourt ? ' sel' : '') + (S.editCourt && court.includes(p.id) ? ' oncourt' : '');
     li.innerHTML = `<span class="pnum">${esc(p.number || '–')}</span><span class="sname">${esc(p.name)}</span>
       <span class="sline">${statLine(tot.byPlayer[p.id], shown) || '&nbsp;'}</span>`;
-    li.onclick = () => { S.sel = S.sel === p.id ? null : p.id; renderStats(); };
-    grid?.appendChild(li);
+    li.onclick = async () => {
+      if (S.editCourt) {   // setting the five: tap toggles on court / bench
+        const cur = statsCourt(g), has = cur.includes(p.id);
+        if (!has && cur.length >= need) { toast(`Already ${need} on court — tap one to take her off`); return; }
+        g.statsCourt = has ? cur.filter(x => x !== p.id) : [...cur, p.id];
+        await saveGame(); renderStats(); return;
+      }
+      S.sel = S.sel === p.id ? null : p.id; renderStats();
+    };
+    return li;
+  };
+  const crow = document.getElementById('sCourt');
+  for (const id of court) crow.appendChild(tile(playerById(id), 'stile ctile'));
+  for (let k = court.length; k < need; k++) {   // empty places in the five
+    const li = document.createElement('li'); li.className = 'ctile empty';
+    li.textContent = S.editCourt ? 'Tap a player' : '';
+    if (!S.editCourt && !linked) li.onclick = () => { S.editCourt = true; S.sel = null; renderStats(); };
+    crow.appendChild(li);
   }
+  const grid = document.getElementById('sGrid');
+  for (const p of bench) grid?.appendChild(tile(p, 'stile'));
+  document.getElementById('sCourtEdit')?.addEventListener('click', () => { S.editCourt = !S.editCourt; S.sel = null; renderStats(); });
   document.querySelectorAll('.q-sel button').forEach(b => b.onclick = async () => { g.statPeriod = +b.dataset.q; await saveGame(); renderStats(); });
   const opp = document.getElementById('sOpp');
   opp.onchange = async () => { const v = opp.value.trim(); g.oppScore = v === '' ? null : Math.max(0, parseInt(v, 10) || 0); await saveGame(); renderStats(); };
   document.getElementById('sMenu').onclick = openStatsMenu;
 
   // The pad
-  const sel = S.sel && playerById(S.sel);
+  const sel = !S.editCourt && S.sel && playerById(S.sel);
   const hasUndo = g.events.some(e => e.type === 'stat');
   document.getElementById('statPad').innerHTML = `
-    <div class="pad-head"><span class="pad-who">${sel ? `<b>${esc(sel.number ? '#' + sel.number + ' ' : '')}${esc(sel.name)}</b>` : 'Tap a player'}</span>
+    <div class="pad-head"><span class="pad-who">${S.editCourt ? 'Setting who’s on court' : sel ? `<b>${esc(sel.number ? '#' + sel.number + ' ' : '')}${esc(sel.name)}</b>` : 'Tap a player'}</span>
       <button class="undo-btn" id="sUndo" ${hasUndo ? '' : 'disabled'} aria-label="Undo last stat">
         <svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Undo</button></div>
     <div class="pad-grid">${pad.map(t => `<button class="pad-btn ${t.group}" data-stat="${t.key}" ${sel ? '' : 'disabled'}>${t.pad}</button>`).join('')}</div>
