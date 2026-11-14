@@ -9,11 +9,12 @@
 const TEAM_NAME = 'PENGUINS';
 const SCHOOL_NAME = 'BURNS PARK';   // written opposite the team name
 const PURPLE = '#4e2a84';
+const DEEP_PURPLE = '#2b1550';   // the out-of-bounds strip and, to match it exactly, the names
 
 // Two board styles. "ink" is the board-color marker: white on purple, purple on white.
 // Lines drawn with it switch color when you switch boards; picked colors stay as picked.
 const THEMES = {
-  purple: { floor: PURPLE, band: '#ffffff', lines: '#ffffff', lettering: PURPLE, ink: '#ffffff', apron: '#2b1550',
+  purple: { floor: PURPLE, band: '#ffffff', lines: '#ffffff', lettering: DEEP_PURPLE, ink: '#ffffff', apron: DEEP_PURPLE,
             oldPens: ['#ffffff', '#ffd84d', '#ff6b6b', '#7fd3ff'] },   // for plays saved before v2
   white:  { floor: '#fbfafd', band: PURPLE, lines: PURPLE, lettering: '#ffffff', ink: PURPLE, apron: null,
             oldPens: [PURPLE, '#1c1b22', '#d62839', '#1f6fd1'] },
@@ -21,7 +22,7 @@ const THEMES = {
 
 const DEFAULT_WIDTH = 0.35;      // marker thickness for new lines, in feet on the court
 const MIN_WIDTH = 0.08, MAX_WIDTH = 1.2;   // range of the Line slider in the ••• menu
-const APP_VERSION = '25 preview';   // the preview copy (next/) — see BUILD-LOG.md
+const APP_VERSION = '26 preview';   // the preview copy (next/) — see BUILD-LOG.md
 const DB_NAME = 'penguins-playbook-preview';   // preview keeps its own plays, separate from the live app           // shown in the ••• menu; bump with each update
 const ZOOM_MAX = 6;              // how far you can zoom in (6× the fitted size)
 const ERASER_RADIUS_PX = 14;     // how close the eraser must come to a line, in screen points

@@ -404,3 +404,8 @@ the white border and letters may shrink; letters must be spaced away from the st
 - Letter sizes now: iPad sideways full 4.5 ft (same), half 2.3 ft (was 4.5); iPad upright half 1.5 ft (was ~3.7);
   iPhone unchanged (4.3–4.5).
 - Noticed, not changed: the floating tab bar covers PENGUINS at the bottom when names are at the ends (since Stage 2).
+
+### Version 26 preview — names match the border (2026-11-14)
+Owner: the letters must match either the border or the court body exactly. They already matched the body
+(#4e2a84), but beside the dark strip they read as a near-miss. Chose the strip: `DEEP_PURPLE = '#2b1550'`
+for both the strip and the names (purple board). White board unchanged. Baseline passes.
