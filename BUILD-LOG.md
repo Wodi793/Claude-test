@@ -748,3 +748,11 @@ more elegant, "like the New York Times on the iPhone… lives above the surface�
   shadows instead of flat black offsets; a deep purple gradient behind; 1.5 pt dark outline; 10 pt corners on
   boxes (6 pt inside); pink buttons glow faintly; labels get a slight shadow.
 - Full suite passes.
+
+### Live version 52 (2026-11-14)
+Owner (screenshot, open foldable on Stats): "different color purples" — the v51 gradient didn't match the solid
+purple iOS shows at the screen's top and bottom edges; and put the tab button "lower, underneath the boxes".
+- One solid purple (#4e2a84) for every page and sheet; the floating shadows stay.
+- Tab button (now 42 pt) sits in a slim row of its own under the pad (Stats) and under Undo/Stop (Minutes,
+  phones); those take the full width again. Sideways layouts unchanged (two columns).
+- Tests pass (stats2's "pad clear of button" now true by being above it).

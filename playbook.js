@@ -22,7 +22,7 @@ const THEMES = {
 
 const DEFAULT_WIDTH = 0.35;      // marker thickness for new lines, in feet on the court
 const MIN_WIDTH = 0.08, MAX_WIDTH = 1.2;   // range of the Line slider in the ••• menu
-const APP_VERSION = 51;   // shown in the ••• menu; bump with each update (the preview in next/ has its own)
+const APP_VERSION = 52;   // shown in the ••• menu; bump with each update (the preview in next/ has its own)
 const DB_NAME = 'penguins-playbook';   // the live app's database (next/ uses 'penguins-playbook-preview')
 const ZOOM_MAX = 6;              // how far you can zoom in (6× the fitted size)
 const ERASER_RADIUS_PX = 14;     // how close the eraser must come to a line, in screen points

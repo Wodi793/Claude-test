@@ -1682,3 +1682,36 @@ html[data-layout="compact"][data-orient="land"] .sb-actions { border: 0 !importa
 .page-head .tn-school { font-size: clamp(16px, 4.6vw, 22px) !important; letter-spacing: .26em !important; margin-bottom: 2px; }
 .page-head .tn-team { font-size: clamp(34px, 11vw, 52px) !important; }
 @media (min-width: 700px) { .page-head .tn-team { font-size: 46px !important; } .page-head .tn-school { font-size: 19px !important; } }
+
+/* =====================================================================
+   ONE PURPLE, AND THE CORNER BUTTON UNDER THE BOXES (owner, after live 51)
+   • The gradient didn't match the solid purple iOS shows at the screen's edges (seams).
+     Back to one solid purple for every page and sheet.
+   • The tab button sits in a slim row of its own *under* the pad / the Undo-Stop bar
+     (owner: "lower, underneath the boxes"); those get the full width again.
+   ===================================================================== */
+html[data-tab="minutes"] .tab-page, html[data-tab="stats"] .tab-page, .sheet.light { background: #4e2a84 !important; }
+#tabMenuBtn { width: 42px; height: 42px; }
+#tabMenuBtn svg { width: 22px; height: 22px; }
+:root { --tabrow: 52px; }   /* the slim bottom row the tab button lives in */
+
+/* Stats, phones and big upright screens: pad full width, above the tab button's row */
+@media (orientation: portrait) {
+  html[data-tab="stats"]:not([data-layout="wide"]) #statPad {
+    left: max(14px, env(safe-area-inset-left)) !important; right: max(18px, calc(env(safe-area-inset-right) + 4px)) !important;
+    bottom: calc(var(--tabs-bottom, 12px) + var(--tabrow)) !important; }
+}
+@media (min-width: 420px) and (orientation: portrait) {
+  html[data-tab="stats"]:not([data-layout="wide"]) #statPad { left: max(14px, calc(50% - 360px)) !important; right: max(18px, calc(50% - 360px)) !important; }
+}
+html[data-tab="stats"] #tabbar { bottom: var(--tabs-bottom, 12px) !important; }
+html[data-tab="stats"] #tab-stats .page-scroll { padding-bottom: calc(var(--pad-h, 200px) + var(--tabs-bottom, 12px) + var(--tabrow) + 16px) !important; }
+@media (orientation: landscape) {
+  html[data-tab="stats"] #tab-stats .page-scroll { padding-bottom: calc(var(--tabs-bottom, 12px) + var(--tabrow) + 16px) !important; }
+}
+
+/* Minutes on a phone: Undo + Start/Stop full width, above the tab button's row */
+html[data-layout="compact"][data-orient="port"] .sb-actions {
+  left: max(14px, env(safe-area-inset-left)) !important; bottom: calc(var(--tabs-bottom, 12px) + var(--tabrow)) !important; }
+html[data-layout="compact"][data-orient="port"][data-live="yes"]:not([data-subbing="yes"]) .tab-page .page-scroll {
+  padding-bottom: calc(var(--tabs-bottom, 12px) + var(--tabrow) + var(--actions-h) + 4px) !important; }
