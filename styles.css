@@ -1221,3 +1221,18 @@ html[data-layout="compact"] .sb-actions { left: max(14px, env(safe-area-inset-le
 .sub-pairs .nm { white-space: nowrap; }
 /* Bench: a sweep that starts on the number squares marks players; anywhere else scrolls the bench */
 #benchList .pnum { touch-action: none; }
+
+/* Sub bar: one slim row — "5 off / 3 on", Cancel, Confirm (owner: the bigger box hid the bench) */
+#subBar { padding: 8px 10px; }
+.sub-row { display: flex; align-items: center; gap: 8px; }
+.sub-sum { flex: none; min-width: 52px; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+  line-height: 1.25; color: var(--ios-secondary); }
+.sub-sum b { color: var(--blk); font-size: 15px; letter-spacing: 0; }
+.sub-row .pill-btn { flex: 1; min-height: 46px; font-size: 16px; font-weight: 800; }
+.sub-row #subConfirm { flex: 1.4; }
+/* Phone, while picking subs: the tab button steps aside (you don't switch tabs mid-sub), the sub bar
+   drops to the bottom, and the bench gets that room back */
+html[data-layout="compact"][data-subbing="yes"] #tabbar { display: none; }
+html[data-layout="compact"][data-subbing="yes"] #subBar { bottom: var(--tabs-bottom, 12px); }
+html[data-layout="compact"][data-subbing="yes"][data-live="yes"] .tab-page .page-scroll {
+  padding-bottom: calc(var(--tabs-bottom, 12px) + var(--subbar-h, 0px)); }

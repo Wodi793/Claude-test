@@ -461,14 +461,14 @@ function renderSubBar() {
   if (!live) { room(); return; }
   const n = M.outs.length, ready = n > 0 && n === M.ins.length;
   const name = id => { const p = playerById(id); return p ? (p.number ? `#${esc(p.number)} ` : '') + esc(p.name) : '?'; };   // no "#" when she has no number yet
+  // One slim line, so it never hides the bench on a small screen: the highlighted rows show who.
+  const need = M.outs.length - M.ins.length;
   bar.innerHTML = `
-    <div class="sub-pairs">
-      <span class="pair"><em>Off ${M.outs.length}</em> ${M.outs.map(id => `<span class="nm">${name(id)}</span>`).join(', ') || '<i>tap who comes off</i>'}</span>
-      <span class="pair"><em>On ${M.ins.length}</em> ${M.ins.map(id => `<span class="nm">${name(id)}</span>`).join(', ') || '<i>tap who goes in</i>'}</span></div>
-    <div class="sub-actions">
+    <div class="sub-row">
+      <span class="sub-sum"><b>${M.outs.length}</b> off<br><b>${M.ins.length}</b> on</span>
       <button class="pill-btn" id="subCancel">Cancel</button>
-      <button class="pill-btn primary-btn" id="subConfirm" ${ready ? '' : 'disabled'}>${ready ? `Confirm ${n} sub${n === 1 ? '' : 's'}`
-        : M.outs.length > M.ins.length ? `Pick ${M.outs.length - M.ins.length} more to go in` : `Pick ${M.ins.length - M.outs.length} more to come off`}</button>
+      <button class="pill-btn primary-btn" id="subConfirm" ${ready ? '' : 'disabled'}>${ready ? `Confirm ${n}`
+        : need > 0 ? `Pick ${need} in` : `Pick ${-need} off`}</button>
     </div>`;
   room();   // make room at the bottom of the list for the queue
   $('subCancel').onclick = () => { clearSubs(); renderMinutes(); };

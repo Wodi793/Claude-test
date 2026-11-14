@@ -22,12 +22,13 @@ const THEMES = {
 
 const DEFAULT_WIDTH = 0.35;      // marker thickness for new lines, in feet on the court
 const MIN_WIDTH = 0.08, MAX_WIDTH = 1.2;   // range of the Line slider in the ••• menu
-const APP_VERSION = 40;   // shown in the ••• menu; bump with each update (the preview in next/ has its own)
+const APP_VERSION = 41;   // shown in the ••• menu; bump with each update (the preview in next/ has its own)
 const DB_NAME = 'penguins-playbook';   // the live app's database (next/ uses 'penguins-playbook-preview')
 const ZOOM_MAX = 6;              // how far you can zoom in (6× the fitted size)
 const ERASER_RADIUS_PX = 14;     // how close the eraser must come to a line, in screen points
 const APRON = 2;                 // dark-purple out-of-bounds strip around the court (feet; purple board only)
-const NAME_GAP = 0.4;            // space kept between that strip and PENGUINS / BURNS PARK (feet)
+const NAME_GAP = 0.4;
+const WHITE_SHARE = 0.5;         // share of the white border kept beside the names; the dark band takes the rest            // space kept between that strip and PENGUINS / BURNS PARK (feet)
 const PLAIN_BAND = 0.75;         // minimum border (feet) around the court: thin, but not zero
 const MIN_BORDER_LETTERS = 1.25;   // letter size (feet) needed to write PENGUINS in the border;
                                  // with less room, it goes on the court floor instead
@@ -246,7 +247,17 @@ function placeNames(L, theme) {
   const size = Math.min(MAX_LETTERS, Math.max(ends, sides));
   L.letters = size >= MIN_BORDER_LETTERS ? (ends >= sides ? 'ends' : 'sides') : 'floor';
   L.letterSize = size;
-  L.nameY = bandY / 2; L.nameX = bandX / 2;   // centered in the white space
+  // The white beside the names is leftover space (the court's shape never matches the screen's).
+  // Owner: halve it, keep the names the same size — the dark band takes the difference.
+  // Never less white than the names need.
+  let whiteY = bandY, whiteX = bandX;
+  L.apronX = L.apronY = APRON;
+  if (apron && L.letters !== 'floor') {
+    const need = 0.85 * size + 0.5;                       // what fit() needs for letters this size
+    if (L.letters === 'ends') { whiteY = Math.max(need, bandY * WHITE_SHARE); L.apronY = APRON + bandY - whiteY; }
+    else { whiteX = Math.max(need, bandX * WHITE_SHARE); L.apronX = APRON + bandX - whiteX; }
+  }
+  L.nameY = whiteY / 2; L.nameX = whiteX / 2;   // centered in the white that's left
   L.namesFor = theme;
 }
 
@@ -413,7 +424,9 @@ function render() {
   if (L.turned) ctx.transform(0, 1, -1, 0, L.ch, 0);
   if (t.apron) {   // dark out-of-bounds strip just outside the boundary line
     const c = COURTS[state.court];
-    ctx.fillStyle = t.apron; ctx.fillRect(-APRON, -APRON, c.w + 2 * APRON, c.h + 2 * APRON);
+    // (apronX/Y are along the screen; the court may be turned, which swaps them)
+    const ax = L.turned ? L.apronY : L.apronX, ay = L.turned ? L.apronX : L.apronY;
+    ctx.fillStyle = t.apron; ctx.fillRect(-ax, -ay, c.w + 2 * ax, c.h + 2 * ay);
   }
   drawCourt(ctx, state.court, t);
   if (L.letters === 'floor') drawFloorNames(ctx, state.court, t);

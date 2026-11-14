@@ -575,3 +575,17 @@ Owner: picking one off, then one on, back and forth, is too much swiping; wants 
 - Redraws keep the bench's (and the two-screen lists') scroll position — before, marking someone low on the bench
   jumped the list back to the top.
 - Test benchsweep.js (name swipe selects nothing; number sweep selected all 8 incl. off-screen; list scrolled).
+
+### Live version 41 (2026-11-14)
+Owner: on the small (folded) screen the sub box hid the bench so subs couldn't be picked; purple at the sides
+(folded); white at the base (open); the white border around the full court is too big — halve it, keep the names.
+- Sub bar: one slim row ("5 off / 3 on", Cancel, Confirm n / Pick n in / Pick n off) — 66 pt, was 127–198.
+  On the phone, while picking subs, the round tab button hides and the sub bar sits at the bottom: bench shows
+  4 full rows at 360×640 and 360×780 (was 3), 3 at 320×568 (was 1).
+- Court border: `placeNames` keeps WHITE_SHARE = 0.5 of the white beside the names (never less than the names
+  need); the dark band (`L.apronX/Y`, per screen axis, swapped when the court is turned) takes the rest.
+  Names unchanged in size.
+- Purple sides / white base: not changed — need the owner's Screen check (folded and open) to see whether those
+  strips are inside the app's drawable area.
+- Tests: multisub (updated texts), benchsweep, smallsub, game, layouts, rule, season, tabs, 8-screen, baseline,
+  Pencil all pass.
