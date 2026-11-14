@@ -9,7 +9,7 @@ const TeamUI = { team: null };
 async function refreshTeamUI() {
   TeamUI.team = await Data.currentTeam();
   const t = TeamUI.team, roster = await Data.players(t.id);
-  $('mTeamName').textContent = t.name;
+  $('mTeamName').textContent = `${SCHOOL_NAME} ${t.name}`;   // e.g. BURNS PARK PENGUINS (capitals via CSS)
   $('mTeamSeason').textContent = `${SPORTS[t.sport]?.name || ''} · ${t.season}`;
   if (!$('teamSheet').hidden) renderTeamSheet(roster);
   window.onTeamChanged?.();   // let the Minutes tab reload the roster / team (minutes.js)

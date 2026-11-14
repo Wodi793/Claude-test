@@ -752,83 +752,118 @@ html[data-layout="compact"] .sec-rule br { display: none; }
 }
 
 /* =====================================================================
-   DARK TEAM SIDE (owner, after v27): "darker, minimalist; the two dark purples
-   most of the time; white and light colors as the pop."
-   Same iOS layout as Stage 6, recolored. Defined last so it wins.
-     background  = DEEP purple (#2b1550, the court's border)
-     cards/rows  = a step lighter, toward the court purple
-     court purple (#4e2a84) = number circles, Stop, "coming in", must-stay tags
-     white       = the main buttons (Start, Confirm), selections, urgent tags
-     lavender    = small accents (links, icons, timeline bars)
+   LOUD TEAM SIDE (owner, after preview 28): purple, hot pink and white, with black
+   outlines — "loud", "sassy", more definition and contrast than the light (v27) or
+   dark (v28) looks. Same layout as Stage 6; only colors, outlines and the header change.
+     page          = court purple (#4e2a84)
+     cards, rows   = white, 2px black outline, hard black drop shadow
+     hot pink      = the main buttons (Start, Confirm), the quarter badge, picked / coming-in rows, urgent tags
+     black         = Stop, a girl marked to come out, outlines
+     header        = BURNS PARK PENGUINS in the court's lettering (heavy, spaced capitals, deep purple)
    ===================================================================== */
 :root {
-  --deep: #2b1550;
-  --court: #4e2a84;
-  --lav: #cbb8f2;                          /* light lavender accent */
-  --ios-bg: var(--deep);
-  --ios-card: #3a1f68;
-  --ios-sep: rgba(255, 255, 255, .09);
-  --ios-label: #ffffff;
-  --ios-secondary: rgba(232, 222, 255, .62);
-  --ios-fill: rgba(255, 255, 255, .10);
-  --tint: var(--lav);
-  --ios-red: #ff8a87;
+  --blk: #14091f;                 /* near-black outline */
+  --pink: #ff2e93;                /* hot pink */
+  --pink-soft: #ffe0ef;
+  --lav-soft: #f1e9fb;
+  --line: 2px solid var(--blk);
+  --pop: 3px 3px 0 var(--blk);    /* hard drop shadow */
+  --ios-bg: #4e2a84;
+  --ios-card: #ffffff;
+  --ios-sep: rgba(20, 9, 31, .12);
+  --ios-label: #14091f;
+  --ios-secondary: #6a5a80;
+  --ios-fill: var(--lav-soft);
+  --tint: #4e2a84;
+  --ios-red: #d62839;
 }
-.sheet.light { background: rgba(43, 21, 80, .97); }
 
-/* Main buttons: white with deep-purple text */
+/* ----- Text that sits on the purple page: white ----- */
+.tab-page .card-title, .sheet.light .card-title, .tab-page .card-title span, .sheet.light .card-title span,
+.tab-page .hint, .tab-page .note, .sheet.light .note, .rule-note, .sheet.light h1, .season-title,
+.final-date { color: #fff; }
+.tab-page .card-title span, .sheet.light .card-title span, .tab-page .hint, .tab-page .note, .sheet.light .note,
+.rule-note { color: rgba(255, 255, 255, .82); }
+.sheet.light { background: #4e2a84; }
+
+/* ----- Header card: BURNS PARK PENGUINS, lettered like the court ----- */
+.page-head { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 8px 10px;
+  background: #fff; border: var(--line); box-shadow: var(--pop); border-radius: 16px; padding: 12px 14px; margin-bottom: 14px; }
+.page-head .team-title { display: contents; }
+.page-head .team-name { grid-column: 1 / -1; font-family: -apple-system, system-ui, "Helvetica Neue", Arial, sans-serif;
+  font-weight: 900; text-transform: uppercase; letter-spacing: .19em; color: #2b1550; line-height: 1.05;
+  font-size: clamp(17px, calc((100vw - 76px) / 17.5), 34px); white-space: nowrap; overflow: hidden; }
+.page-head .team-season { grid-column: 1; margin: 0; color: var(--ios-secondary); }
+.tab-page .page-head .season-btn, .tab-page .page-head .round-btn { background: #fff; color: #4e2a84; border: var(--line); }
+/* Wide screens: name, season and buttons on one line (keeps the game higher on the screen) */
+@media (min-width: 700px) {
+  .page-head { grid-template-columns: auto 1fr auto auto; padding: 10px 14px; }
+  .page-head .team-name { grid-column: 1; font-size: 30px; }
+  .page-head .team-season { grid-column: 2; padding-left: 8px; }
+}
+
+/* ----- Cards: white, outlined, hard shadow ----- */
+.tab-page .card, .sheet.light .card, .players, .scoreboard, .rule-bar, .tl-card, .season-card {
+  background: #fff; color: var(--ios-label); border: var(--line); box-shadow: var(--pop); }
+.players { margin-right: 3px; }   /* room for the shadow */
+
+/* ----- Buttons ----- */
 .tab-page .primary-btn, .sheet.light .primary-btn, .light .primary-btn, #subBar .primary-btn,
-html[data-tab="minutes"] #modal .buttons button.primary { background: #fff !important; color: var(--deep) !important; }
-.big-btn, .clock-btn.go, .clock-btn.next { background: #fff; color: var(--deep); }
-.big-btn:disabled { background: #4a2f78; color: rgba(232, 222, 255, .7); }   /* solid: the list must not show through */
-.clock-btn.stop { background: var(--court); color: #fff; box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .35); }
-.undo-btn { color: #fff; }
-.period-chip { background: #fff; color: var(--deep); }
-.tab-page .seg button.active, .light .seg button.active { background: #fff; color: var(--deep); }
-.light .menu-btn.active { background: #fff; color: var(--deep); }
-html[data-tab="minutes"] #modal .buttons button.danger { background: #d62839; color: #fff; }
+html[data-tab="minutes"] #modal .buttons button.primary, .big-btn, .clock-btn.go, .clock-btn.next {
+  background: var(--pink) !important; color: #fff !important; border: var(--line); box-shadow: var(--pop); }
+.big-btn:disabled { background: #e4dcef !important; color: var(--ios-secondary) !important; box-shadow: none; }
+.clock-btn.stop { background: var(--blk); color: #fff; border: var(--line); box-shadow: 3px 3px 0 var(--pink); }
+.undo-btn { background: #fff; color: var(--blk); border: var(--line); }
+.tab-page .pill-btn, .sheet.light .pill-btn, .light .pill-btn, #subBar .pill-btn { background: #fff; color: var(--blk); border: var(--line); }
+.period-chip { background: var(--pink); color: #fff; border: var(--line); }
+.tab-page .seg, .light .seg { background: var(--lav-soft); border: var(--line); }
+.tab-page .seg button, .light .seg button { color: var(--blk); }
+.tab-page .seg button.active, .light .seg button.active { background: var(--pink); color: #fff; }
+.light .menu-btn { background: var(--lav-soft); color: var(--blk); border: var(--line); }
+.light .menu-btn.active { background: var(--pink); color: #fff; }
+.sheet.light .danger-btn { background: #fff !important; color: var(--ios-red); border: var(--line) !important; }
 
-/* Player rows */
-.pnum, .sheet.light .roster .num { background: var(--court) !important; color: #fff !important; }
-.ptag, .ptag.rule-owed { background: rgba(255, 255, 255, .12); color: #ece4ff; }
-.ptag.rule-now, .ptag.rule-must { background: #fff; color: var(--deep); }
-.ptag.rule-keep { background: var(--court); color: #fff; }
-.pmet { color: var(--lav); }
-.prow.picked, .prow.selected, .prow.going-out { background: #fff; color: var(--deep); }
-.prow.picked .pnum, .prow.selected .pnum, .prow.going-out .pnum { background: var(--deep) !important; color: #fff !important; }
-.prow.selected .pmin, .prow.going-out .pmin, .prow.picked .pmin,
-.prow.selected .pmet, .prow.going-out .pmet { color: var(--deep); }
-.prow.picked .ptag, .prow.selected .ptag, .prow.going-out .ptag,
-.prow.selected .ptag.rule-now, .prow.going-out .ptag.rule-keep { background: var(--deep); color: #fff; }
-.prow.coming-in { background: var(--court); color: #fff; box-shadow: inset 0 0 0 2px #fff; }
-.prow.coming-in .pnum { background: #fff !important; color: var(--court) !important; }
-.prow.coming-in .ptag { background: #fff; color: var(--court); }
+/* ----- Player rows ----- */
+.pnum, .sheet.light .roster .num { background: #4e2a84 !important; color: #fff !important; }
+.pmin { color: var(--blk); }
+.ptag, .ptag.rule-owed { background: var(--lav-soft); color: #4e2a84; }
+.ptag.rule-now, .ptag.rule-must { background: var(--pink); color: #fff; }
+.ptag.rule-keep { background: #4e2a84; color: #fff; }
+.pmet { color: var(--pink); }
+.prow.picked, .prow.coming-in { background: var(--pink); color: #fff; box-shadow: none; }
+.prow.selected, .prow.going-out { background: var(--blk); color: #fff; }
+.prow.picked .pnum, .prow.coming-in .pnum { background: #fff !important; color: var(--pink) !important; }
+.prow.selected .pnum, .prow.going-out .pnum { background: #fff !important; color: var(--blk) !important; }
+.prow.picked .pmin, .prow.coming-in .pmin, .prow.selected .pmin, .prow.going-out .pmin,
+.prow.selected .pmet, .prow.going-out .pmet, .prow.coming-in .pmet { color: #fff; }
+.prow.picked .ptag, .prow.coming-in .ptag { background: #fff; color: var(--pink); }
+.prow.selected .ptag, .prow.going-out .ptag,
+.prow.selected .ptag.rule-now, .prow.going-out .ptag.rule-keep { background: #fff; color: var(--blk); }
 
-/* Team sheet bits */
-.sheet.light .chip { background: var(--ios-fill); color: #fff; }
-.sheet.light .roster li.inactive .chip { background: #fff; color: var(--deep); }
-.sheet.light .add-player input { background: rgba(0, 0, 0, .22) !important; color: #fff; }
+/* ----- Team sheet bits ----- */
+.sheet.light .chip { background: var(--lav-soft); color: var(--blk); }
+.sheet.light .roster li.inactive .chip { background: var(--blk); color: #fff; }
 
-/* Frosted overlays (menus, sub queue, pop-ups, the corner switch): dark glass */
+/* ----- Overlays (menus, sub queue, pop-ups, thumb bar, corner switch): white, outlined ----- */
 .light.glass, .light .glass, #subBar, html[data-tab="minutes"] #tabbar, html[data-tab="minutes"] #modal,
 html[data-layout="compact"] .sb-actions {
-  background: rgba(58, 31, 104, .82); border: .5px solid rgba(255, 255, 255, .12);
-  box-shadow: 0 10px 30px rgba(10, 4, 24, .45); color: #fff; }
+  background: #fff; -webkit-backdrop-filter: none; backdrop-filter: none;
+  border: var(--line); box-shadow: 4px 4px 0 var(--blk); color: var(--ios-label); }
 html[data-layout="compact"][data-orient="land"] .sb-actions { background: none; border: 0; box-shadow: none; }
-@media (prefers-reduced-transparency: reduce) {
-  .light.glass, .light .glass, #subBar, html[data-tab="minutes"] #tabbar, html[data-tab="minutes"] #modal,
-  html[data-layout="compact"] .sb-actions { background: #3a1f68 !important; }
-}
+html[data-tab="minutes"] .tabbtn:not(.active) { color: #4e2a84; }
 
-/* Timeline and season table */
-.tl-card, .season-card { background: var(--ios-card); color: #fff; }
-.tl-head, .tl-key, .st-head { color: var(--ios-secondary); }
-.tl-row, .st-row { border-top-color: var(--ios-sep); }
-.tl-name b, .st-name b { color: var(--lav); }
-.tl-track { background: rgba(255, 255, 255, .07); }
-.tl-track i { background: var(--lav); }
-.tl-track i.live { background: #fff; }
-.tl-lines i.div { border-left-color: rgba(255, 255, 255, .2); }
-.tl-lines i.deadline, .tl-key i.deadline { border-left-color: #fff; }
-.tl-lines i.now { border-left-color: var(--ios-red); }
-.st-name em, .st-row.behind .st-fair { background: #fff; color: var(--deep); }
+/* ----- Timeline and season table ----- */
+.tl-head, .st-head { color: var(--ios-secondary); }
+.tl-key { color: var(--ios-secondary); }
+.tl-key i.deadline { border-left-color: var(--blk); }
+.tl-track { background: var(--lav-soft); }
+.tl-track i { background: #4e2a84; }
+.tl-track i.live { background: var(--pink); }
+.tl-lines i.deadline { border-left-color: var(--blk); }
+.tl-lines i.now { border-left-color: var(--pink); }
+.tl-name b, .st-name b { color: #4e2a84; }
+.st-name em, .st-row.behind .st-fair { background: var(--pink); color: #fff; }
+/* Sheet text on the purple background (titles, summaries) is white; text inside white cards stays dark */
+.sheet.light p, .sheet.light .season-title { color: #fff; }
+.sheet.light p.note, .sheet.light .season-title + .note { color: rgba(255, 255, 255, .82); }
+.sheet.light .card p { color: var(--ios-secondary); }

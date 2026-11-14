@@ -444,3 +444,16 @@ minimalist; use the two dark purples most; white and light colors as the pop.
 - Dark glass for menus, sub queue, pop-ups, the thumb bar and the corner switch.
 - Disabled "Pick 5 more starters" kept solid (the list must not show through).
 - Tests: layouts, game pass.
+
+### Version 29 preview — loud purple / hot pink / white (2026-11-14)
+Owner on preview 28: header should read BURNS PARK PENGUINS in the court's lettering; dark felt too dark and
+lacked definition; wants purple, hot pink and white with black outlines, "loud", "sassy", more contrast.
+- Replaced the DARK section with "LOUD TEAM SIDE": court-purple page; white cards with 2px near-black outlines
+  and hard black drop shadows; hot pink #ff2e93 for Start / Confirm / quarter badge / picked and coming-in rows /
+  urgent tags; black for Stop (pink shadow) and going-out rows.
+- Header: a white card with BURNS PARK PENGUINS (SCHOOL_NAME + team name) in the court lettering
+  (system font, weight 900, capitals, 0.19em spacing, #2b1550), sized to fit the width; on screens ≥ 700 pt
+  wide the name, season and buttons share one line so the game stays high on the screen.
+- Bug found: my black variable was named --ink, which the Playbook sets to the marker color (white) on the
+  page, so outlines vanished. Renamed --blk. (Same family as the Stage 6 name clashes: shared names.)
+- Tests: layouts (all five on court in every layout after the header fix), game, season pass.
