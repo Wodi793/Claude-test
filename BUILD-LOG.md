@@ -457,3 +457,18 @@ lacked definition; wants purple, hot pink and white with black outlines, "loud",
 - Bug found: my black variable was named --ink, which the Playbook sets to the marker color (white) on the
   page, so outlines vanished. Renamed --blk. (Same family as the Stage 6 name clashes: shared names.)
 - Tests: layouts (all five on court in every layout after the header fix), game, season pass.
+
+### Version 30 preview — "sharp" (2026-11-14)
+Owner on preview 29 (liked it): bolder BURNS PARK PENGUINS; rules and starter text much smaller; pre-game order =
+header, players, then starters text, then league rule, then opponent/format at the bottom; iPad: drop the
+"11 still owed" box, clock card the same size as the timeline and aligned with it, no "Game timeline" label,
+more negative space; pull it all together — "high-end Berlin design studio… sharp".
+- New "SHARP" section on top of LOUD: 6 px corners (4 px tags and number squares), one 2 px outline and one
+  4 px hard shadow everywhere, more space (20–28 px), section labels and sheet titles in the court lettering
+  (900, wide-spaced capitals), buttons in heavy capitals, small print 12 px.
+- Header lockup: BURNS PARK (small, spaced) over a big PENGUINS (court lettering, deep purple).
+- Pre-game reordered in minutes.js (players → Start → starters text → league rule → opponent/format).
+- iPad sideways: 2 × 2 grid — clock | timeline (stretched to the same height), on court | bench; rule bar hidden
+  there; slimmer header so all five on court fit on an 11" iPad too. Timeline label removed everywhere.
+- Playbook not changed.
+- Tests: layouts (all five visible everywhere), game, season, rule, tabs, baseline pass.

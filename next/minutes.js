@@ -204,17 +204,19 @@ function renderPregame(body) {
   g.starters = g.starters.filter(id => available().some(p => p.id === id));
   const roster = M.roster.filter(p => !p.removed && p.active);
   const n = g.starters.length;
+  // Order (owner): the players first, then Start, then the small print, then opponent / format
   body.innerHTML = `
+    <div class="pregame">
+    ${roster.length ? '<ul class="players" id="pgList"></ul>'
+      : '<div class="card empty-card">No players yet.<br><button class="pill-btn primary-btn" id="gAddPlayers">Add your roster</button></div>'}
+    <button class="big-btn" id="gStart" ${n === need ? '' : 'disabled'}>${n === need ? 'Start game' : `Pick ${need - n} more starter${need - n === 1 ? '' : 's'}`}</button>
+    <p class="hint small-print">Starters ${n} of ${need}. Tap to pick; press and hold a player for Absent, Injured or Sitting out.</p>
+    ${ruleOn() ? pregameRuleNote() : ''}
     <section class="card">
       <label class="field">Opponent<input id="gOpp" type="text" maxlength="40" placeholder="Optional" autocomplete="off"></label>
       <button class="field field-btn" id="gFormat"><span>Format</span><span class="field-value">${esc(settingsSummary(g.settings))} ›</span></button>
     </section>
-    ${ruleOn() ? pregameRuleNote() : ''}
-    <h2 class="card-title">Starters <span>${n} of ${need}</span></h2>
-    <p class="hint">Tap to pick ${need} starters. Press and hold a player for Absent, Injured or Sitting out.</p>
-    ${roster.length ? '<ul class="players" id="pgList"></ul>'
-      : '<div class="card empty-card">No players yet.<br><button class="pill-btn primary-btn" id="gAddPlayers">Add your roster</button></div>'}
-    <button class="big-btn" id="gStart" ${n === need ? '' : 'disabled'}>${n === need ? 'Start game' : `Pick ${need - n} more starter${need - n === 1 ? '' : 's'}`}</button>`;
+    </div>`;
   $('gOpp').value = g.opponent || '';
   $('gOpp').onchange = () => { g.opponent = $('gOpp').value.trim(); saveGame(); };
   $('gFormat').onclick = openGameSettings;
@@ -242,7 +244,7 @@ function pregameRuleNote() {
   const line = players <= M.game.settings.onCourt ? ''
     : free >= 0 ? ` With ${players} players that leaves ${formatClock(free)} of free time before mid-Q3.`
     : ` With ${players} players there isn't enough time before mid-Q3 — ${formatClock(-free)} short; the rest is made up after.`;
-  return `<p class="rule-note">League rule: everyone plays a full ${M.game.settings.periods === 4 ? 'quarter' : 'period'} (${formatClock(len)}) by mid-Q3.${line}</p>`;
+  return `<p class="rule-note small-print">League rule: everyone plays a full ${M.game.settings.periods === 4 ? 'quarter' : 'period'} (${formatClock(len)}) by mid-Q3.${line}</p>`;
 }
 
 /** One player row: jersey number, name, optional minutes and tag. Solid and high-contrast. */
@@ -319,7 +321,6 @@ function renderLive(body) {
           ${bench.length ? '' : '<p class="hint">Nobody on the bench.</p>'}</div>
       </section>
       <section class="sec-tl">
-        <h2 class="card-title">Game timeline</h2>
         <section class="card tl-card" id="liveTimeline"></section>
       </section>
     </div>`;
