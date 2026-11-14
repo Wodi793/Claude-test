@@ -549,3 +549,17 @@ the bottom; "margins look shitty"), and: put Clear back on the rail, between the
 ### Live version 37 (2026-11-14)
 - Owner screenshot (foldable, 5 subs queued): the Cancel / Confirm bar is missing; a thin black bar shows below the bench; white band at the bottom still there. Not reproducible in Chromium at 703×1000, 669×927, 402×874, 1194×834 (bar shows, 198 pt tall, buttons present). Asked owner for version number, folded/unfolded, and whether the bar ever appears.
 - Fixed: the sub bar showed "# Name" for players with no number; now just the name.
+
+### Live version 38 (2026-11-14) — mark several subs at once
+Owner: picking one off, then one on, back and forth, is too much swiping; wants to mark all coming off
+(e.g. sweep down all five), then mark all going in.
+- State: `M.outs` / `M.ins` (any number, any order) replace `M.out` / `M.pairs`. Who replaces whom doesn't
+  affect playing time, so there's no pairing. Confirm is enabled when the counts match (≥ 1); otherwise it reads
+  "Pick N more to go in / to come off".
+- On court: tap toggles; a finger dragged down the list marks (or unmarks) every row it passes (`dragSelect`;
+  `touch-action: none` on those rows, so dragging there doesn't scroll); "All 5 off" / "Clear" button on the
+  On court label. Bench: taps toggle.
+- Sub bar shows "OFF n" and "ON n" lists. Tag on court rows reads "Off".
+- Undo takes back a whole confirmed batch as one action (unchanged mechanism: one action id).
+- Tests: new multisub.js (11/11: sweep, All off/Clear, partial counts, confirm, undo); existing tests switched to
+  the new state; full suite passes on preview and live copy.

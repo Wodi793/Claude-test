@@ -1205,3 +1205,17 @@ html[data-layout="compact"][data-live="yes"] .page-scroll { padding-left: 14px; 
 html[data-layout="wide"][data-live="yes"] .tab-page .page-scroll { padding-left: 24px; padding-right: 28px; }
 html[data-layout="compact"] .sb-actions { left: max(14px, env(safe-area-inset-left)); right: max(18px, calc(env(safe-area-inset-right) + 4px)); }
 .sheet.light .team-scroll, .sheet.light .scrollable { padding-right: 4px; }
+
+/* ----- Subs: mark several off, then several on (owner, after live 37) ----- */
+.sec-court .card-title { display: flex; align-items: center; gap: 6px; }
+.card-title .mini-btn { margin: -4px 0 -4px auto; height: 28px; padding: 0 10px; border-radius: 6px;
+  background: #fff; color: var(--blk); border: 2px solid var(--blk); font-size: 11px; font-weight: 900;
+  letter-spacing: .12em; text-transform: uppercase; box-shadow: 2px 2px 0 var(--blk); }
+.card-title .mini-btn:active { background: var(--pink); color: #fff; }
+#courtList .prow { touch-action: none; }   /* a finger dragged down the list marks players, it doesn't scroll */
+.sub-pairs .pair { display: grid; grid-template-columns: 50px 1fr; align-items: baseline; line-height: 1.3; font-size: 15px; font-weight: 600; }
+.sub-pairs .pair em { display: block; font-style: normal; font-weight: 900; font-size: 11px;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--ios-secondary); }
+.sub-pairs .pair i { font-style: normal; color: var(--ios-secondary); font-weight: 500; }
+#subConfirm:disabled { background: #e4dcef !important; color: var(--ios-secondary) !important; box-shadow: none !important; }
+.sub-pairs .nm { white-space: nowrap; }

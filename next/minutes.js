@@ -20,8 +20,8 @@
    ===================================================================== */
 const M = {
   team: null, roster: [], game: null,
-  out: null,          // on-court player tapped to come out (waiting for a bench player)
-  pairs: [],          // queued subs: [{ out, in }]
+  outs: [],           // on-court players marked to come off (any number, any order)
+  ins: [],            // bench players marked to go in; Confirm when the two counts match
   firedAlerts: new Set(),
   wake: null, audio: null,
 };
@@ -125,14 +125,19 @@ async function nextPeriod() {
   return record(events);
 }
 
+/** Forget the subs being picked. */
+function clearSubs() { M.outs = []; M.ins = []; }
+
+/** Make the marked subs: everyone marked off comes off, everyone marked on goes in, at this
+ *  moment. Who replaces whom doesn't matter for playing time, so there is no pairing. */
 async function commitSubs() {
-  if (!M.pairs.length) return;
+  if (!M.outs.length || M.outs.length !== M.ins.length) return;
   const r = nowState(), events = [];
-  for (const { out, in: inn } of M.pairs) {
-    events.push({ type: 'sub_out', period: r.period, clock: r.clock, playerId: out });
-    events.push({ type: 'sub_in', period: r.period, clock: r.clock, playerId: inn });
+  for (let i = 0; i < M.outs.length; i++) {
+    events.push({ type: 'sub_out', period: r.period, clock: r.clock, playerId: M.outs[i] });
+    events.push({ type: 'sub_in', period: r.period, clock: r.clock, playerId: M.ins[i] });
   }
-  M.pairs = []; M.out = null;
+  clearSubs();
   await record(events);
   toast(events.length / 2 === 1 ? 'Sub made' : `${events.length / 2} subs made`);
 }
@@ -145,7 +150,7 @@ async function undoGameAction() {   // (not "undo": that's the Playbook's)
   M.game.events = ev.filter(e => e.action !== last);
   if (!M.game.events.length) M.game.status = 'pregame';
   else if (removed.some(e => e.type === 'game_end')) M.game.status = 'live';
-  M.pairs = []; M.out = null;
+  clearSubs();
   await saveGame(); renderMinutes();
   toast('Undone');
 }
@@ -179,7 +184,7 @@ async function startNewGame() {
     M.game.events.push({ id: Data.newId(), action: Data.newId(), at: GameClock.now(), type: 'game_end', period: r.period, clock: r.clock });
     M.game.status = 'final'; await saveGame();
   }
-  M.pairs = []; M.out = null; M.firedAlerts.clear();
+  clearSubs(); M.firedAlerts.clear();
   M.game = await newPregame(); renderMinutes();
 }
 
@@ -187,7 +192,7 @@ async function discardGame() {
   const ok = await ask({ title: 'Discard this game?', message: 'It is deleted with its minutes. This can’t be undone.', okText: 'Discard', danger: true });
   if (!ok) return;
   await DB.del('games', M.game.id);
-  M.pairs = []; M.out = null; M.firedAlerts.clear();
+  clearSubs(); M.firedAlerts.clear();
   M.game = await newPregame(); renderMinutes();
 }
 
@@ -250,7 +255,7 @@ function pregameRuleNote() {
 /** One player row: jersey number, name, optional minutes and tag. Solid and high-contrast. */
 function playerRow(p, { tag = '', cls = '', minutes = null, rule = null, met = false } = {}) {
   const li = document.createElement('li');
-  li.className = 'prow ' + cls;
+  li.className = 'prow ' + cls; li.dataset.id = p.id;
   li.innerHTML = `<span class="pnum">${esc(p.number || '–')}</span><span class="pname">${esc(p.name)}</span>`
     + (tag ? `<span class="ptag">${esc(tag)}</span>` : rule ? `<span class="ptag ${rule.cls}" data-rule="${p.id}">${esc(rule.text)}</span>` : '')
     + (met ? '<span class="pmet" title="Full quarter played">✓</span>' : '')
@@ -278,7 +283,7 @@ function onTapOrHold(el, onTap, onHold) {
 function renderLive(body) {
   const g = M.game, r = nowState();
   const onCourt = r.onCourt.map(playerById).filter(Boolean);
-  const pairedOut = new Set(M.pairs.map(x => x.out)), pairedIn = new Set(M.pairs.map(x => x.in));
+  const pairedOut = new Set(M.outs), pairedIn = new Set(M.ins);
   const ms = ruleStatus(r); M.ruleSig = ruleSignature(ms);
   const urgency = id => { const st = ms?.players[id]?.state; return st === 'now' || st === 'must' ? 0 : st === 'owed' ? 1 : 2; };
   // Bench: girls the league rule says must play first, then least minutes
@@ -313,7 +318,8 @@ function renderLive(body) {
       ${ms ? `<div class="rule-bar sec-rule ${ms.shortfall > 0 ? 'warn' : ''}" id="ruleBar">${ruleBarText(ms)}</div>` : ''}
       <div class="sec-lists">
       <section class="sec-court">
-        <h2 class="card-title">On court <span>${onCourt.length}</span></h2>
+        <h2 class="card-title">On court <span>${onCourt.length}</span>
+          <button class="mini-btn" id="gAllOut">${onCourt.length && onCourt.every(p => M.outs.includes(p.id)) ? 'Clear' : `All ${onCourt.length} off`}</button></h2>
         <ul class="players" id="courtList"></ul>
       </section>
       <section class="sec-bench">
@@ -329,14 +335,15 @@ function renderLive(body) {
 
   $('gUndo').onclick = undoGameAction;
   $('gMenu').onclick = openGameMenu;
+  $('gAllOut').onclick = toggleAllOut;
   $('gClock')?.addEventListener('click', toggleClock);
   $('gNext')?.addEventListener('click', nextPeriod);
 
   for (const p of onCourt) {
-    const sel = M.out === p.id, out = pairedOut.has(p.id);
+    const out = pairedOut.has(p.id);
     const st = ms?.players[p.id];
-    const li = playerRow(p, { minutes: r.played[p.id] || 0, tag: out ? 'Out' : sel ? 'Out?' : '', rule: ruleTag(st), met: st?.state === 'met',
-      cls: (sel ? 'selected ' : '') + (out ? 'going-out' : '') });
+    const li = playerRow(p, { minutes: r.played[p.id] || 0, tag: out ? 'Off' : '', rule: ruleTag(st), met: st?.state === 'met',
+      cls: out ? 'going-out' : '' });
     onTapOrHold(li, () => tapCourt(p.id), () => toast('Sub her out first, then press and hold on the bench'));
     $('courtList').appendChild(li);
   }
@@ -344,10 +351,11 @@ function renderLive(body) {
     const inn = pairedIn.has(p.id);
     const st = ms?.players[p.id];
     const li = playerRow(p, { minutes: r.played[p.id] || 0, tag: inn ? 'In' : '', rule: ruleTag(st), met: st?.state === 'met',
-      cls: (inn ? 'coming-in ' : '') + (M.out ? 'can-pick' : '') });
+      cls: (inn ? 'coming-in ' : '') + (M.outs.length > M.ins.length ? 'can-pick' : '') });
     onTapOrHold(li, () => tapBench(p.id), () => openPlayerMenu(p));
     $('benchList').appendChild(li);
   }
+  dragSelect($('courtList'), id => M.outs.includes(id), (id, on) => markOut(id, on));
   renderTimeline($('liveTimeline'), g, M.roster, r);
   renderSubBar();
 }
@@ -363,43 +371,75 @@ function ruleBarText(ms) {
   return owed ? `<b>Past mid-Q3: ${owed} still short — they go in and stay until they have it.</b>` : 'Everyone has a full quarter ✓';
 }
 
-function tapCourt(id) {
-  const i = M.pairs.findIndex(x => x.out === id);
-  if (i >= 0) M.pairs.splice(i, 1);            // tap a queued player again = take that sub back
-  else {
-    M.out = M.out === id ? null : id;
-    const st = M.out && ruleStatus(nowState())?.players[id];
+/** Mark / unmark an on-court player to come off. on = true / false / undefined (toggle). */
+function markOut(id, on) {
+  const has = M.outs.includes(id);
+  if (on === undefined) on = !has;
+  if (on && !has) {
+    M.outs.push(id);
+    const st = ruleStatus(nowState())?.players[id];
     if (st?.state === 'keep') toast(`${playerById(id).name} still needs ${formatClock(st.owed)} for her full quarter`);
   }
+  if (!on && has) M.outs = M.outs.filter(x => x !== id);
+}
+function tapCourt(id) { markOut(id); renderMinutes(); }
+function tapBench(id) {
+  if (M.ins.includes(id)) M.ins = M.ins.filter(x => x !== id);
+  else M.ins.push(id);
   renderMinutes();
 }
-function tapBench(id) {
-  const i = M.pairs.findIndex(x => x.in === id);
-  if (i >= 0) { M.pairs.splice(i, 1); renderMinutes(); return; }
-  if (!M.out) { toast('First tap who comes OUT (on court)'); return; }
-  M.pairs.push({ out: M.out, in: id }); M.out = null;
+function toggleAllOut() {
+  const on = nowState().onCourt;
+  const all = on.length && on.every(id => M.outs.includes(id));
+  if (all) M.outs = []; else for (const id of on) markOut(id, true);
   renderMinutes();
+}
+
+/** Drag a finger down the on-court list to mark (or unmark) several players in one sweep.
+ *  The first row decides: if she wasn't marked, the sweep marks; if she was, it unmarks. */
+function dragSelect(list, isOn, set) {
+  let drag = null, swallow = false;
+  list.addEventListener('pointerdown', e => {
+    const li = e.target.closest('.prow'); swallow = false;
+    drag = li ? { li0: li, y0: e.clientY, active: false, on: !isOn(li.dataset.id), done: new Set() } : null;
+  });
+  const apply = li => {
+    if (drag.done.has(li)) return;
+    drag.done.add(li); set(li.dataset.id, drag.on); li.classList.toggle('going-out', drag.on);
+  };
+  list.addEventListener('pointermove', e => {
+    if (!drag) return;
+    if (!drag.active) { if (Math.abs(e.clientY - drag.y0) < 12) return; drag.active = true; apply(drag.li0); }
+    const li = document.elementFromPoint(e.clientX, e.clientY)?.closest('.prow');
+    if (li && list.contains(li)) apply(li);
+  });
+  const end = () => { if (drag?.active) { swallow = true; setTimeout(() => { swallow = false; }, 400); renderMinutes(); } drag = null; };
+  list.addEventListener('pointerup', end); list.addEventListener('pointercancel', end);
+  list.addEventListener('click', e => { if (swallow) { swallow = false; e.stopPropagation(); e.preventDefault(); } }, true);
 }
 
 /** The sub queue: floats above the tab switcher while subs are being picked. */
 function renderSubBar() {
   const bar = $('subBar');
-  const live = M.game?.status === 'live' && (M.pairs.length || M.out);
+  const live = M.game?.status === 'live' && (M.outs.length || M.ins.length);
   bar.hidden = !live;
   // While picking subs, the queue takes the thumb bar's place in the compact layout (styles.css)
   document.documentElement.dataset.subbing = live ? 'yes' : 'no';
   const room = () => document.documentElement.style.setProperty('--subbar-h', bar.hidden ? '0px' : bar.offsetHeight + 12 + 'px');
   if (!live) { room(); return; }
+  const n = M.outs.length, ready = n > 0 && n === M.ins.length;
   const name = id => { const p = playerById(id); return p ? (p.number ? `#${esc(p.number)} ` : '') + esc(p.name) : '?'; };   // no "#" when she has no number yet
   bar.innerHTML = `
-    <div class="sub-pairs">${M.pairs.map(x => `<span class="pair"><b>${name(x.out)}</b> ↓ <b>${name(x.in)}</b> ↑</span>`).join('')}
-      ${M.out ? `<span class="pair pending"><b>${name(M.out)}</b> ↓ — tap a bench player</span>` : ''}</div>
+    <div class="sub-pairs">
+      <span class="pair"><em>Off ${M.outs.length}</em> ${M.outs.map(id => `<span class="nm">${name(id)}</span>`).join(', ') || '<i>tap who comes off</i>'}</span>
+      <span class="pair"><em>On ${M.ins.length}</em> ${M.ins.map(id => `<span class="nm">${name(id)}</span>`).join(', ') || '<i>tap who goes in</i>'}</span></div>
     <div class="sub-actions">
       <button class="pill-btn" id="subCancel">Cancel</button>
-      <button class="pill-btn primary-btn" id="subConfirm" ${M.pairs.length ? '' : 'disabled'}>Confirm ${M.pairs.length || ''} sub${M.pairs.length === 1 ? '' : 's'}</button>
+      <button class="pill-btn primary-btn" id="subConfirm" ${ready ? '' : 'disabled'}>${ready ? `Confirm ${n} sub${n === 1 ? '' : 's'}`
+        : M.outs.length > M.ins.length ? `Pick ${M.outs.length - M.ins.length} more to go in` : `Pick ${M.ins.length - M.outs.length} more to come off`}</button>
     </div>`;
   room();   // make room at the bottom of the list for the queue
-  $('subCancel').onclick = () => { M.pairs = []; M.out = null; renderMinutes(); };
+  $('subCancel').onclick = () => { clearSubs(); renderMinutes(); };
   $('subConfirm').onclick = commitSubs;
 }
 
@@ -441,7 +481,7 @@ function renderMinutes() {
   if (M.game.status === 'pregame') renderPregame(body);
   else if (M.game.status === 'live') renderLive(body);
   else renderFinal(body);
-  if (M.game.status !== 'live') { M.pairs = []; M.out = null; renderSubBar(); }
+  if (M.game.status !== 'live') { clearSubs(); renderSubBar(); }
   document.documentElement.dataset.live = M.game.status === 'live' ? 'yes' : 'no';
   updateWakeLock();
 }
@@ -589,7 +629,7 @@ function openPlayerMenu(p) {
       }
       else M.game.absences[p.id] = b.dataset.abs;
       M.game.starters = M.game.starters.filter(id => id !== p.id);
-      M.pairs = M.pairs.filter(x => x.in !== p.id);
+      M.ins = M.ins.filter(x => x !== p.id); M.outs = M.outs.filter(x => x !== p.id);
       await saveGame(); renderMinutes();
     };
   }
