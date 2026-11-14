@@ -737,3 +737,14 @@ tile sizes, the pad's share of the screen, bench rows visible, names cut off).
   now only on the Playbook, and any notice clears when you switch tabs.
 - Results: pad share 17–45% (was up to 66%); every screen keeps targets ≥ 44 pt; bench visible on all but the
   smallest/shortest screens, where it scrolls. Full suite passes.
+
+### Live version 51 (2026-11-14) — floating look; pad rows; header sizes
+Owner: pad — points on the first line, then the non-points (O-Reb and D-Reb side by side, fouls included);
+Minutes header — BURNS PARK bigger, PENGUINS a little smaller; overall — more contrast, less stark, neater and
+more elegant, "like the New York Times on the iPhone… lives above the surface… levitating".
+- Stat pad: one row per kind (points / misses / everything else), `--cols` per row (max 4).
+- Header lockup: BURNS PARK 16–22 pt (was 13), PENGUINS 34–52 pt (was 40–64).
+- "LEVITATE" section (Minutes, Stats, their sheets and pop-ups; the Playbook keeps its look): layered soft
+  shadows instead of flat black offsets; a deep purple gradient behind; 1.5 pt dark outline; 10 pt corners on
+  boxes (6 pt inside); pink buttons glow faintly; labels get a slight shadow.
+- Full suite passes.

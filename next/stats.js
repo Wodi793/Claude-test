@@ -210,7 +210,8 @@ function renderStats() {
     <div class="pad-head"><span class="pad-who">${S.editCourt ? 'Setting who’s on court' : sel ? `<b>${esc(sel.number ? '#' + sel.number + ' ' : '')}${esc(sel.name)}</b>` : 'Tap a player'}</span>
       <button class="undo-btn" id="sUndo" ${hasUndo ? '' : 'disabled'} aria-label="Undo last stat">
         <svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Undo</button></div>
-    <div class="pad-grid">${pad.map(t => `<button class="pad-btn ${t.group}" data-stat="${t.key}" ${sel ? '' : 'disabled'}>${t.pad}</button>`).join('')}</div>
+    ${['score', 'miss', 'other'].map(gr => pad.filter(t => t.group === gr)).filter(row => row.length).map(row =>   // a row per kind: points, misses, everything else
+      `<div class="pad-grid" style="--cols:${Math.min(4, row.length)}">${row.map(t => `<button class="pad-btn ${t.group}" data-stat="${t.key}" ${sel ? '' : 'disabled'}>${t.pad}</button>`).join('')}</div>`).join('')}
     ${set.opponentLive ? `<div class="pad-grid opp">${OPP_PAD.map(o => `<button class="pad-btn opp" data-stat="${o.key}">${o.pad}</button>`).join('')}</div>` : ''}`;
   if (showRow) {
     const crow = document.getElementById('sCourt');
