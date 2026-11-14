@@ -602,3 +602,22 @@ fades BURNS PARK; white strip at the bottom of Minutes. Wants any edge effect to
 - White strip at the bottom of Minutes — real cause found: updateUI() set the html/body background to the
   Playbook's border color as an inline style, overriding v36's per-tab CSS. Removed; CSS now decides per tab.
 - Tests: new edges.js (html/body colors per tab and board) and theme.js; full suite passes; live copy checked.
+
+### Live version 43 (2026-11-14) — game screen, round 2 (foldable feedback)
+Owner, with screenshots from the foldable (folded: portrait and sideways; open: portrait and sideways):
+- Removed the rule summary box ("11 still owed…") everywhere and the bench subtitle ("owed first, then least
+  played"). The tags on each player still show what the league rule needs.
+- Sideways, big (open foldable, iPad): left = clock card with the chart under it; right = on court + bench,
+  full height, scrolling. Sub bar under the right column.
+- Sideways, short (folded on its side; anything under 600 pt tall sideways): clock left, on court + bench right,
+  no chart (it's in the ••• menu). The sub bar sits under the clock, where there was empty space.
+- Bench: "Top N on" button (N = how many more are needed to match those marked off, or 5) marks the top of the
+  bench (sorted least played first); then reads "Clear". While picking who goes in (more marked off than on),
+  a swipe anywhere on a bench row marks rows (`data-picking`, `touch-action: none` on those rows); otherwise
+  only a swipe from the numbers does, so the bench still scrolls.
+- Open foldable: the team name ("PENGUINS") sits in the tall status-bar band during a game (only when that band
+  is ≥ 70 pt, so never under an iPhone's clock — `data-tall-top`). Not visible in the test browser (it has no
+  status bar); to be confirmed on the phone.
+- Below the app's own area (open foldable): the Minutes page is extended by `--lost-h` (screen height iOS
+  leaves below the app's area) so it's page, not white; the controls stay above it.
+- Tests: topin.js (new), duo.js (foldable/iPad sizes), full suite pass; live copy checked.

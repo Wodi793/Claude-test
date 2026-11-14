@@ -86,6 +86,8 @@ function placeTabbar() {
   const hidden = physH ? physH - window.innerHeight : 0;
   const bottomBar = safeInsets().bottom;
   document.documentElement.style.setProperty('--tabs-bottom', Math.max(8, bottomBar - hidden + 6) + 'px');
+  document.documentElement.style.setProperty('--lost-h', Math.max(0, hidden) + 'px');   // screen below the app's area
+  document.documentElement.dataset.tallTop = safeInsets().top >= 70 ? 'yes' : 'no';      // e.g. the open foldable
 }
 
 for (const b of document.querySelectorAll('.tabbtn')) b.onclick = () => showTab(b.dataset.tab);

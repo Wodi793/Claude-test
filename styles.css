@@ -1236,3 +1236,67 @@ html[data-layout="compact"][data-subbing="yes"] #tabbar { display: none; }
 html[data-layout="compact"][data-subbing="yes"] #subBar { bottom: var(--tabs-bottom, 12px); }
 html[data-layout="compact"][data-subbing="yes"][data-live="yes"] .tab-page .page-scroll {
   padding-bottom: calc(var(--tabs-bottom, 12px) + var(--subbar-h, 0px)); }
+
+/* =====================================================================
+   GAME SCREEN, ROUND 2 (owner, from the foldable, after live 42)
+   • The rule summary box is gone everywhere (the tags on each player carry it).
+   • Sideways, big (open foldable, iPad): LEFT = clock card, chart under it (look-up);
+     RIGHT = on court + bench, full height, scrolling (the working column).
+   • Sideways, short (folded phone on its side, or any screen under 600 pt tall):
+     clock on the left, on court + bench on the right; the chart lives in the ••• menu.
+   • Tall top band (open foldable): the team name sits in it during a game.
+   • Below the app's own area (open foldable): the page continues there instead of white.
+   • Bench: while you're picking who goes in, a swipe anywhere on the rows marks them.
+   ===================================================================== */
+.sec-rule, #ruleBar { display: none !important; }
+html[data-picking="yes"] #benchList .prow { touch-action: none; }
+.sec-bench .card-title { display: flex; align-items: center; gap: 6px; }
+
+/* The page fills the screen below the app's area too (the gap iOS leaves on the open foldable) */
+.tab-page { height: calc(var(--app-h) + var(--lost-h, 0px)); }
+.tab-page .page-scroll { padding-bottom: calc(var(--tabs-bottom, 16px) + 72px + var(--subbar-h, 0px) + var(--lost-h, 0px)); }
+
+/* Team name in the tall status-bar band (only where that band is tall — never under an iPhone's clock) */
+.live-brand { display: none; }
+html[data-tall-top="yes"][data-live="yes"] .live-brand {
+  display: flex; align-items: center; position: absolute; top: 0; left: max(24px, env(safe-area-inset-left));
+  height: env(safe-area-inset-top); max-width: 55%; color: #fff; font-weight: 900; text-transform: uppercase;
+  letter-spacing: .22em; font-size: min(28px, calc(env(safe-area-inset-top) * .34)); white-space: nowrap; pointer-events: none; }
+
+/* ----- Sideways, big: clock + chart | on court + bench ----- */
+html[data-layout="wide"][data-live="yes"] .live { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "sb lists" "tl lists"; }
+html[data-layout="wide"][data-live="yes"] .tab-page .page-scroll {
+  padding-bottom: calc(var(--tabs-bottom, 12px) + 58px + var(--subbar-h, 0px)); }   /* the controls sit above the gap */
+html[data-layout="wide"] .sec-sb { margin-bottom: 18px; }
+html[data-layout="wide"] .sec-lists { grid-area: lists; }
+html[data-layout="wide"] .sec-tl { grid-area: tl; }
+html[data-layout="wide"] .sec-sb .clock { font-size: clamp(72px, min(9vw, 13vh), 160px); margin: 2px 0 10px; }
+/* Sub queue under the right (working) column */
+html[data-layout="wide"] #subBar { left: calc(50% + 24px); right: 28px; }
+
+/* ----- Sideways, short: clock | on court + bench; no chart ----- */
+@media (orientation: landscape) and (max-height: 600px) {
+  html[data-layout="wide"][data-live="yes"] .live { grid-template-areas: "sb lists" "sb lists"; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); }
+  html[data-layout="wide"] .sec-tl { display: none; }
+  html[data-layout="wide"] .sec-sb { align-self: start; }
+  html[data-layout="wide"] .sec-sb .clock { font-size: clamp(56px, 16vh, 110px); }
+}
+html[data-layout="compact"][data-orient="land"][data-live="yes"] .live { display: grid; column-gap: 18px;
+  grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); grid-template-rows: minmax(0, 1fr); grid-template-areas: "sb lists"; }
+html[data-layout="compact"][data-orient="land"] .sec-lists { grid-area: lists; display: block; overflow-y: auto; min-height: 0; padding: 0 6px 6px 0; }
+html[data-layout="compact"][data-orient="land"] .sec-court, html[data-layout="compact"][data-orient="land"] .sec-bench { display: block; }
+html[data-layout="compact"][data-orient="land"] .sec-court .players, html[data-layout="compact"][data-orient="land"] .bench-scroll { overflow: visible; }
+html[data-layout="compact"][data-orient="land"] .sec-sb { align-self: start; }
+html[data-layout="compact"][data-orient="land"] .sec-court .players { margin-bottom: 8px; }
+/* Short sideways screens: the sub bar goes in the empty space under the clock (left column), so it never
+   covers the lists on the right */
+html[data-layout="compact"][data-orient="land"] #subBar {
+  left: max(14px, env(safe-area-inset-left)); right: calc(55% + 9px); bottom: calc(var(--tabs-bottom, 12px) + 50px); max-width: none; margin: 0; }
+html[data-layout="compact"][data-orient="land"][data-live="yes"] .tab-page .page-scroll { padding-bottom: calc(var(--tabs-bottom, 12px) + 52px); }
+@media (orientation: landscape) and (max-height: 600px) {
+  html[data-layout="wide"] #subBar { left: 24px; right: calc(55% + 12px); }
+  html[data-layout="wide"][data-live="yes"] .tab-page .page-scroll { padding-bottom: calc(var(--tabs-bottom, 12px) + 58px); }
+}
+.sub-row .pill-btn { white-space: nowrap; padding: 0 8px; } .sub-row #subConfirm { min-width: 0; }
+html[data-orient="land"] .sub-row .pill-btn { font-size: 15px; }

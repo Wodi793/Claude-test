@@ -330,7 +330,7 @@ function renderLive(body) {
         <ul class="players" id="courtList"></ul>
       </section>
       <section class="sec-bench">
-        <h2 class="card-title">Bench <span>${ms ? 'owed first, then least played' : 'least played first'}</span></h2>
+        <h2 class="card-title">Bench ${bench.length ? `<button class="mini-btn" id="gTopIn">${topInLabel(bench)}</button>` : ''}</h2>
         <div class="bench-scroll scrollable"><ul class="players" id="benchList"></ul>
           ${bench.length ? '' : '<p class="hint">Nobody on the bench.</p>'}</div>
       </section>
@@ -343,6 +343,7 @@ function renderLive(body) {
   $('gUndo').onclick = undoGameAction;
   $('gMenu').onclick = openGameMenu;
   $('gAllOut').onclick = toggleAllOut;
+  $('gTopIn')?.addEventListener('click', () => topIn(bench));
   $('gClock')?.addEventListener('click', toggleClock);
   $('gNext')?.addEventListener('click', nextPeriod);
 
@@ -364,7 +365,8 @@ function renderLive(body) {
   }
   for (const [sel, top] of keep) { const el = document.querySelector(`#mBody ${sel}`); if (el) el.scrollTop = top; }
   dragSelect($('courtList'), { isOn: id => M.outs.includes(id), set: markOut, cls: 'going-out' });
-  dragSelect($('benchList'), { isOn: id => M.ins.includes(id), set: markIn, cls: 'coming-in', handle: '.pnum' });
+  dragSelect($('benchList'), { isOn: id => M.ins.includes(id), set: markIn, cls: 'coming-in',
+    handle: () => (M.outs.length > M.ins.length ? '.prow' : '.pnum') });
   renderTimeline($('liveTimeline'), g, M.roster, r);
   renderSubBar();
 }
@@ -400,6 +402,20 @@ function markIn(id, on) {
   if (!on && has) M.ins = M.ins.filter(x => x !== id);
 }
 function tapBench(id) { markIn(id); renderMinutes(); }
+/** Bench button: mark the top N going in (the bench is sorted least played first, so the top
+ *  few are usually the right ones). N = how many more are needed to match those marked off,
+ *  or the whole five if nobody's marked off yet. Once they match, the button clears the bench picks. */
+function topInCount(bench) {
+  const need = M.outs.length - M.ins.length;
+  return need > 0 ? need : M.outs.length ? 0 : Math.min(M.game.settings.onCourt, bench.length);
+}
+function topInLabel(bench) { const k = topInCount(bench); return k ? `Top ${k} on` : 'Clear'; }
+function topIn(bench) {
+  let k = topInCount(bench);
+  if (!k) M.ins = [];
+  else for (const p of bench) { if (!k) break; if (!M.ins.includes(p.id)) { M.ins.push(p.id); k--; } }
+  renderMinutes();
+}
 function toggleAllOut() {
   const on = nowState().onCourt;
   const all = on.length && on.every(id => M.outs.includes(id));
@@ -419,7 +435,8 @@ function dragSelect(list, { isOn, set, cls, handle = '.prow' }) {
   list.addEventListener('pointerdown', e => {
     swallow = false;
     const li = e.target.closest('.prow');
-    drag = li && e.target.closest(handle) ? { li0: li, y0: e.clientY, x: e.clientX, y: e.clientY, active: false,
+    const h = typeof handle === 'function' ? handle() : handle;
+    drag = li && e.target.closest(h) ? { li0: li, y0: e.clientY, x: e.clientX, y: e.clientY, active: false,
       on: !isOn(li.dataset.id), done: new Set(), scroller: scrollerOf(list), raf: 0 } : null;
   });
   const apply = li => {
@@ -457,6 +474,8 @@ function renderSubBar() {
   bar.hidden = !live;
   // While picking subs, the queue takes the thumb bar's place in the compact layout (styles.css)
   document.documentElement.dataset.subbing = live ? 'yes' : 'no';
+  // Picking who goes in: a swipe anywhere on a bench row marks (styles.css turns off scrolling on those rows)
+  document.documentElement.dataset.picking = live && M.outs.length > M.ins.length ? 'yes' : 'no';
   const room = () => document.documentElement.style.setProperty('--subbar-h', bar.hidden ? '0px' : bar.offsetHeight + 12 + 'px');
   if (!live) { room(); return; }
   const n = M.outs.length, ready = n > 0 && n === M.ins.length;
