@@ -1530,3 +1530,5 @@ html[data-layout="compact"][data-orient="port"][data-live="yes"]:not([data-subbi
   padding-bottom: calc(var(--tabs-bottom, 12px) + var(--actions-h) + 4px) !important; }
 html:not([data-layout="wide"]) .pad-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 html[data-layout="tall"] .pad-btn { height: 52px; }
+.q-sel.linked button:disabled { opacity: 1; }   /* following the game clock: shown, not tappable */
+.q-sel.linked button:not(.on) { opacity: .45; }

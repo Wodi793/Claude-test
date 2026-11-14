@@ -86,10 +86,11 @@ function statsCourt(g = M.game) {
   return (statsCourtLinked(g) ? replayGame(g).onCourt : (g.statsCourt || [])).filter(ok).slice(0, g.settings.onCourt);
 }
 
-/** Quarter for new entries: the one picked here; else, if this phone runs the clock, the game's. */
+/** Quarter for new entries. If this phone is running the game clock, the clock decides — Stats and
+ *  Minutes always agree on the time and on who's on court. Otherwise, the quarter picked here. */
 function statPeriod(game = M.game) {
-  if (game.statPeriod) return game.statPeriod;
-  return game.status === 'live' ? replayGame(game).period : 1;
+  if (statsCourtLinked(game)) return replayGame(game).period;
+  return game.statPeriod || 1;
 }
 
 async function recordStat(key) {
@@ -97,7 +98,8 @@ async function recordStat(key) {
   if (!opp && !S.sel) { toast('Tap a player first'); return; }
   const p = opp ? null : playerById(S.sel);
   g.events.push({ id: Data.newId(), action: Data.newId(), at: GameClock.now(), type: 'stat',
-    period: statPeriod(g), clock: null, playerId: opp ? null : S.sel, data: { stat: key } });
+    period: statPeriod(g), clock: statsCourtLinked(g) ? replayGame(g).clock : null,   // game-clock time when there is one
+    playerId: opp ? null : S.sel, data: { stat: key } });
   S.sel = null;
   await saveGame();
   renderStats();
@@ -132,7 +134,7 @@ function renderStats() {
   const body = document.getElementById('sBody');
   if (!body || !M.game || !M.team) return;
   const g = M.game, set = statSettings(), pad = padStats(), shown = pad.map(t => t.key);
-  const tot = statTotals(g), periods = g.settings.periods, q = statPeriod(g);
+  const tot = statTotals(g), periods = g.settings.periods, q = statPeriod(g), linked = statsCourtLinked(g);
   const roster = M.roster.filter(p => !p.removed && p.active && !g.absences?.[p.id]);
   if (S.sel && !roster.some(p => p.id === S.sel)) S.sel = null;
 
@@ -143,7 +145,7 @@ function renderStats() {
   for (const k of ['ast', 'stl', 'blk', 'tov', 'pf', 'tf']) if (shown.includes(k))
     cells.push(`<div class="tt"><b>${tot.team[k] || 0}</b><span>${{ ast: 'Ast', stl: 'Stl', blk: 'Blk', tov: 'TO', pf: 'Fouls', tf: 'Tech' }[k]}</span></div>`);
 
-  const linked = statsCourtLinked(g), court = statsCourt(g), need = g.settings.onCourt;
+  const court = statsCourt(g), need = g.settings.onCourt;
   if (linked) S.editCourt = false;
   const bench = roster.filter(p => !court.includes(p.id));
   const when = new Date(g.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
@@ -154,8 +156,8 @@ function renderStats() {
           <button class="mini-btn" id="sMenu" aria-label="Stats menu">•••</button></h2>
         <div class="card game-card">
           <div class="gc-top">
-            <div class="q-sel" role="group" aria-label="Quarter">
-              ${Array.from({ length: periods }, (_, i) => `<button class="${q === i + 1 ? 'on' : ''}" data-q="${i + 1}">${periodLabel(g, i + 1)}</button>`).join('')}
+            <div class="q-sel ${linked ? 'linked' : ''}" role="group" aria-label="Quarter">
+              ${Array.from({ length: periods }, (_, i) => `<button class="${q === i + 1 ? 'on' : ''}" data-q="${i + 1}" ${linked ? 'disabled' : ''}>${periodLabel(g, i + 1)}</button>`).join('')}
             </div>
             <div class="score"><span class="us"><b>${tot.team.pts}</b><i>Us</i></span><span class="dash">–</span>
               <label class="them"><input id="sOpp" inputmode="numeric" maxlength="3" placeholder="–" value="${g.oppScore ?? (tot.opp ?? '')}"><i>Them</i></label></div>
@@ -264,3 +266,12 @@ function openStatSheet() {
   document.getElementById('statSheet').hidden = false;
 }
 document.getElementById('btnCloseStatSheet').onclick = () => { document.getElementById('statSheet').hidden = true; };
+
+// Stats on screen while this phone's clock runs: redraw when the quarter or the five change
+// (cheap check, twice a second; nothing happens on a stats-only phone).
+let statsSeen = '';
+setInterval(() => {
+  if (App.tab !== 'stats' || !M.game || !statsCourtLinked()) return;
+  const r = replayGame(M.game), sig = r.period + '|' + r.onCourt.join(',');
+  if (sig !== statsSeen) { statsSeen = sig; renderStats(); }
+}, 500);

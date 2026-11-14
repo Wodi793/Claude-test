@@ -702,3 +702,14 @@ in the top band; black bar at the bottom.
 - Team name in the tall top band on Stats too (#sBrand). Below the app's area: purple on Stats (was the dark body color).
 - Tests: stats2.js (new: Change, sixth refused, five visible above the pad, pad clear of the button, 3 screens);
   full suite passes.
+
+### Live version 48 (2026-11-14) — Stats follows the clock on the same phone
+Owner: Stats must run on the same time and the same five as Minutes, live.
+- Same phone: Stats' quarter now always comes from the game clock when this phone runs it (an earlier manual
+  pick no longer overrides it; the quarter buttons show it and aren't tappable then), and each stat is stamped
+  with the game-clock time. The on-court row already followed Minutes; now a half-second check redraws Stats
+  when the quarter or the five change while Stats is on screen.
+- Two phones: no live link (no server, by design). Options put to the owner: one phone runs both tabs; a shared
+  iPad showing both side by side; or a live-sync service (server, internet at the gym, accounts, kids' names on
+  a third party) — not recommended.
+- Test linked.js: quarter from clock, five from clock, sub reflected live, stat clock-stamped, next quarter followed.
