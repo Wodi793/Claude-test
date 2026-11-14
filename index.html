@@ -31,7 +31,6 @@
 <main id="stage">
   <canvas id="board"></canvas>
   <div id="scrim"></div>
-  <div id="toast" class="glass"></div>
 
   <!-- Tools: swipe in from the right edge (or tap the tab); swipe back to hide -->
   <div id="drawer" class="closed">
@@ -119,6 +118,12 @@
   </div>
 </div><!-- /tab-minutes -->
 
+<!-- ===================== STATS (stage S1): stats.js ===================== -->
+<div id="tab-stats" class="tab tab-page" hidden>
+  <div class="scrollable page-scroll"><div id="sBody"></div></div>
+  <div id="statPad"></div>   <!-- the stat buttons, by the thumb -->
+</div><!-- /tab-stats -->
+
 <!-- Sub queue: floats above the tab switcher while subs are being picked -->
 <div id="subBar" class="glass" hidden></div>
 <!-- Sub alert / end-of-period banner: shows on any tab -->
@@ -127,14 +132,29 @@
 <!-- ===================== TAB SWITCHER =====================
      Floating glass pill at the bottom center. Add a button here (and a
      matching tab-… section above) to add a tab, e.g. Stats later. -->
+<!-- Tab switcher: a corner button that opens a small menu of the tabs (shell.js) -->
 <nav id="tabbar" class="glass" aria-label="Sections">
   <span class="lens"></span>
-  <button class="tabbtn" data-tab="playbook" aria-label="Playbook"><svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="1.5"/><path d="M6 12h12"/><circle cx="12" cy="12" r="2.2"/></svg></button>
-  <button class="tabbtn" data-tab="minutes" aria-label="Minutes"><svg viewBox="0 0 24 24"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 13.5V9.5M10 2.5h4M12 2.5V6M18.5 6.5l1.5-1.5"/></svg></button>
+  <button id="tabMenuBtn" aria-label="Switch section" aria-expanded="false"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1"/></svg></button>
+  <div id="tabMenu" hidden>
+    <button class="tabbtn" data-tab="playbook"><svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="1.5"/><path d="M6 12h12"/><circle cx="12" cy="12" r="2.2"/></svg>Playbook</button>
+    <button class="tabbtn" data-tab="minutes"><svg viewBox="0 0 24 24"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 13.5V9.5M10 2.5h4M12 2.5V6M18.5 6.5l1.5-1.5"/></svg>Minutes</button>
+    <button class="tabbtn" data-tab="stats"><svg viewBox="0 0 24 24"><path d="M5 20V11M12 20V5M19 20v-7M3 20h18"/></svg>Stats</button>
+  </div>
 </nav>
+<div id="toast" class="glass"></div>   <!-- short notices, on any tab -->
 
 <!-- ===================== TEAM SETTINGS (Stage 3) =====================
      Team, season, roster, backup. Opened from the gear on the Minutes tab. -->
+<!-- Stats settings: which buttons appear on the stat pad -->
+<section id="statSheet" class="sheet light" hidden>
+  <header>
+    <h1>Stats</h1>
+    <button class="pill-btn" id="btnCloseStatSheet" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </header>
+  <div class="scrollable team-scroll" id="statSheetBody"></div>
+</section>
+
 <section id="teamSheet" class="sheet light" hidden>
   <header>
     <h1>Team</h1>
@@ -229,6 +249,16 @@
 </dialog>
 
 <!-- Game menu (•••) -->
+<dialog id="statsMenu" class="glass menu-dialog light">
+  <h2>Stats</h2>
+  <div class="menu-list">
+    <button class="menu-btn" id="smOpponent">Opponent</button>
+    <button class="menu-btn" id="smSettings">Stats settings</button>
+    <button class="menu-btn" id="smNew">Start a new game</button>
+  </div>
+  <button class="menu-btn" id="smClose">Close</button>
+</dialog>
+
 <dialog id="gameMenu" class="glass menu-dialog light">
   <h2>Game</h2>
   <div class="menu-list">
@@ -291,6 +321,7 @@
 <script src="gamelog.js"></script>
 <script src="readouts.js"></script>
 <script src="minutes.js"></script>
+<script src="stats.js"></script>
 <script src="shell.js"></script>
 </body>
 </html>

@@ -44,6 +44,7 @@ async function loadMinutes() {
   M.game = game;
   markPassedAlerts();
   renderMinutes();
+  window.renderStats?.();
 }
 window.onTeamChanged = loadMinutes;   // called by settings.js when the team or roster changes
 window.addEventListener('penguins:layout', () => renderMinutes());   // rotate / fold / one-hand toggle (shell.js)
@@ -143,12 +144,14 @@ async function commitSubs() {
 }
 
 /** Undo the last action (all events that share its action id). */
+/** Minutes events only — the Stats tab's entries live in the same log and have their own Undo. */
+const isMinutesEvent = e => e.type !== 'stat';
 async function undoGameAction() {   // (not "undo": that's the Playbook's)
-  const ev = M.game.events;
-  if (!ev.length) return;
-  const last = ev[ev.length - 1].action, removed = ev.filter(e => e.action === last);
+  const ev = M.game.events, mine = ev.filter(isMinutesEvent);
+  if (!mine.length) return;
+  const last = mine[mine.length - 1].action, removed = ev.filter(e => e.action === last);
   M.game.events = ev.filter(e => e.action !== last);
-  if (!M.game.events.length) M.game.status = 'pregame';
+  if (!M.game.events.some(isMinutesEvent)) M.game.status = 'pregame';
   else if (removed.some(e => e.type === 'game_end')) M.game.status = 'live';
   clearSubs();
   await saveGame(); renderMinutes();
@@ -183,9 +186,11 @@ async function startNewGame() {
     const r = nowState();
     M.game.events.push({ id: Data.newId(), action: Data.newId(), at: GameClock.now(), type: 'game_end', period: r.period, clock: r.clock });
     M.game.status = 'final'; await saveGame();
+  } else if (M.game.status === 'pregame' && M.game.events.length) {
+    M.game.status = 'final'; await saveGame();   // a stats-only game: keep it as a finished game
   }
   clearSubs(); M.firedAlerts.clear();
-  M.game = await newPregame(); renderMinutes();
+  M.game = await newPregame(); renderMinutes(); window.renderStats?.();
 }
 
 async function discardGame() {
@@ -193,7 +198,7 @@ async function discardGame() {
   if (!ok) return;
   await DB.del('games', M.game.id);
   clearSubs(); M.firedAlerts.clear();
-  M.game = await newPregame(); renderMinutes();
+  M.game = await newPregame(); renderMinutes(); window.renderStats?.();
 }
 
 /* =====================================================================
@@ -317,7 +322,7 @@ function renderLive(body) {
         <div class="clock ${r.running ? 'running' : ''} ${r.periodOver ? 'over' : ''}" id="gClockText">${formatClock(r.clock)}</div>
         ${r.periodOver ? `<div class="period-over">End of ${label}</div>` : ''}
         <div class="sb-actions">
-          <button class="undo-btn" id="gUndo" ${g.events.length ? '' : 'disabled'} aria-label="Undo last action">
+          <button class="undo-btn" id="gUndo" ${g.events.some(isMinutesEvent) ? '' : 'disabled'} aria-label="Undo last action">
             <svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Undo</button>
           ${mainBtn}
         </div>

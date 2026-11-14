@@ -1,8 +1,8 @@
 # Penguins
 
-The Burns Park Penguins team app for iPhone and iPad. Two tabs:
-**Playbook** (draw plays with a finger or Apple Pencil) and **Minutes** (game clock, subs,
-playing time, the league minimum rule, season totals). Works offline once installed on the
+The Burns Park Penguins team app for iPhone and iPad. Three tabs:
+**Playbook** (draw plays with a finger or Apple Pencil), **Minutes** (game clock, subs,
+playing time, the league minimum rule, season totals) and **Stats** (points, rebounds, assists, fouls… per player). Works offline once installed on the
 home screen. No accounts, no server: everything is stored on the device.
 
 ## Files
@@ -15,6 +15,7 @@ home screen. No accounts, no server: everything is stored on the device.
 | `shell.js` | Tabs and layouts (compact / tall / wide, one-hand) |
 | `sports.js`, `data.js`, `settings.js` | Sport settings; teams, players and games; the Team sheet |
 | `gamelog.js`, `minutes.js`, `readouts.js` | Game clock and event log; the Minutes screens; timelines and season view |
+| `stats.js` | The Stats tab: tap a player, then a stat; team totals; Stats settings (which buttons show) |
 | `screen-check.html`, `tap-test.html` | Diagnostic pages (••• → Screen check) |
 | `manifest.webmanifest` | Home-screen name, icon and colors |
 | `sw.js` | Service worker — keeps a copy of the app on the device for offline use |

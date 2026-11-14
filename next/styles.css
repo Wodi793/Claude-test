@@ -1380,3 +1380,113 @@ html[data-tall-top="yes"][data-live="yes"] .live-brand { left: 0; right: 0; max-
   html[data-layout="compact"][data-orient="land"] .sec-tl .tl-card { margin-top: 14px; padding: 10px 12px 6px; min-height: calc(100% - 20px); }
   html[data-layout="compact"][data-orient="land"] #subBar { bottom: calc(var(--tabs-bottom, 12px) + 50px); }
 }
+
+/* =====================================================================
+   STATS TAB (stage S1) — same language as Minutes: label rows, white outlined boxes,
+   pink for what's selected, the pad by the thumb.
+   ===================================================================== */
+#tab-stats .page-scroll { padding-top: 16px; padding-bottom: calc(var(--pad-h, 200px) + var(--tabs-bottom, 12px) + 70px); }
+.stats .card-title { display: flex; align-items: center; gap: 6px; height: 28px; margin: 0 2px 10px; }
+.stats section + section .card-title { margin-top: 18px; }
+.stats .card-title .mini-btn { margin-left: auto; height: 26px; padding: 0 10px; box-shadow: none; font-size: 12px; letter-spacing: .1em; }
+.stats .card { margin-bottom: 0; }
+/* Game box: quarter picker + score */
+.game-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px !important; flex-wrap: wrap; }
+.q-sel { display: flex; gap: 6px; }
+.q-sel button { width: 44px; height: 44px; border: 2px solid var(--blk); border-radius: 6px; background: #fff; color: var(--blk);
+  font-weight: 900; font-size: 14px; letter-spacing: .04em; }
+.q-sel button.on { background: var(--pink); color: #fff; }
+.score { display: flex; align-items: center; gap: 10px; }
+.score .us, .score .them { display: flex; flex-direction: column; align-items: center; }
+.score b, .score input { font-size: 34px; font-weight: 900; color: var(--blk); font-variant-numeric: tabular-nums; line-height: 1; }
+.score input { width: 64px; text-align: center; border: 2px solid var(--blk); border-radius: 6px; background: var(--lav-soft); padding: 2px 0; font-family: inherit; }
+.score i { font-style: normal; font-size: 10px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; color: var(--ios-secondary); margin-top: 4px; }
+.score .dash { font-size: 24px; font-weight: 900; color: var(--ios-secondary); }
+/* Team totals */
+.team-totals { display: flex; flex-wrap: wrap; gap: 0; padding: 0 !important; }
+.tt { flex: 1 1 64px; display: flex; flex-direction: column; align-items: center; padding: 12px 6px; border-right: 1px solid var(--ios-sep); }
+.tt:last-child { border-right: 0; }
+.tt b { font-size: 24px; font-weight: 900; color: var(--blk); font-variant-numeric: tabular-nums; }
+.tt.big b { color: #2b1550; }
+.tt span { font-size: 10px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; color: var(--ios-secondary); margin-top: 2px; }
+.tt i { font-style: normal; font-size: 11px; color: var(--ios-secondary); margin-top: 2px; }
+/* Player grid */
+.sgrid { list-style: none; margin: 0 6px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.stile { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 10px; align-items: center;
+  background: #fff; border: 2px solid var(--blk); border-radius: 6px; box-shadow: 4px 4px 0 var(--blk); padding: 10px 12px; cursor: pointer;
+  -webkit-user-select: none; user-select: none; touch-action: manipulation; }
+.stile .pnum { grid-row: 1 / span 2; }
+.stile .sname { font-size: 17px; font-weight: 800; color: var(--blk); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stile .sline { font-size: 12px; font-weight: 600; color: var(--ios-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stile.sel { background: var(--pink); }
+.stile.sel .sname, .stile.sel .sline { color: #fff; }
+.stile.sel .pnum { background: #fff !important; color: var(--pink) !important; }
+/* The pad (fixed, by the thumb) */
+#statPad { position: fixed; z-index: 7; left: max(14px, env(safe-area-inset-left)); right: max(18px, calc(env(safe-area-inset-right) + 4px));
+  bottom: calc(var(--tabs-bottom, 12px) + 58px); max-width: 640px; margin: 0 auto;
+  background: #fff; border: 2px solid var(--blk); border-radius: 6px; box-shadow: 4px 4px 0 var(--blk); padding: 10px; }
+#tab-stats[hidden] #statPad { display: none; }
+.pad-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; min-height: 40px; }
+.pad-who { font-size: 13px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--ios-secondary); }
+.pad-who b { font-size: 17px; letter-spacing: 0; text-transform: none; color: var(--blk); }
+.pad-head .undo-btn { min-height: 40px; height: 40px; padding: 0 12px; font-size: 15px; }
+.pad-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 8px; }
+.pad-grid.opp { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--ios-sep); }
+.pad-btn { height: 52px; border: 2px solid var(--blk); border-radius: 6px; background: #fff; color: var(--blk); font-size: 16px; font-weight: 900; }
+.pad-btn.score { background: var(--pink); color: #fff; }
+.pad-btn.miss { background: var(--lav-soft); }
+.pad-btn:disabled { opacity: .35; }
+.pad-btn:active:not(:disabled) { transform: scale(.96); }
+.pad-btn.opp { background: var(--blk); color: #fff; }
+/* Sideways and big screens: the pad sits under the right half; players fill the left */
+html[data-layout="wide"] #statPad { left: calc(50% + 14px); right: 22px; max-width: none; }
+html[data-layout="wide"] #tab-stats .page-scroll { padding-right: calc(50% + 4px); padding-bottom: 90px; }
+/* Stats settings: check rows */
+.check-card { padding: 0 !important; }
+.check-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 50px; padding: 0 16px; text-align: left;
+  border-bottom: 1px solid var(--ios-sep); color: var(--blk); font-size: 16px; font-weight: 600; background: transparent; }
+.check-row:last-child { border-bottom: 0; }
+.check { width: 26px; height: 26px; border: 2px solid var(--blk); border-radius: 4px; display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 900; color: #fff; flex: none; }
+.check.on { background: var(--pink); }
+.cl { display: flex; flex-direction: column; }
+.cl i { font-style: normal; font-size: 12px; color: var(--ios-secondary); font-weight: 500; }
+
+/* Toast at page level (shows on every tab) */
+#toast { position: fixed !important; z-index: 20; }
+
+/* Tab switcher: a corner button and a small menu of the tabs */
+#tabMenuBtn { width: 48px; height: 48px; border-radius: 50%; color: #4e2a84; display: flex; align-items: center; justify-content: center; }
+#tabMenuBtn svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+#tabMenu { position: absolute; left: 0; bottom: calc(100% + 10px); background: #fff; border: 2px solid var(--blk); border-radius: 6px;
+  box-shadow: 4px 4px 0 var(--blk); padding: 6px; display: flex; flex-direction: column; gap: 4px; min-width: 170px; }
+#tabMenu[hidden] { display: none; }
+#tabMenu .tabbtn, #tabMenu .tabbtn:not(.active) { display: flex !important; justify-content: flex-start; gap: 10px; width: 100%; height: 46px;
+  padding: 0 12px; border-radius: 4px; color: var(--blk) !important; font-size: 16px; font-weight: 800; background: #fff; }
+#tabMenu .tabbtn svg { width: 22px; height: 22px; stroke: currentColor; fill: none; }
+#tabMenu .tabbtn.active { background: var(--pink); color: #fff !important; }
+.check-row { justify-content: flex-start !important; }
+/* Sideways/big: the pad sits at the top of the right column, under a STAT label like every other block */
+html[data-layout="wide"] #statPad { top: calc(env(safe-area-inset-top) + 16px + 38px); bottom: auto; }
+html[data-layout="wide"] #statPad::before { content: 'Stat'; position: absolute; left: 0; bottom: calc(100% + 12px); height: 28px;
+  display: flex; align-items: center; color: #fff; font-size: 11px; font-weight: 900; letter-spacing: .18em; text-transform: uppercase; }
+html[data-layout="wide"] .pad-btn { height: 64px; font-size: 18px; }
+/* Phone: more of the team above the pad — three columns of slimmer tiles, a slimmer game box and pad */
+html[data-layout="compact"] .sgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+html[data-layout="compact"] .stile { padding: 7px 8px; column-gap: 7px; box-shadow: 3px 3px 0 var(--blk); }
+html[data-layout="compact"] .stile .pnum { min-width: 28px; height: 28px; font-size: 14px; }
+html[data-layout="compact"] .stile .sname { font-size: 15px; }
+html[data-layout="compact"] .stile .sline { font-size: 11px; }
+html[data-layout="compact"] .game-card { flex-wrap: nowrap; padding: 10px 12px !important; gap: 8px; }
+html[data-layout="compact"] .q-sel { gap: 4px; }
+html[data-layout="compact"] .q-sel button { width: 38px; height: 38px; font-size: 13px; }
+html[data-layout="compact"] .score b, html[data-layout="compact"] .score input { font-size: 26px; }
+html[data-layout="compact"] .score input { width: 50px; }
+html[data-layout="compact"] .score { gap: 6px; }
+html[data-layout="compact"] .tt { padding: 8px 4px; }
+html[data-layout="compact"] .tt b { font-size: 20px; }
+html[data-layout="compact"] .pad-btn { height: 46px; font-size: 15px; }
+html[data-layout="compact"] .pad-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+html[data-layout="compact"] .pad-head { min-height: 36px; margin-bottom: 6px; }
+html[data-layout="compact"] .pad-head .undo-btn { height: 36px; min-height: 36px; }
+html[data-layout="compact"] #statPad { padding: 8px; }

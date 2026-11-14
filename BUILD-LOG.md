@@ -664,3 +664,24 @@ Owner's answers:
 - Hand entry after a game: stats grid, with an optional minutes column.
 - Open: clock on the stats phone (recommended: no clock, a Q1–Q4 selector); owner's last message was cut off.
 Planned stages: S1 in-game stats screen + data; S2 reports; S3 game file export/import/merge; S4 hand entry.
+
+## Stats stage S1 — live version 46 (2026-11-14)
+Owner: "No clock is fine, go ahead with stage 1."
+- New `stats.js` and a third tab. Stats are entries in the same game log as Minutes:
+  `{ type: 'stat', period, clock: null, playerId, data: { stat } }` (opponent live points: `opp1/2/3`, no player).
+  Minutes ignores them (replayGame skips unknown types); Minutes Undo now only takes back minutes events
+  (`isMinutesEvent`), and "has this game started" checks only minutes events. Stats Undo only takes back stats.
+- Screen: GAME (quarter picker Q1–Q4 — no clock on the stats phone; defaults to the Minutes quarter if this
+  phone runs the clock — and the score: Us from stats, Them typed, or from live opponent taps); TEAM totals
+  (points, rebounds with O/D, then each stat on the pad); PLAYERS grid (tap a player → pink → tap a stat; each
+  tile shows her line, e.g. "3 pts · 1 reb"); the stat pad by the thumb (iPad/sideways: top of the right column).
+- Stat catalog `STAT_TYPES` (2/3/FT made; missed 2/3/FT; O-Reb, D-Reb, assist, steal, block, turnover, foul,
+  technical). Stats settings (••• → Stats settings), saved on the team: checklist of pad buttons (default:
+  points, both rebounds, assists, fouls); "Track misses" (off; adds the three miss buttons); "Score the other
+  team live" (off). ••• also: Opponent name, Start a new game (a stats-only game becomes final when you do).
+- Tab switcher: the corner button now opens a small menu (Playbook / Minutes / Stats).
+- Fixed along the way: short notices ("Sub made", …) lived inside the Playbook's area and never showed on Minutes;
+  the notice now sits at page level.
+- Tests: new stats1.js (record, totals, quarters, opponent score, Stats Undo vs Minutes Undo, settings, tab
+  menu); all older tests updated for the tab menu and passing; no name clashes.
+- Next (S2): box score after a game; season totals, averages, per-10-minute rates — blanks where data is missing.

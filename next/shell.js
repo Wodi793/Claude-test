@@ -42,6 +42,7 @@ try { App.oneHand = localStorage.getItem('penguins.oneHand') === '1'; } catch { 
 /** Optional per-tab code to run when a tab is shown. */
 const TAB_SHOWN = {
   playbook: () => requestRender(),   // repaint the court (cheap; nothing is reset)
+  stats: () => window.renderStats?.(),
 };
 
 /** The folded foldable keeps a strip beside the app (with the clock and Wi-Fi at its top) that the
@@ -112,7 +113,12 @@ function placeTabbar() {
   paintSideBrand();
 }
 
-for (const b of document.querySelectorAll('.tabbtn')) b.onclick = () => showTab(b.dataset.tab);
+// The corner button opens a small menu of the tabs; picking one switches and closes it
+const tabMenu = document.getElementById('tabMenu'), tabMenuBtn = document.getElementById('tabMenuBtn');
+function setTabMenu(open) { tabMenu.hidden = !open; tabMenuBtn.setAttribute('aria-expanded', open ? 'true' : 'false'); }
+tabMenuBtn.onclick = () => setTabMenu(tabMenu.hidden);
+for (const b of document.querySelectorAll('.tabbtn')) b.onclick = () => { setTabMenu(false); showTab(b.dataset.tab); };
+document.addEventListener('pointerdown', e => { if (!tabMenu.hidden && !e.target.closest('#tabbar')) setTabMenu(false); });
 window.addEventListener('resize', () => { chooseAppLayout(); placeTabbar(); placeLens(); });
 window.addEventListener('orientationchange', () => setTimeout(() => { chooseAppLayout(); placeTabbar(); placeLens(); }, 300));
 
