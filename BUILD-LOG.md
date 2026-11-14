@@ -432,3 +432,15 @@ What was done
 Tests on the live copy: baseline all pass, Pencil/two-tap 15/15, tabs, layouts, game, rule, season,
 v16 → v27 upgrade. Test fix: game.js reopened on Minutes, where the switcher only shows the other tab.
 Not verified on a real device: the Pencil button fix and the tap offset (tap-test results still owed).
+
+### Version 28 preview — dark team side (2026-11-14)
+Owner (after running a full quarter with subs: "felt really good"): make Minutes darker and more
+minimalist; use the two dark purples most; white and light colors as the pop.
+- New last section in next/styles.css, "DARK TEAM SIDE": redefines the Stage 6 color variables
+  (background #2b1550, cards #3a1f68, white text, lavender #cbb8f2 accent) and recolors the pieces
+  that had fixed colors. Layout unchanged; Playbook unchanged.
+- White = Start, Confirm, period chip, selected / going-out rows, urgent "Play now" tags.
+  Court purple = number circles, Stop, coming-in rows, must-stay tags. Lavender = small accents, timeline bars.
+- Dark glass for menus, sub queue, pop-ups, the thumb bar and the corner switch.
+- Disabled "Pick 5 more starters" kept solid (the list must not show through).
+- Tests: layouts, game pass.

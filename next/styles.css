@@ -750,3 +750,85 @@ html[data-layout="compact"] .sec-rule br { display: none; }
   html[data-layout="compact"][data-orient="port"] .pnum { min-width: 32px; height: 32px; font-size: 15px; }
   html[data-layout="compact"][data-orient="port"] .sec-court .card-title, html[data-layout="compact"][data-orient="port"] .sec-bench .card-title { margin: 4px 12px 3px; }
 }
+
+/* =====================================================================
+   DARK TEAM SIDE (owner, after v27): "darker, minimalist; the two dark purples
+   most of the time; white and light colors as the pop."
+   Same iOS layout as Stage 6, recolored. Defined last so it wins.
+     background  = DEEP purple (#2b1550, the court's border)
+     cards/rows  = a step lighter, toward the court purple
+     court purple (#4e2a84) = number circles, Stop, "coming in", must-stay tags
+     white       = the main buttons (Start, Confirm), selections, urgent tags
+     lavender    = small accents (links, icons, timeline bars)
+   ===================================================================== */
+:root {
+  --deep: #2b1550;
+  --court: #4e2a84;
+  --lav: #cbb8f2;                          /* light lavender accent */
+  --ios-bg: var(--deep);
+  --ios-card: #3a1f68;
+  --ios-sep: rgba(255, 255, 255, .09);
+  --ios-label: #ffffff;
+  --ios-secondary: rgba(232, 222, 255, .62);
+  --ios-fill: rgba(255, 255, 255, .10);
+  --tint: var(--lav);
+  --ios-red: #ff8a87;
+}
+.sheet.light { background: rgba(43, 21, 80, .97); }
+
+/* Main buttons: white with deep-purple text */
+.tab-page .primary-btn, .sheet.light .primary-btn, .light .primary-btn, #subBar .primary-btn,
+html[data-tab="minutes"] #modal .buttons button.primary { background: #fff !important; color: var(--deep) !important; }
+.big-btn, .clock-btn.go, .clock-btn.next { background: #fff; color: var(--deep); }
+.big-btn:disabled { background: #4a2f78; color: rgba(232, 222, 255, .7); }   /* solid: the list must not show through */
+.clock-btn.stop { background: var(--court); color: #fff; box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .35); }
+.undo-btn { color: #fff; }
+.period-chip { background: #fff; color: var(--deep); }
+.tab-page .seg button.active, .light .seg button.active { background: #fff; color: var(--deep); }
+.light .menu-btn.active { background: #fff; color: var(--deep); }
+html[data-tab="minutes"] #modal .buttons button.danger { background: #d62839; color: #fff; }
+
+/* Player rows */
+.pnum, .sheet.light .roster .num { background: var(--court) !important; color: #fff !important; }
+.ptag, .ptag.rule-owed { background: rgba(255, 255, 255, .12); color: #ece4ff; }
+.ptag.rule-now, .ptag.rule-must { background: #fff; color: var(--deep); }
+.ptag.rule-keep { background: var(--court); color: #fff; }
+.pmet { color: var(--lav); }
+.prow.picked, .prow.selected, .prow.going-out { background: #fff; color: var(--deep); }
+.prow.picked .pnum, .prow.selected .pnum, .prow.going-out .pnum { background: var(--deep) !important; color: #fff !important; }
+.prow.selected .pmin, .prow.going-out .pmin, .prow.picked .pmin,
+.prow.selected .pmet, .prow.going-out .pmet { color: var(--deep); }
+.prow.picked .ptag, .prow.selected .ptag, .prow.going-out .ptag,
+.prow.selected .ptag.rule-now, .prow.going-out .ptag.rule-keep { background: var(--deep); color: #fff; }
+.prow.coming-in { background: var(--court); color: #fff; box-shadow: inset 0 0 0 2px #fff; }
+.prow.coming-in .pnum { background: #fff !important; color: var(--court) !important; }
+.prow.coming-in .ptag { background: #fff; color: var(--court); }
+
+/* Team sheet bits */
+.sheet.light .chip { background: var(--ios-fill); color: #fff; }
+.sheet.light .roster li.inactive .chip { background: #fff; color: var(--deep); }
+.sheet.light .add-player input { background: rgba(0, 0, 0, .22) !important; color: #fff; }
+
+/* Frosted overlays (menus, sub queue, pop-ups, the corner switch): dark glass */
+.light.glass, .light .glass, #subBar, html[data-tab="minutes"] #tabbar, html[data-tab="minutes"] #modal,
+html[data-layout="compact"] .sb-actions {
+  background: rgba(58, 31, 104, .82); border: .5px solid rgba(255, 255, 255, .12);
+  box-shadow: 0 10px 30px rgba(10, 4, 24, .45); color: #fff; }
+html[data-layout="compact"][data-orient="land"] .sb-actions { background: none; border: 0; box-shadow: none; }
+@media (prefers-reduced-transparency: reduce) {
+  .light.glass, .light .glass, #subBar, html[data-tab="minutes"] #tabbar, html[data-tab="minutes"] #modal,
+  html[data-layout="compact"] .sb-actions { background: #3a1f68 !important; }
+}
+
+/* Timeline and season table */
+.tl-card, .season-card { background: var(--ios-card); color: #fff; }
+.tl-head, .tl-key, .st-head { color: var(--ios-secondary); }
+.tl-row, .st-row { border-top-color: var(--ios-sep); }
+.tl-name b, .st-name b { color: var(--lav); }
+.tl-track { background: rgba(255, 255, 255, .07); }
+.tl-track i { background: var(--lav); }
+.tl-track i.live { background: #fff; }
+.tl-lines i.div { border-left-color: rgba(255, 255, 255, .2); }
+.tl-lines i.deadline, .tl-key i.deadline { border-left-color: #fff; }
+.tl-lines i.now { border-left-color: var(--ios-red); }
+.st-name em, .st-row.behind .st-fair { background: #fff; color: var(--deep); }
