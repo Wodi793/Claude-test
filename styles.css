@@ -1,0 +1,752 @@
+/* Penguins — shared look and the Playbook's styles.
+   (Moved unchanged from index.html in Stage 2; shell styles are at the end.) */
+/* =====================================================================
+   1. LOOK AND LAYOUT
+   Court and ink colors are in the script, section "SETTINGS".
+   ===================================================================== */
+:root {
+  --bg: #151319;
+  --panel: rgba(30, 27, 36, .94);   /* toolbar and menus (slightly see-through) */
+  --btn-press: rgba(255,255,255,.12);
+  --text: #f3f0f8;
+  --muted: #a79fb5;
+  --accent: #a784e8;                /* Penguins lavender: selected tool, unsaved dot */
+  --accent-strong: #5b2d91;
+  --danger: #e5605e;
+  /* One font family everywhere (Stage 6): Apple's system font, SF Pro. ("serif" kept as a name so
+     older rules still work — it now means the same font.) */
+  --serif: -apple-system, system-ui, "SF Pro Display", "Helvetica Neue", sans-serif;
+  --sans: -apple-system, system-ui, "Helvetica Neue", sans-serif;
+  --b: 44px;                        /* tool button size; the script shrinks it on short screens */
+  --app-h: 100%;                    /* set by the script to the true screen height */
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0; height: 100%;
+  background: var(--bg); color: var(--text);
+  font-family: var(--sans);
+  overflow: hidden;                      /* no page scrolling */
+  overscroll-behavior: none;             /* no rubber-band bounce */
+  -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none;           /* no long-press popups */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;            /* no double-tap zoom */
+}
+
+/* Hidden helper: lets the script read the notch / home-bar margins */
+#lvhProbe { position: fixed; top: 0; left: 0; width: 1px; height: 100lvh; visibility: hidden; pointer-events: none; }
+#safe {
+  position: fixed; visibility: hidden; pointer-events: none;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+           env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* ---------- The court: edge to edge, top to bottom ---------- */
+#stage { position: fixed; top: 0; left: 0; right: 0; height: var(--app-h); }
+#board {
+  position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+  touch-action: none;   /* the court gets every touch: no scrolling while drawing */
+}
+/* Soft shade behind the clock/battery so they stay readable on a white border */
+#scrim {
+  position: absolute; top: 0; left: 0; right: 0;
+  height: calc(env(safe-area-inset-top) + 10px);
+  background: linear-gradient(rgba(0,0,0,.38), rgba(0,0,0,0));
+  pointer-events: none; display: none;
+}
+#scrim.show { display: block; }
+#toast {
+  position: absolute; left: 50%; top: calc(env(safe-area-inset-top) + 10px);
+  transform: translateX(-50%);
+  color: var(--text);
+  padding: 9px 18px; border-radius: 999px; font-size: 15px;
+  pointer-events: none; opacity: 0; transition: opacity .25s; white-space: nowrap;
+}
+#toast.show { opacity: 1; }
+
+/* ---------- Buttons ---------- */
+button, .tb {
+  font: inherit; color: var(--text);
+  background: transparent; border: 0; padding: 0; margin: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer; position: relative;
+}
+svg { width: 22px; height: 22px; flex: none;
+  fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------- Liquid glass: translucent, blurred, with a soft lit edge ---------- */
+.glass {
+  background:
+    linear-gradient(160deg, rgba(255,255,255,.18), rgba(255,255,255,.04) 45%, rgba(255,255,255,.08)),
+    rgba(30, 20, 46, .58);
+  -webkit-backdrop-filter: blur(30px) saturate(1.8); backdrop-filter: blur(30px) saturate(1.8);
+  border: 1px solid rgba(255,255,255,.26);
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,.45),     /* light catching the top edge */
+    inset 0 -1px 1px rgba(255,255,255,.08),
+    0 12px 32px rgba(12, 6, 24, .32);           /* soft float above the court */
+}
+.glass svg { filter: drop-shadow(0 1px 1px rgba(0,0,0,.35)); }
+/* Over a white border, the glass takes a deeper tint so white icons stay crisp */
+.light-band #rail, .light-band #toast {
+  background:
+    linear-gradient(160deg, rgba(255,255,255,.16), rgba(255,255,255,.03) 45%, rgba(255,255,255,.06)),
+    rgba(34, 22, 54, .78);
+}
+.light-band #grab span { background: rgba(78, 42, 132, .55); }
+
+/* ---------- Tools: a glass rail that slides in from the right edge ---------- */
+#drawer {
+  position: absolute; z-index: 6; top: 50%;
+  right: calc(env(safe-area-inset-right) + 10px);
+  display: flex; align-items: center; gap: 6px;
+  transform: translate(0, -50%);
+  transition: transform .38s cubic-bezier(.2, .9, .25, 1.08);   /* a little spring */
+}
+#drawer.closed { transform: translate(var(--hide, 80px), -50%); }
+/* The tab that peeks out at the screen edge: tap or swipe it */
+#grab { width: 22px; height: 76px; }
+#grab span {
+  width: 6px; height: 52px; border-radius: 3px; padding: 0;
+  background: rgba(255,255,255,.55);
+  box-shadow: 0 0 0 1px rgba(30,20,45,.25), 0 2px 8px rgba(0,0,0,.25);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+#rail {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 6px; border-radius: 30px;
+}
+.tb { width: var(--b); height: var(--b); border-radius: 50%; transition: background .15s, transform .15s; }
+.tb:active { background: rgba(255,255,255,.18); transform: scale(.92); }
+.tb.active {
+  background: linear-gradient(180deg, rgba(255,255,255,.40), rgba(255,255,255,.10) 55%, rgba(255,255,255,.18));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.45), inset 0 1px 1px rgba(255,255,255,.85), 0 3px 10px rgba(10,5,25,.3);
+}
+.tb:disabled { opacity: .3; }
+/* Full | Half switch at the top of the rail: a glass lens slides to the chosen court */
+.courtseg { position: relative; display: flex; flex-direction: column; gap: 2px; padding: 3px;
+  background: rgba(0,0,0,.22); border-radius: 18px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,.35), inset 0 -1px 0 rgba(255,255,255,.12); }
+.cs { position: relative; z-index: 1; width: calc(var(--b) - 6px); height: calc(var(--b) * .72);
+  border-radius: 14px; font-size: 12px; font-weight: 600; letter-spacing: .2px;
+  color: rgba(255,255,255,.6); transition: color .25s; }
+.cs.active { color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.3); }
+.courtseg .lens {
+  position: absolute; z-index: 0; left: 3px; right: 3px; top: 3px;
+  height: calc(var(--b) * .72); border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,.46), rgba(255,255,255,.12) 55%, rgba(255,255,255,.22));
+  -webkit-backdrop-filter: blur(8px) saturate(2); backdrop-filter: blur(8px) saturate(2);
+  border: 1px solid rgba(255,255,255,.45);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.9),     /* bright rim along the top */
+              inset 0 -2px 4px rgba(255,255,255,.18),   /* light pooling at the bottom */
+              0 3px 10px rgba(10,5,25,.35);
+  transition: transform .42s cubic-bezier(.25, 1.35, .4, 1);   /* springy slide */
+}
+.courtseg.half .lens { transform: translateY(calc(var(--b) * .72 + 2px)); }
+.cs .icon { display: none; width: min(20px, calc(var(--b) * .7)); height: min(20px, calc(var(--b) * .7)); }
+@media (max-height: 520px) {   /* short (sideways) screen: court icons instead of words */
+  .cs .word { display: none; }
+  .cs .icon { display: block; }
+}
+.sep { width: 22px; height: 1px; background: rgba(255,255,255,.22); margin: 3px 0; }
+.dot { width: 22px; height: 22px; border-radius: 50%; box-shadow: 0 0 0 1.5px rgba(255,255,255,.7), 0 1px 3px rgba(0,0,0,.3); }
+/* Rainbow ring = color picker; the center shows the color you last picked */
+.rainbow .dot {
+  background: conic-gradient(#f44, #fd4, #4d6, #4cf, #66f, #d4f, #f44);
+  display: flex; align-items: center; justify-content: center;
+}
+.rainbow .dot span { width: 12px; height: 12px; border-radius: 50%; background: var(--custom, #ffd84d);
+  box-shadow: 0 0 0 1.5px rgba(30,27,36,.85); }
+.rainbow input {   /* the real color picker sits invisibly on top of the rainbow button */
+  position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; border: 0; padding: 0; cursor: pointer;
+}
+#btnSave.unsaved::after {   /* small dot = unsaved changes */
+  content: ""; position: absolute; top: 8px; right: 8px;
+  width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
+
+/* ---------- "More" menu: glass card beside the rail ---------- */
+#more {
+  position: absolute; z-index: 7; top: 50%;
+  right: calc(env(safe-area-inset-right) + 10px + var(--b) + 12px + 6px + 22px + 8px);   /* rail + tab + gaps */
+  width: min(290px, calc(100vw - var(--b) - 76px));
+  transform: translateY(-50%);
+  border-radius: 24px; padding: 14px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+#more[hidden] { display: none; }
+.line-adjust { display: flex; align-items: center; gap: 12px; }
+#widthRange { -webkit-appearance: none; appearance: none; width: 140px; height: 30px; background: transparent; margin: 0; }
+#widthRange::-webkit-slider-runnable-track { height: 6px; border-radius: 3px;
+  background: rgba(0,0,0,.28); box-shadow: inset 0 1px 2px rgba(0,0,0,.35), 0 1px 0 rgba(255,255,255,.12); }
+#widthRange::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; margin-top: -10px; border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.65));
+  box-shadow: inset 0 1px 1px #fff, 0 2px 8px rgba(10,5,25,.4); }
+#widthRange::-moz-range-track { height: 6px; border-radius: 3px; background: rgba(0,0,0,.28); }
+#widthRange::-moz-range-thumb { width: 26px; height: 26px; border: 0; border-radius: 50%; background: #fff; }
+#widthPreview { width: 34px; min-height: 1px; border-radius: 99px; background: var(--ink, #fff);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.15); }
+#version { text-align: center; font-size: 12px; color: rgba(255,255,255,.45); }
+#screenCheck { text-align: center; font-size: 12px; color: rgba(255,255,255,.6); margin-top: -6px; }
+#playName {
+  font-family: var(--serif); font-size: 21px; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  text-shadow: 0 1px 2px rgba(0,0,0,.3);
+}
+.setting { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  font-size: 15px; color: rgba(255,255,255,.75); }
+.seg { display: flex; background: rgba(0,0,0,.18); border-radius: 13px; padding: 3px;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.2); }
+.seg button { min-height: 34px; padding: 0 12px; border-radius: 10px; font-size: 15px; transition: background .15s; }
+.seg button.active { background: rgba(255,255,255,.26); box-shadow: inset 0 1px 1px rgba(255,255,255,.4), 0 1px 4px rgba(0,0,0,.2); }
+.menu-btn {
+  justify-content: flex-start; gap: 10px; width: 100%; min-height: 44px;
+  padding: 0 12px; border-radius: 14px; background: rgba(255,255,255,.10); font-size: 16px;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.18);
+}
+.menu-btn:active { background: rgba(255,255,255,.2); }
+.menu-btn.danger { color: #ffc2c2; }   /* Clear: in the ••• menu, away from Save (Undo still brings it back) */
+
+/* ---------- Saved plays screen ---------- */
+.sheet {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--app-h); z-index: 10;
+  background: rgba(18, 13, 26, .62);
+  -webkit-backdrop-filter: blur(30px) saturate(1.6); backdrop-filter: blur(30px) saturate(1.6);
+  display: flex; flex-direction: column;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+           env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+.sheet[hidden] { display: none; }
+.sheet header { display: flex; align-items: center; padding: 10px 14px; gap: 10px; }
+.sheet h1 { flex: 1; margin: 0; font-family: var(--serif); font-size: 28px; font-weight: 600; }
+.sheet .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 4px 14px 12px; }
+.sheet .note { color: var(--muted); font-size: 13px; padding: 0 16px 8px; margin: 0; }
+.pill-btn { min-height: 46px; padding: 0 14px; border-radius: 14px; background: rgba(255,255,255,.10);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.18); }
+.pill-btn:active { background: rgba(255,255,255,.2); }
+.scrollable { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+#playList { list-style: none; margin: 0; padding: 0 14px 20px; }
+#playList li {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,.07); border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.10);
+  padding: 8px 8px 8px 14px; margin-bottom: 8px;
+}
+#playList .open { flex: 1; min-width: 0; text-align: left; justify-content: flex-start; min-height: 46px; }
+#playList .name { font-family: var(--serif); font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#playList .meta { font-size: 13px; color: var(--muted); }
+#playList .open > div { min-width: 0; }
+#playList li.current { box-shadow: inset 0 0 0 2px var(--accent); }
+.empty { color: var(--muted); text-align: center; padding: 40px 20px; font-size: 16px; }
+
+/* ---------- Pop-up dialog (name a play, rename, confirm delete) ---------- */
+dialog {
+  border: 0; border-radius: 20px; padding: 20px;
+  width: min(92vw, 380px); color: var(--text);
+  border-radius: 26px;
+}
+dialog::backdrop { background: rgba(10,6,18,.35); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+dialog h2 { margin: 0 0 8px; font-family: var(--serif); font-weight: 600; font-size: 22px; }
+dialog p { margin: 0 0 14px; color: var(--muted); font-size: 15px; line-height: 1.4; }
+dialog input {
+  width: 100%; font-size: 17px; /* 16px+ stops iOS zooming into the field */
+  padding: 12px; border-radius: 14px; border: 1px solid rgba(255,255,255,.25);
+  background: rgba(0,0,0,.25); color: var(--text); margin-bottom: 14px;
+  -webkit-user-select: text; user-select: text;
+}
+dialog input:focus { outline: none; border-color: var(--accent); }
+dialog .buttons { display: flex; gap: 8px; }
+dialog .buttons button { flex: 1; min-height: 46px; border-radius: 14px; background: rgba(255,255,255,.12); }
+dialog .buttons button.primary { background: var(--accent-strong); }
+dialog .buttons button.danger { background: var(--danger); }
+
+/* =====================================================================
+   SHELL (added in Stage 2): tabs and the floating tab switcher
+   ===================================================================== */
+
+/* A hidden tab stays laid out (so the Playbook keeps its size and drawing)
+   but is invisible and can't be touched. */
+.tab.is-hidden { visibility: hidden; }
+
+/* Ordinary scrolling page (Minutes and future tabs) */
+.tab-page {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--app-h); z-index: 4;
+  background: var(--page-bg, #4e2a84); color: #fff;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
+}
+.tab-page[hidden] { display: none; }
+/* Bottom room = tab switcher + (when showing) the sub queue, so nothing ends up hidden under them */
+.page-scroll { height: 100%; padding: 16px 16px calc(var(--tabs-bottom, 16px) + 72px + var(--subbar-h, 0px));
+  scroll-padding-bottom: calc(var(--tabs-bottom, 16px) + 72px + var(--subbar-h, 0px)); }
+.coming { min-height: 70%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; gap: 10px; }
+.coming-logo { width: 120px; height: 120px; border-radius: 28px; box-shadow: 0 8px 30px rgba(0,0,0,.35); }
+.coming h1 { margin: 6px 0 0; font-family: var(--serif); font-size: 32px; font-weight: 600; }
+.coming p { margin: 0; color: rgba(255,255,255,.75); font-size: 16px; }
+
+/* Floating glass tab switcher: bottom center, in the gap below the court */
+#tabbar {
+  position: fixed; z-index: 8; left: 50%; transform: translateX(-50%);
+  bottom: var(--tabs-bottom, 12px);
+  display: flex; gap: 0; padding: 4px; border-radius: 999px;
+}
+.tabbtn { position: relative; z-index: 1; height: 36px; padding: 0 18px; border-radius: 999px;
+  font-size: 15px; font-weight: 600; color: rgba(255,255,255,.65); transition: color .25s; min-width: 98px; }
+.tabbtn.active { color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.3); }
+#tabbar .lens {
+  position: absolute; z-index: 0; top: 4px; left: 4px; height: 36px; width: var(--lens-w, 98px); border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255,255,255,.46), rgba(255,255,255,.12) 55%, rgba(255,255,255,.22));
+  border: 1px solid rgba(255,255,255,.45);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.9), inset 0 -2px 4px rgba(255,255,255,.18), 0 3px 10px rgba(10,5,25,.35);
+  transform: translateX(var(--lens-x, 0)); transition: transform .42s cubic-bezier(.25, 1.35, .4, 1), width .3s;
+}
+
+/* Respect iOS "Reduce Motion" and "Reduce Transparency" */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass, #tabbar { -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+    background: #2a1d40 !important; }
+}
+
+/* Over a white border, the switcher takes the same deeper tint as the tool rail */
+.light-band #tabbar {
+  background:
+    linear-gradient(160deg, rgba(255,255,255,.16), rgba(255,255,255,.03) 45%, rgba(255,255,255,.06)),
+    rgba(34, 22, 54, .78);
+}
+
+/* =====================================================================
+   MINUTES TAB + TEAM SETTINGS (Stage 3)
+   Lists and text stay solid and high-contrast; glass only on overlays.
+   ===================================================================== */
+.page-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 0 8px; }
+.team-name { font-family: var(--serif); font-size: 28px; font-weight: 600; line-height: 1.1; }
+.team-season { font-size: 15px; color: rgba(255,255,255,.75); margin-top: 2px; }
+.round-btn { width: 46px; height: 46px; border-radius: 50%; flex: none; }
+.coming { min-height: 60%; }
+
+.team-scroll { padding: 0 14px calc(env(safe-area-inset-bottom) + 24px); }
+.card { background: #221a30; border: 1px solid rgba(255,255,255,.10); border-radius: 18px; padding: 6px 14px; margin-bottom: 18px; }
+.card-title { font-family: var(--serif); font-weight: 600; font-size: 20px; margin: 4px 4px 8px; }
+.card-title span { font-family: var(--sans); font-size: 15px; color: rgba(255,255,255,.6); font-weight: 400; }
+.field { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px;
+  border-bottom: 1px solid rgba(255,255,255,.08); font-size: 16px; color: rgba(255,255,255,.8); }
+.field:last-child { border-bottom: 0; }
+.field input, .field-value { flex: 1; max-width: 62%; text-align: right; color: #fff; font-size: 17px; }
+.team-scroll input { font: inherit; font-size: 17px; color: #fff; background: transparent; border: 0;
+  -webkit-user-select: text; user-select: text; }
+.team-scroll input:focus { outline: none; }
+
+.roster { list-style: none; margin: 0; padding: 0; }
+.roster li { display: flex; align-items: center; gap: 8px; min-height: 54px; border-bottom: 1px solid rgba(255,255,255,.08); }
+.roster .num { width: 52px; flex: none; text-align: center; font-weight: 700; font-size: 18px;
+  background: #fff !important; color: #2a1745 !important; border-radius: 12px !important; height: 38px; }
+.roster .name { flex: 1; min-width: 0; font-size: 18px; font-weight: 600; }
+.roster li.inactive .name, .roster li.inactive .num { opacity: .45; }
+.chip { flex: none; height: 32px; padding: 0 12px; border-radius: 999px; font-size: 13px; font-weight: 600;
+  background: rgba(255,255,255,.14); }
+.roster li.inactive .chip { background: #000; color: rgba(255,255,255,.75); }
+.icon-btn { width: 40px; height: 40px; border-radius: 50%; flex: none; color: rgba(255,255,255,.7); }
+.add-player { display: flex; gap: 8px; align-items: center; padding: 10px 0 8px; }
+.add-player input { height: 44px; border-radius: 12px !important; background: rgba(0,0,0,.28) !important;
+  padding: 0 12px !important; border: 1px solid rgba(255,255,255,.18) !important; }
+#newNumber { width: 64px; flex: none; text-align: center; }
+#newName { flex: 1; min-width: 0; }
+.primary-btn { background: #fff !important; color: #2a1745; font-weight: 700; }
+.card .note { padding: 4px 0 6px; margin: 0; }
+
+.team-list { list-style: none; margin: 0; padding: 4px 0 0; }
+.team-row { width: 100%; min-height: 52px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
+  border-bottom: 1px solid rgba(255,255,255,.08); text-align: left; padding: 6px 0; }
+.team-row .tn { font-size: 17px; font-weight: 600; }
+.team-row .ts { font-size: 14px; color: rgba(255,255,255,.65); }
+.team-row.current .tn::before { content: "● "; color: #fff; }
+.row-btns { display: flex; gap: 8px; padding: 10px 0; }
+.row-btns .pill-btn { flex: 1; }
+.danger-btn { width: 100%; background: transparent !important; color: #ff8a87; border: 1px solid rgba(255,138,135,.4); margin-bottom: 12px; }
+
+/* =====================================================================
+   MINUTES — GAME TRACKER (Stage 4)
+   Solid, high-contrast clock and player rows (gym lighting); glass only on
+   the sub queue, menus and pop-ups. Purple and white, black as the accent.
+   ===================================================================== */
+.hint { margin: -2px 4px 10px; font-size: 14px; color: rgba(255,255,255,.75); }
+.field-btn { width: 100%; text-align: left; }
+.field-btn .field-value { text-align: right; }
+.empty-card { text-align: center; padding: 22px 14px; font-size: 16px; line-height: 1.6; }
+
+/* Player rows */
+.players { list-style: none; margin: 0 0 16px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.prow { display: flex; align-items: center; gap: 12px; min-height: 58px; padding: 0 14px 0 8px;
+  background: #fff; color: #24133d; border-radius: 16px; cursor: pointer;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: manipulation; }
+.pnum { min-width: 46px; height: 42px; padding: 0 6px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+  background: #4e2a84; color: #fff; font-weight: 800; font-size: 20px; font-variant-numeric: tabular-nums; }
+.pname { flex: 1; min-width: 0; font-size: 19px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pmin { font-size: 19px; font-weight: 700; font-variant-numeric: tabular-nums; color: #4e2a84; }
+.ptag { font-size: 12px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; padding: 4px 9px;
+  border-radius: 999px; background: #efe8fb; color: #4e2a84; }
+.prow.picked { background: #000; color: #fff; }
+.prow.picked .pnum { background: #fff; color: #000; }
+.prow.picked .ptag { background: #fff; color: #000; }
+.prow.away { opacity: .5; }
+.prow.selected, .prow.going-out { background: #000; color: #fff; }
+.prow.selected .pnum, .prow.going-out .pnum { background: #fff; color: #000; }
+.prow.selected .pmin, .prow.going-out .pmin { color: #fff; }
+.prow.selected .ptag, .prow.going-out .ptag { background: #fff; color: #000; }
+.prow.coming-in { background: #4e2a84; color: #fff; box-shadow: inset 0 0 0 3px #fff; }
+.prow.coming-in .pnum { background: #fff; color: #4e2a84; }
+.prow.coming-in .pmin { color: #fff; }
+.prow.coming-in .ptag { background: #fff; color: #4e2a84; }
+.prow.can-pick { box-shadow: inset 0 0 0 3px #000; }
+
+/* Scoreboard: period, clock, Start/Stop, Undo */
+.scoreboard { background: #1d1029; border-radius: 22px; padding: 12px 14px 14px; margin-bottom: 16px;
+  border: 1px solid rgba(255,255,255,.12); }
+.sb-top { display: flex; align-items: center; gap: 8px; }
+.sb-vs { flex: 1; min-width: 0; font-size: 15px; color: rgba(255,255,255,.75); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.period-chip { background: #fff; color: #4e2a84; font-weight: 800; font-size: 17px; padding: 6px 12px; border-radius: 999px; }
+.undo-btn { height: 46px; padding: 0 14px; gap: 6px; border-radius: 999px; font-size: 16px; font-weight: 700;
+  border: 2px solid rgba(255,255,255,.85); }
+.undo-btn:disabled { opacity: .35; }
+.clock { font-size: clamp(76px, 24vw, 140px); font-weight: 800; line-height: 1; text-align: center; margin: 12px 0 10px;
+  font-variant-numeric: tabular-nums; letter-spacing: -2px; color: rgba(255,255,255,.72); }
+.clock.running { color: #fff; }
+.clock.over { color: rgba(255,255,255,.5); }
+.period-over { text-align: center; font-size: 18px; font-weight: 700; margin: -4px 0 10px; }
+.clock-btn { width: 100%; height: 66px; border-radius: 20px; font-size: 24px; font-weight: 800; }
+.clock-btn.go { background: #fff; color: #4e2a84; }
+.clock-btn.stop { background: #000; color: #fff; box-shadow: inset 0 0 0 2px rgba(255,255,255,.5); }
+.clock-btn.next { background: #fff; color: #000; }
+.final-date { text-align: center; font-size: 18px; margin: 14px 0 4px; color: rgba(255,255,255,.8); }
+.big-btn { width: 100%; height: 60px; border-radius: 18px; background: #fff; color: #4e2a84; font-size: 20px; font-weight: 800; margin: 6px 0 16px; }
+.big-btn:disabled { opacity: .45; }
+
+/* Sub queue: glass, floats above the tab switcher */
+#subBar { position: fixed; z-index: 9; left: max(12px, env(safe-area-inset-left)); right: max(12px, env(safe-area-inset-right));
+  bottom: calc(var(--tabs-bottom, 12px) + 54px); border-radius: 22px; padding: 10px 12px; max-width: 560px; margin: 0 auto; }
+#subBar[hidden] { display: none; }
+.sub-pairs { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; font-size: 16px; }
+.pair b { font-weight: 800; }
+.pair.pending { opacity: .8; }
+.sub-actions { display: flex; gap: 8px; }
+.sub-actions .pill-btn { flex: 1; min-height: 50px; font-size: 17px; font-weight: 700; }
+.sub-actions .primary-btn:disabled { opacity: .45; }
+
+/* Sub alert: banner on any tab + a flash of the whole screen */
+#alertBanner { position: fixed; z-index: 12; left: 50%; transform: translateX(-50%); top: calc(env(safe-area-inset-top) + 8px);
+  background: #fff; color: #4e2a84; font-weight: 800; font-size: 18px; padding: 12px 20px; border-radius: 999px;
+  box-shadow: 0 6px 24px rgba(0,0,0,.4); white-space: nowrap; }
+#alertBanner[hidden] { display: none; }
+body.alert-flash::after { content: ""; position: fixed; inset: 0; z-index: 11; pointer-events: none;
+  animation: subflash 1s ease-in-out 3; background: #fff; opacity: 0; }
+@keyframes subflash { 0%, 100% { opacity: 0; } 40% { opacity: .55; } }
+@media (prefers-reduced-motion: reduce) {
+  body.alert-flash::after { animation: none; opacity: 1; background: transparent; box-shadow: inset 0 0 0 10px #fff; }
+}
+
+/* Menus and settings pop-ups (glass) */
+.menu-dialog { width: min(92vw, 400px); border-radius: 26px; }
+.menu-dialog .menu-list { display: flex; flex-direction: column; gap: 8px; margin: 6px 0 12px; }
+.menu-dialog .menu-btn { justify-content: center; min-height: 52px; font-size: 17px; font-weight: 600; }
+.menu-dialog .menu-btn.active { background: #fff; color: #4e2a84; }
+.danger-text { color: #ff9a97; }
+.pill-btn.wide { width: 100%; }
+.gs-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 52px; font-size: 16px; }
+.gs-row[hidden] { display: none; }
+.stepper { display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,.25); border-radius: 14px; padding: 3px; }
+.stepper button { width: 42px; height: 40px; border-radius: 11px; font-size: 22px; font-weight: 700; }
+.stepper button:active { background: rgba(255,255,255,.2); }
+.stepper b { min-width: 52px; text-align: center; font-size: 18px; }
+.format-block.locked { opacity: .45; pointer-events: none; }
+#gameSettings .buttons { display: flex; gap: 8px; margin-top: 10px; }
+#gameSettings .buttons .pill-btn { flex: 1; }
+
+/* Minimum playing time (Stage 4b) */
+.rule-note { margin: -4px 4px 14px; font-size: 15px; line-height: 1.4; color: rgba(255,255,255,.85); }
+.rule-bar { background: #fff; color: #24133d; border-radius: 14px; padding: 10px 14px; margin: -4px 0 14px; font-size: 15px; line-height: 1.35; }
+.rule-bar.warn { box-shadow: inset 0 0 0 3px #000; }
+.ptag.rule-owed { background: #efe8fb; color: #4e2a84; }
+.ptag.rule-now, .ptag.rule-must { background: #000; color: #fff; }
+.ptag.rule-keep { background: #4e2a84; color: #fff; }
+.pmet { font-size: 18px; font-weight: 800; color: #4e2a84; }
+.prow.selected .pmet, .prow.going-out .pmet, .prow.coming-in .pmet { color: #fff; }
+.prow.selected .ptag.rule-now, .prow.going-out .ptag.rule-keep { background: #fff; color: #000; }
+
+/* =====================================================================
+   READOUTS (Stage 5): game timeline and season table — solid, high-contrast
+   ===================================================================== */
+.season-btn { min-height: 46px; padding: 0 16px; font-weight: 700; margin-left: auto; }
+.page-head .team-title { flex: 1; min-width: 0; }
+.tl-card { padding: 10px 10px 6px; background: #fff; color: #24133d; border: 0; }
+.timeline { position: relative; }
+.tl-head, .tl-row, .tl-overlay { display: flex; align-items: center; gap: 8px; }
+.tl-head { font-size: 12px; font-weight: 800; color: #6b5a86; height: 20px; }
+.tl-row { height: 30px; border-top: 1px solid #eee8f6; }
+.tl-name { width: 92px; flex: none; font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tl-name b { display: inline-block; min-width: 22px; color: #4e2a84; }
+.tl-total { width: 44px; flex: none; text-align: right; font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.tl-periods { flex: 1; display: flex; }
+.tl-periods span { flex: 1; text-align: center; }
+.tl-track { flex: 1; position: relative; height: 16px; background: #f3eefa; border-radius: 4px; overflow: hidden; }
+.tl-track i { position: absolute; top: 0; bottom: 0; background: #4e2a84; border-radius: 3px; }
+.tl-track i.live { background: #000; }
+.tl-overlay { position: absolute; inset: 20px 0 0 0; pointer-events: none; }
+.tl-lines { flex: 1; position: relative; align-self: stretch; }
+.tl-lines i { position: absolute; top: 0; bottom: 0; width: 0; }
+.tl-lines i.div { border-left: 1px solid rgba(78,42,132,.35); }
+.tl-lines i.deadline { border-left: 2px dashed #000; }
+.tl-lines i.now { border-left: 2px solid #e5605e; }
+.tl-key { margin: 6px 2px 2px; font-size: 12px; color: #6b5a86; display: flex; align-items: center; gap: 6px; }
+.tl-key i.deadline { display: inline-block; width: 0; height: 12px; border-left: 2px dashed #000; }
+
+.season-title { font-family: var(--serif); font-size: 20px; font-weight: 600; margin: 0 4px 4px; }
+.season-card { padding: 4px 12px; background: #fff; color: #24133d; border: 0; }
+.st-row { display: grid; grid-template-columns: 1fr 52px 44px 48px 48px; align-items: center; gap: 6px; min-height: 46px;
+  border-top: 1px solid #eee8f6; font-size: 15px; font-variant-numeric: tabular-nums; }
+.st-row span:not(.st-name) { text-align: right; }
+.st-head { border-top: 0; min-height: 34px; font-size: 12px; font-weight: 800; color: #6b5a86; text-transform: uppercase; }
+.st-name { font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.st-name b { color: #4e2a84; display: inline-block; min-width: 22px; }
+.st-name em { font-style: normal; font-size: 11px; font-weight: 800; background: #000; color: #fff; padding: 2px 6px; border-radius: 999px; }
+.st-fair { font-weight: 800; }
+.st-row.behind .st-fair { background: #000; color: #fff; border-radius: 8px; padding: 2px 4px; }
+
+/* =====================================================================
+   APPLE LOOK + THE THREE LAYOUTS (Stage 6)
+   The team side (Minutes, Team, Season, their pop-ups) follows iOS's own style:
+   light grouped lists, SF Pro, large bold titles, small gray section headers,
+   filled capsule buttons. Purple is the tint; black marks a selection.
+   The Playbook keeps its own dark look around the court.
+   ===================================================================== */
+:root {
+  --ios-bg: #f2f1f7;          /* grouped background (a touch of lavender) */
+  --ios-card: #ffffff;
+  --ios-sep: rgba(60, 50, 90, .13);
+  --ios-label: #17121f;
+  --ios-secondary: rgba(60, 55, 75, .62);
+  --ios-fill: rgba(120, 115, 140, .14);   /* gray button / control fill */
+  --tint: #4e2a84;                         /* Penguins purple */
+  --actions-h: 86px;                       /* room taken by the compact thumb bar (Undo + Start/Stop) */
+  --ios-red: #d62839;
+}
+
+/* ----- Page and type ----- */
+.tab-page, .sheet.light { --page-bg: var(--ios-bg); color: var(--ios-label); }
+.sheet.light { background: rgba(242, 241, 247, .94); }
+.sheet.light h1 { font-size: 34px; font-weight: 700; letter-spacing: -.4px; }
+.team-name { font-size: 34px; font-weight: 700; letter-spacing: -.4px; color: var(--ios-label); }
+.team-season { color: var(--ios-secondary); font-size: 15px; }
+.tab-page .card-title, .sheet.light .card-title {
+  font-family: var(--sans); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px;
+  color: var(--ios-secondary); margin: 22px 16px 7px; }
+.tab-page .card-title span, .sheet.light .card-title span { font-size: 13px; text-transform: none; letter-spacing: 0; color: var(--ios-secondary); }
+.tab-page .hint, .tab-page .note, .sheet.light .note, .rule-note, .season-title + .note { color: var(--ios-secondary); }
+.rule-note { color: var(--ios-secondary); }
+.season-title { font-family: var(--sans); font-weight: 600; color: var(--ios-label); }
+
+/* ----- Grouped cards and fields ----- */
+.tab-page .card, .sheet.light .card { background: var(--ios-card); border: 0; border-radius: 12px; color: var(--ios-label); padding: 0 16px; }
+.tab-page .field, .sheet.light .field { border-bottom: .5px solid var(--ios-sep); color: var(--ios-label); font-size: 17px; }
+.tab-page .field:last-child, .sheet.light .field:last-child { border-bottom: 0; }
+.tab-page .field input, .tab-page .field-value, .sheet.light .field input, .sheet.light .field-value { color: var(--ios-secondary); }
+.sheet.light .team-scroll input, .tab-page input { color: var(--ios-label); }
+.sheet.light .roster li { border-bottom: .5px solid var(--ios-sep); }
+.sheet.light .roster .num { background: var(--tint) !important; color: #fff !important; border-radius: 50% !important; width: 40px; height: 40px; }
+.sheet.light .chip { background: var(--ios-fill); color: var(--ios-label); }
+.sheet.light .roster li.inactive .chip { background: #000; color: #fff; }
+.sheet.light .icon-btn { color: var(--ios-secondary); }
+.sheet.light .add-player input { background: var(--ios-bg) !important; border: 0 !important; color: var(--ios-label); }
+.sheet.light .team-row { border-bottom: .5px solid var(--ios-sep); color: var(--ios-label); }
+.sheet.light .team-row .ts { color: var(--ios-secondary); }
+.sheet.light .team-row.current .tn::before { color: var(--tint); }
+.sheet.light .danger-btn { background: var(--ios-card) !important; color: var(--ios-red); border: 0; }
+
+/* ----- Buttons and controls ----- */
+.tab-page .pill-btn, .sheet.light .pill-btn, .light .pill-btn { background: var(--ios-fill); color: var(--tint); font-weight: 600; }
+.tab-page .primary-btn, .sheet.light .primary-btn, .light .primary-btn, #subBar .primary-btn { background: var(--tint) !important; color: #fff !important; }
+.tab-page .round-btn, .tab-page .season-btn { background: var(--ios-fill); color: var(--tint); -webkit-backdrop-filter: none; backdrop-filter: none; border: 0; box-shadow: none; }
+.tab-page .round-btn svg { filter: none; }
+.tab-page .seg, .light .seg { background: var(--ios-fill); box-shadow: none; }
+.tab-page .seg button, .light .seg button { color: var(--ios-label); }
+.tab-page .seg button.active, .light .seg button.active { background: #fff; color: var(--ios-label);
+  box-shadow: 0 3px 8px rgba(0,0,0,.12), 0 1px 1px rgba(0,0,0,.04); }
+.big-btn { background: var(--tint); color: #fff; border-radius: 14px; font-weight: 700; }
+
+/* ----- Player lists: inset grouped, high contrast ----- */
+.players { background: var(--ios-card); border-radius: 12px; overflow: hidden; gap: 0; }
+.prow { border-radius: 0; background: transparent; color: var(--ios-label); min-height: 56px;
+  border-bottom: .5px solid var(--ios-sep); padding: 0 16px 0 12px; }
+.prow:last-child { border-bottom: 0; }
+.pnum { min-width: 38px; height: 38px; border-radius: 19px; background: var(--tint); font-size: 17px; padding: 0 8px; }
+.pname { font-size: 17px; font-weight: 600; }
+.pmin { font-size: 17px; font-weight: 600; color: var(--ios-secondary); }
+.prow.picked, .prow.selected, .prow.going-out { background: #000; color: #fff; }
+.prow.coming-in { background: var(--tint); box-shadow: none; }
+.prow.can-pick { box-shadow: inset 4px 0 0 #000; }
+.ptag { text-transform: none; letter-spacing: 0; font-size: 13px; font-weight: 700; padding: 4px 10px; }
+
+/* ----- Scoreboard ----- */
+.scoreboard { background: var(--ios-card); border: 0; border-radius: 16px; color: var(--ios-label); }
+.period-chip { background: var(--tint); color: #fff; font-size: 15px; font-weight: 700; padding: 5px 12px; }
+.sb-vs { color: var(--ios-secondary); }
+.clock { color: var(--ios-secondary); font-weight: 700; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+.clock.running { color: var(--ios-label); }
+.clock.over { color: var(--ios-secondary); }
+.period-over { color: var(--ios-label); font-weight: 600; }
+.sb-actions { display: flex; gap: 10px; align-items: stretch; }
+.sb-actions .clock-btn { flex: 1; }
+.undo-btn { border: 0; background: var(--ios-fill); color: var(--tint); height: auto; min-height: 56px; padding: 0 16px; font-size: 17px; font-weight: 600; border-radius: 16px; }
+.clock-btn { height: 56px; border-radius: 16px; font-size: 20px; font-weight: 700; }
+.clock-btn.go, .clock-btn.next { background: var(--tint); color: #fff; }
+.clock-btn.stop { background: #000; color: #fff; box-shadow: none; }
+.final-date { color: var(--ios-secondary); }
+
+/* ----- Tab switcher as a small corner button (owner, after v26) -----
+   One round button in the bottom-left corner, clear of PENGUINS / BURNS PARK, showing the
+   OTHER tab's icon: the stopwatch on the Playbook, the court on Minutes. Same height as the
+   old bar, so the space the Minutes screens keep free at the bottom still fits it. */
+#tabbar { left: max(12px, env(safe-area-inset-left)); transform: none; padding: 0; border-radius: 50%; }
+#tabbar .lens { display: none; }
+.tabbtn { display: none; }
+.tabbtn:not(.active) { display: flex; align-items: center; justify-content: center;
+  width: 48px; height: 48px; min-width: 0; padding: 0; border-radius: 50%; color: #fff; }
+.tabbtn svg { width: 25px; height: 25px; fill: none; stroke: currentColor; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round; }
+.tabbtn:active { transform: scale(.9); transition: transform .1s; }
+html[data-tab="minutes"] .tabbtn:not(.active) { color: var(--tint); }
+.rule-bar { background: var(--ios-card); color: var(--ios-label); border-radius: 12px; }
+
+/* ----- Glass: light frosted on the team side ----- */
+.light.glass, .light .glass, #subBar, html[data-tab="minutes"] #tabbar, html[data-tab="minutes"] #modal {
+  background: rgba(250, 249, 253, .78);
+  -webkit-backdrop-filter: blur(30px) saturate(1.8); backdrop-filter: blur(30px) saturate(1.8);
+  border: .5px solid rgba(0, 0, 0, .08);
+  box-shadow: 0 10px 30px rgba(20, 10, 40, .18); color: var(--ios-label);
+}
+.light h2, .light p, html[data-tab="minutes"] #modal h2 { color: var(--ios-label); font-family: var(--sans); }
+.light p, html[data-tab="minutes"] #modal p { color: var(--ios-secondary); }
+.light .menu-btn { background: var(--ios-fill); color: var(--tint); box-shadow: none; }
+.light .menu-btn.active { background: var(--tint); color: #fff; }
+.light .danger-text { color: var(--ios-red); }
+.light .stepper { background: var(--ios-fill); }
+.light .stepper b { color: var(--ios-label); }
+.light .stepper button { color: var(--tint); }
+html[data-tab="minutes"] #modal input { background: var(--ios-bg); color: var(--ios-label); border-color: transparent; }
+html[data-tab="minutes"] #modal .buttons button { background: var(--ios-fill); color: var(--tint); }
+html[data-tab="minutes"] #modal .buttons button.primary { background: var(--tint); color: #fff; }
+html[data-tab="minutes"] #modal .buttons button.danger { background: var(--ios-red); color: #fff; }
+html[data-tab="minutes"] .tabbtn { color: var(--ios-secondary); text-shadow: none; }
+html[data-tab="minutes"] .tabbtn.active { color: var(--tint); text-shadow: none; }
+html[data-tab="minutes"] #tabbar .lens { background: #fff; border-color: rgba(0,0,0,.04); box-shadow: 0 3px 10px rgba(20,10,40,.15); }
+#subBar { color: var(--ios-label); }
+#subBar .pill-btn { background: var(--ios-fill); color: var(--tint); }
+@media (prefers-reduced-transparency: reduce) {
+  .light.glass, .light .glass, #subBar, html[data-tab="minutes"] #tabbar, html[data-tab="minutes"] #modal {
+    background: #f7f6fa !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+}
+
+/* ----- Layout: TALL (bigger screen upright) — one centered column ----- */
+.tab-page .page-scroll > * { max-width: 760px; margin-left: auto; margin-right: auto; }
+
+/* ----- Layout: WIDE (bigger screen sideways) — court & bench left, timeline right ----- */
+html[data-layout="wide"] .tab-page .page-scroll > * { max-width: 1180px; }
+html[data-layout="wide"] .live { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); column-gap: 20px;
+  grid-template-areas: "sb tl" "rule tl" "court tl" "bench tl"; align-items: start; }
+html[data-layout="wide"] .sec-sb { grid-area: sb; }
+html[data-layout="wide"] .sec-rule { grid-area: rule; margin-top: 0; }
+html[data-layout="wide"] .sec-court { grid-area: court; }
+html[data-layout="wide"] .sec-bench { grid-area: bench; }
+html[data-layout="wide"] .sec-tl { grid-area: tl; position: sticky; top: 0; }
+html[data-layout="wide"] .sec-tl .card-title:first-child { margin-top: 0; }
+
+/* ----- Layout: COMPACT (iPhone; one-hand) during a live game -----
+   Nothing scrolls except the bench. Clock on top; the five on court always visible;
+   Undo + Start/Stop pinned at the bottom by the thumb; timeline in the ••• menu. */
+html[data-layout="compact"][data-live="yes"] .tab-page .page-scroll { overflow: hidden; padding-top: 6px;
+  padding-bottom: calc(var(--tabs-bottom, 12px) + 54px + var(--actions-h) + var(--subbar-h, 0px)); }
+html[data-layout="compact"][data-live="yes"] .page-head { display: none; }
+html[data-layout="compact"][data-live="yes"] #mBody, html[data-layout="compact"][data-live="yes"] .live { height: 100%; }
+html[data-layout="compact"] .live { display: flex; flex-direction: column; min-height: 0; }
+html[data-layout="compact"] .sec-tl { display: none; }
+html[data-layout="compact"] .sec-sb { padding: 8px 12px; margin-bottom: 8px; display: grid; grid-template-columns: auto 1fr auto;
+  grid-template-areas: "chip clock menu" "over over over"; align-items: center; column-gap: 10px; flex: none; }
+html[data-layout="compact"] .sb-top { display: contents; }
+html[data-layout="compact"] .period-chip { grid-area: chip; }
+html[data-layout="compact"] .sb-vs { display: none; }
+html[data-layout="compact"] #gMenu { grid-area: menu; }
+html[data-layout="compact"] .clock { grid-area: clock; margin: 0; font-size: clamp(52px, 17vw, 72px); }
+html[data-layout="compact"] .period-over { grid-area: over; margin: 2px 0 0; font-size: 15px; }
+html[data-layout="compact"] .sb-actions { position: fixed; z-index: 7; left: max(12px, env(safe-area-inset-left));
+  right: max(12px, env(safe-area-inset-right)); bottom: calc(var(--tabs-bottom, 12px) + 54px); max-width: 560px; margin: 0 auto;
+  padding: 8px; border-radius: 22px; background: rgba(250, 249, 253, .86);
+  -webkit-backdrop-filter: blur(30px) saturate(1.8); backdrop-filter: blur(30px) saturate(1.8); box-shadow: 0 8px 24px rgba(20,10,40,.18); }
+html[data-layout="compact"] .sb-actions .clock-btn { height: 60px; font-size: 22px; }
+html[data-layout="compact"] .sb-actions .undo-btn { min-height: 60px; }
+html[data-layout="compact"] .sec-rule { margin: 0 0 6px; padding: 8px 12px; font-size: 14px; flex: none; }
+html[data-layout="compact"] .sec-court { flex: none; }
+html[data-layout="compact"] .sec-court .card-title, html[data-layout="compact"] .sec-bench .card-title { margin: 8px 12px 5px; }
+html[data-layout="compact"] .sec-bench { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+html[data-layout="compact"] .bench-scroll { flex: 1; min-height: 0; overflow-y: auto; border-radius: 12px; }
+html[data-layout="compact"] .players { margin-bottom: 0; }
+html[data-layout="compact"] .prow { min-height: 50px; }
+html[data-layout="compact"] #subBar { bottom: calc(var(--tabs-bottom, 12px) + 54px + var(--actions-h)); }
+/* Compact, sideways (phone on its side, ~390 pt tall): three columns —
+   clock + Start/Stop + Undo | the five on court | bench (scrolls). Nothing pinned but the tab switcher. */
+html[data-layout="compact"][data-orient="land"][data-live="yes"] .tab-page .page-scroll {
+  padding-bottom: calc(var(--tabs-bottom, 12px) + 52px + var(--subbar-h, 0px)); }
+html[data-layout="compact"][data-orient="land"][data-live="yes"] .live { display: grid; column-gap: 10px;
+  grid-template-columns: minmax(0, .85fr) minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto 1fr;
+  grid-template-areas: "sb court bench" "rule court bench"; }
+html[data-layout="compact"][data-orient="land"] .sec-sb { grid-area: sb; grid-template-columns: auto 1fr auto;
+  grid-template-areas: "chip clock menu" "over over over" "act act act"; row-gap: 6px; margin-bottom: 6px; }
+html[data-layout="compact"][data-orient="land"] .clock { font-size: 46px; }
+html[data-layout="compact"][data-orient="land"] .sb-actions { grid-area: act; position: static; padding: 0; background: none;
+  -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; max-width: none; }
+html[data-layout="compact"][data-orient="land"] .sb-actions .clock-btn, html[data-layout="compact"][data-orient="land"] .sb-actions .undo-btn { height: 50px; min-height: 50px; font-size: 18px; }
+html[data-layout="compact"][data-orient="land"] .sec-rule { grid-area: rule; align-self: start; font-size: 13px; }
+html[data-layout="compact"][data-orient="land"] .sec-court { grid-area: court; min-height: 0; display: flex; flex-direction: column; }
+html[data-layout="compact"][data-orient="land"] .sec-court .players { overflow-y: auto; min-height: 0; }
+html[data-layout="compact"][data-orient="land"] .sec-bench { grid-area: bench; }
+html[data-layout="compact"][data-orient="land"] .sec-court .card-title, html[data-layout="compact"][data-orient="land"] .sec-bench .card-title { margin: 2px 8px 4px; }
+html[data-layout="compact"][data-orient="land"] .prow { min-height: 46px; padding: 0 10px 0 8px; gap: 8px; }
+html[data-layout="compact"][data-orient="land"] .pnum { min-width: 32px; height: 32px; font-size: 15px; }
+html[data-layout="compact"][data-orient="land"] .pname, html[data-layout="compact"][data-orient="land"] .pmin { font-size: 16px; }
+html[data-layout="compact"][data-orient="land"] .ptag { font-size: 12px; padding: 3px 7px; }
+html[data-layout="compact"][data-orient="land"] #subBar { bottom: calc(var(--tabs-bottom, 12px) + 50px); left: 36%; }
+/* Compact pre-game: the Start button stays reachable at the bottom */
+html[data-layout="compact"] #gStart { position: sticky; bottom: 8px; box-shadow: 0 8px 24px rgba(20,10,40,.2); }
+/* Sideways phone: Undo shows just its icon so Start/Stop gets the room (it keeps its "Undo" label for VoiceOver) */
+html[data-layout="compact"][data-orient="land"] .sb-actions .undo-btn { font-size: 0; gap: 0; padding: 0 14px; flex: none; }
+html[data-layout="compact"][data-orient="land"] .sb-actions .undo-btn svg { width: 24px; height: 24px; }
+html[data-layout="compact"][data-orient="land"] .sb-actions { margin: 0; width: 100%; }   /* fill the column (no centering) */
+/* Disabled Start button: solid, not see-through, so it never muddles the list behind it */
+.big-btn:disabled { opacity: 1; background: #dcd8e6; color: var(--ios-secondary); box-shadow: none; }
+/* iOS-style text fields inside grouped rows: no box, right-aligned */
+.tab-page .field input { border: 0; background: transparent; text-align: right; font-size: 17px; padding: 0; min-width: 0;
+  -webkit-appearance: none; appearance: none; color: var(--ios-label); }
+.tab-page .field input::placeholder { color: var(--ios-secondary); }
+
+/* Compact: while subs are being picked, the queue (Confirm / Cancel) sits where the thumb bar was,
+   and the thumb bar steps aside — so the bench keeps its room even on small iPhones */
+html[data-layout="compact"][data-subbing="yes"] .sb-actions { display: none; }
+html[data-layout="compact"][data-subbing="yes"] #subBar { bottom: calc(var(--tabs-bottom, 12px) + 54px); }
+html[data-layout="compact"][data-subbing="yes"][data-live="yes"] .tab-page .page-scroll {
+  padding-bottom: calc(var(--tabs-bottom, 12px) + 54px + var(--subbar-h, 0px)); }
+html[data-layout="compact"][data-orient="land"][data-subbing="yes"] .sb-actions { display: flex; }   /* sideways: it's in the left column, keep it */
+/* Compact: the rule line stays to one line */
+html[data-layout="compact"] .sec-rule { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; }
+html[data-layout="compact"] .sec-rule br { display: none; }
+/* Short screens (small iPhones, or Safari with its toolbars): a bit tighter */
+@media (max-height: 740px) {
+  html[data-layout="compact"][data-orient="port"] .clock { font-size: 46px; }
+  html[data-layout="compact"][data-orient="port"] .sec-sb { padding: 6px 10px; }
+  html[data-layout="compact"][data-orient="port"] .prow { min-height: 46px; }
+  html[data-layout="compact"][data-orient="port"] .pnum { min-width: 32px; height: 32px; font-size: 15px; }
+  html[data-layout="compact"][data-orient="port"] .sec-court .card-title, html[data-layout="compact"][data-orient="port"] .sec-bench .card-title { margin: 4px 12px 3px; }
+}

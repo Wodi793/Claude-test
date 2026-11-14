@@ -409,3 +409,26 @@ the white border and letters may shrink; letters must be spaced away from the st
 Owner: the letters must match either the border or the court body exactly. They already matched the body
 (#4e2a84), but beside the dark strip they read as a near-miss. Chose the strip: `DEEP_PURPLE = '#2b1550'`
 for both the strip and the names (purple board). White board unchanged. Baseline passes.
+
+## Stage 7 — published to the live app as version 27 (2026-11-14, owner: "Publish all")
+
+Also included, from the owner just before publishing: **the tab switcher is a small round corner button**
+(bottom-left, clear of the names), showing the other tab's icon (stopwatch on the Playbook,
+court on Minutes). It sits in the same corner when sideways. Replaces the centered two-word pill,
+which covered PENGUINS. Option A (moving the name up) was no longer needed.
+
+What was done
+- Save point: branch `save/live-v16-before-publish` (tags are refused by the server).
+- Copied next/ to the root; fixed `../icon*` → `icon*`, Screen check link, `<title>Penguins</title>`,
+  `DB_NAME = 'penguins-playbook'` (the live database), `APP_VERSION = 27`, `sw.js` VERSION `penguins-v27`
+  with every new file listed.
+- Manifest: name "Penguins Playbook" → "Penguins" (short name was already "Penguins"); start URL and
+  scope unchanged ("./"), so the existing home-screen icon keeps working and no reinstall is needed.
+  iOS keeps the name an icon was installed with.
+- Data: the live database upgrades from version 1 to 2; saved plays are kept (tested: a play saved
+  in v16 is still there in v27, with the new teams/players/games stores added).
+- next/ stays as the preview (version 27 preview, its own database).
+
+Tests on the live copy: baseline all pass, Pencil/two-tap 15/15, tabs, layouts, game, rule, season,
+v16 → v27 upgrade. Test fix: game.js reopened on Minutes, where the switcher only shows the other tab.
+Not verified on a real device: the Pencil button fix and the tap offset (tap-test results still owed).

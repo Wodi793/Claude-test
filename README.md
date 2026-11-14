@@ -1,19 +1,26 @@
-# Penguins Playbook
+# Penguins
 
-A coaching clipboard for iPhone and iPad: draw basketball plays on a Penguins court
-with your finger or Apple Pencil. Works offline once installed on the home screen.
-No accounts, no server — plays are stored on the device.
+The Burns Park Penguins team app for iPhone and iPad. Two tabs:
+**Playbook** (draw plays with a finger or Apple Pencil) and **Minutes** (game clock, subs,
+playing time, the league minimum rule, season totals). Works offline once installed on the
+home screen. No accounts, no server: everything is stored on the device.
 
 ## Files
 
 | File | What it does |
 |---|---|
-| `index.html` | The whole app: layout, styling, court drawing, pens, saving, backup |
+| `index.html` | Page structure for both tabs (no code) |
+| `styles.css` | All styling: the Playbook, the tab switcher, Minutes and its three layouts |
+| `playbook.js` | The Playbook: court drawing, pens, Pencil, saving, backup (all data) |
+| `shell.js` | Tabs and layouts (compact / tall / wide, one-hand) |
+| `sports.js`, `data.js`, `settings.js` | Sport settings; teams, players and games; the Team sheet |
+| `gamelog.js`, `minutes.js`, `readouts.js` | Game clock and event log; the Minutes screens; timelines and season view |
+| `screen-check.html`, `tap-test.html` | Diagnostic pages (••• → Screen check) |
 | `manifest.webmanifest` | Home-screen name, icon and colors |
 | `sw.js` | Service worker — keeps a copy of the app on the device for offline use |
 | `icon.svg` | The icon artwork (basketball + penguin). The center-court logo copies its coordinates |
 | `icon-180.png`, `icon-512.png` | App icons, made from `icon.svg` |
-| `next/` | **Preview** of the team app in progress (wodi793.github.io/Claude-test/next/), with its own database. Split into `index.html` (structure), `styles.css`, `playbook.js`, `sports.js`, `data.js`, `settings.js`, `gamelog.js`, `readouts.js`, `minutes.js`, `shell.js` — see BUILD-LOG.md |
+| `next/` | **Preview** copy for trying changes before they go live (wodi793.github.io/Claude-test/next/), with its own database. Split into `index.html` (structure), `styles.css`, `playbook.js`, `sports.js`, `data.js`, `settings.js`, `gamelog.js`, `readouts.js`, `minutes.js`, `shell.js` — see BUILD-LOG.md |
 | `BUILD-LOG.md` | Record of every stage of the team-app build, decisions, and the Playbook baseline checklist |
 
 ## Using it
@@ -37,7 +44,7 @@ No accounts, no server — plays are stored on the device.
   full court stays along the long side of the screen, as big as
   the screen allows. Drawings are stored in court feet, so they follow the court.
 
-## Common changes (all in `index.html`, section "2. SETTINGS")
+## Common changes (in `playbook.js`, section "2. SETTINGS")
 
 - Team name: `TEAM_NAME`; school name (opposite side): `SCHOOL_NAME`
 - Center-court logo: `LOGO_SEAMS`, `PENGUIN_*`, `drawPenguin` (keep in step with `icon.svg`)

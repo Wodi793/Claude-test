@@ -606,6 +606,20 @@ body.alert-flash::after { content: ""; position: fixed; inset: 0; z-index: 11; p
 .clock-btn.go, .clock-btn.next { background: var(--tint); color: #fff; }
 .clock-btn.stop { background: #000; color: #fff; box-shadow: none; }
 .final-date { color: var(--ios-secondary); }
+
+/* ----- Tab switcher as a small corner button (owner, after v26) -----
+   One round button in the bottom-left corner, clear of PENGUINS / BURNS PARK, showing the
+   OTHER tab's icon: the stopwatch on the Playbook, the court on Minutes. Same height as the
+   old bar, so the space the Minutes screens keep free at the bottom still fits it. */
+#tabbar { left: max(12px, env(safe-area-inset-left)); transform: none; padding: 0; border-radius: 50%; }
+#tabbar .lens { display: none; }
+.tabbtn { display: none; }
+.tabbtn:not(.active) { display: flex; align-items: center; justify-content: center;
+  width: 48px; height: 48px; min-width: 0; padding: 0; border-radius: 50%; color: #fff; }
+.tabbtn svg { width: 25px; height: 25px; fill: none; stroke: currentColor; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round; }
+.tabbtn:active { transform: scale(.9); transition: transform .1s; }
+html[data-tab="minutes"] .tabbtn:not(.active) { color: var(--tint); }
 .rule-bar { background: var(--ios-card); color: var(--ios-label); border-radius: 12px; }
 
 /* ----- Glass: light frosted on the team side ----- */
