@@ -227,6 +227,7 @@ function renderStats() {
   document.querySelectorAll('#statPad .pad-btn').forEach(b => b.onclick = () => recordStat(b.dataset.stat));
   document.getElementById('sUndo').onclick = undoStat;
   document.documentElement.style.setProperty('--pad-h', document.getElementById('statPad').offsetHeight + 'px');
+  document.documentElement.style.setProperty('--game-h', (document.querySelector('#sBody .sec-game')?.offsetHeight || 0) + 'px');
 }
 window.renderStats = renderStats;
 

@@ -1764,3 +1764,77 @@ html[data-layout="compact"][data-orient="port"][data-live="yes"]:not([data-subbi
   .box-table .bp { max-width: 84px; overflow: hidden; text-overflow: ellipsis; }
 }
 .box-table th.bp { text-transform: uppercase; }
+
+/* =====================================================================
+   STATS ON BIG SCREENS (owner: iPad, both ways — "lots of real estate… buttons could be
+   bigger… feels hidden in the corners, not intentional"). From 900 × 700 pt up:
+   • Sideways: the pad fills the whole right column, top to bottom; its button rows stretch
+     to share the height, so the targets are big and the column is used on purpose.
+   • Upright: the pad spans the width (up to 960) and takes the lower ~half of the screen.
+   • The game box, team totals and bench tiles scale up to match.
+   ===================================================================== */
+@media (min-width: 900px) and (min-height: 700px) {
+  /* The pad as a full-height column of rows */
+  html[data-tab="stats"] #statPad { display: flex; flex-direction: column; padding: 16px !important; }
+  html[data-tab="stats"] #statPad .pad-grid { flex: 1 1 0; min-height: 0; gap: 12px !important; }
+  html[data-tab="stats"] #statPad .pad-grid + .pad-grid { margin-top: 12px; }
+  html[data-tab="stats"] #statPad .pad-btn { height: 100% !important; min-height: 72px; font-size: clamp(20px, 2.6vh, 30px) !important; border-radius: 10px !important; }
+  html[data-tab="stats"] .pad-court { flex: none; margin-bottom: 14px; padding-bottom: 14px; }
+  html[data-tab="stats"] .pad-court .crow { gap: 10px; }
+  html[data-tab="stats"] .pad-court .ctile { min-height: clamp(96px, 12vh, 140px) !important; padding: 10px !important; border-radius: 10px !important; }
+  html[data-tab="stats"] .pad-court .ctile .sname { font-size: clamp(17px, 2.1vh, 22px) !important; }
+  html[data-tab="stats"] .pad-court .ctile .sline { font-size: 13px !important; }
+  html[data-tab="stats"] .pad-court .ctile .pnum { min-width: 38px !important; height: 38px !important; font-size: 18px !important; }
+  html[data-tab="stats"] .pc-head span, html[data-tab="stats"] .pad-who { font-size: 13px; }
+  html[data-tab="stats"] .pad-who b { font-size: 22px; }
+  html[data-tab="stats"] .pad-head { min-height: 48px; margin-bottom: 12px; }
+  html[data-tab="stats"] .pad-head .undo-btn { height: 48px; min-height: 48px; font-size: 18px; padding: 0 18px; }
+  /* Game box and totals */
+  html[data-tab="stats"] .gc-top { padding: 18px 20px; }
+  html[data-tab="stats"] .q-sel { gap: 10px; }
+  html[data-tab="stats"] .q-sel button { width: 60px; height: 60px; font-size: 18px; }
+  html[data-tab="stats"] .score b, html[data-tab="stats"] .score input { font-size: 52px; }
+  html[data-tab="stats"] .score input { width: 96px; }
+  html[data-tab="stats"] .score i { font-size: 12px; }
+  html[data-tab="stats"] .game-card .tt { padding: 12px 6px; }
+  html[data-tab="stats"] .game-card .tt b { font-size: 28px; }
+  /* Bench tiles */
+  html[data-tab="stats"] .sgrid { gap: 14px !important; }
+  html[data-tab="stats"] .sgrid .stile { min-height: clamp(72px, 9vh, 104px); padding: 12px 14px; border-radius: 10px !important; column-gap: 12px; }
+  html[data-tab="stats"] .sgrid .stile .sname { font-size: clamp(18px, 2.1vh, 23px); }
+  html[data-tab="stats"] .sgrid .stile .sline { font-size: 14px; }
+  html[data-tab="stats"] .sgrid .stile .pnum { min-width: 40px; height: 40px; font-size: 18px; }
+  html[data-tab="stats"] .stats .card-title { font-size: 13px; }
+}
+/* Big and sideways: the pad runs the full height of the right column */
+@media (min-width: 900px) and (min-height: 700px) and (orientation: landscape) {
+  html[data-tab="stats"] #statPad { bottom: calc(var(--tabs-bottom, 12px) + 4px) !important; max-height: none !important; }
+  html[data-tab="stats"] .sgrid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+}
+/* Big and upright: the pad takes the lower half, full width up to 960 */
+@media (min-width: 700px) and (min-height: 900px) and (orientation: portrait) {
+  html[data-tab="stats"]:not([data-layout="wide"]) #statPad { left: max(20px, calc(50% - 480px)) !important; right: max(24px, calc(50% - 480px)) !important;
+    height: 50vh; bottom: calc(var(--tabs-bottom, 12px) + var(--tabrow)) !important; }
+  html[data-tab="stats"] .sgrid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+  html[data-tab="stats"] #tab-stats .page-scroll > * { max-width: 960px; margin-left: auto; margin-right: auto; }
+}
+/* Big screens, refined: buttons share the height but never balloon */
+@media (min-width: 900px) and (min-height: 700px) {
+  html[data-tab="stats"] #statPad .pad-grid { max-height: 180px; }
+}
+/* iPad sideways: the right column is the live-entry column — game box on top, the pad filling the rest.
+   The left column is just the bench. */
+@media (min-width: 900px) and (min-height: 700px) and (orientation: landscape) {
+  html[data-tab="stats"] #sBody .sec-game { position: fixed; z-index: 6; top: calc(env(safe-area-inset-top) + 16px);
+    left: calc(50% + 14px); right: max(22px, calc(env(safe-area-inset-right) + 8px)); }
+  html[data-tab="stats"] #statPad { top: calc(env(safe-area-inset-top) + 16px + var(--game-h, 200px) + 16px) !important; }
+  html[data-tab="stats"] #statPad::before { display: none; }
+  html[data-tab="stats"] .pad-court .ctile { min-height: clamp(110px, 16vh, 180px) !important; }
+  html[data-tab="stats"] .stats .sec-players .card-title { margin-top: 0 !important; }
+}
+/* iPad upright: the pad at its natural height (big targets, not stretched); the bench gets the rest */
+@media (min-width: 700px) and (min-height: 900px) and (orientation: portrait) {
+  html[data-tab="stats"]:not([data-layout="wide"]) #statPad { height: auto; }
+  html[data-tab="stats"] #statPad .pad-grid { flex: none; height: 120px; }
+  html[data-tab="stats"] .pad-court .ctile { min-height: 150px !important; }
+}

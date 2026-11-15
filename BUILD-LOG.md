@@ -779,3 +779,19 @@ Owner: after a game with stats there's no stats sheet; wants one that can be tex
 - Verified: PNG 1200 × 1098; PDF opens in pdfinfo/pdftoppm (1 page, 612 × 560 pt); test box.js (full game,
   minutes-only, stats-only); suite passes; no name clashes.
 - Next (S2b): season stats — totals, per-game averages, points per 10 minutes, blanks where data is missing.
+
+### Live version 55 (2026-11-15) — iPad fixes
+Owner, from the iPad: no keyboard when naming a play; BURNS PARK blurry at the top sideways; Stats on the iPad
+"hidden away in the corners" — use the space, bigger buttons.
+- Keyboard: the bar in the photo is iPadOS Scribble — a Pencil tap on Save focuses the box, and iPadOS then
+  expects handwriting and hides the keyboard. Now, after a Pencil tap, the name box doesn't grab focus (write
+  in it with the Pencil, or tap it with a finger for the keyboard) and says so; after a finger tap it's ready
+  to type as before (`lastPointer` in playbook.js).
+- BURNS PARK: iPadOS 26 fades the area under the status bar. On thin status bars (top inset < 40 — iPads),
+  fitView records how much of the board's top lies in status bar + 16 pt (`topClear`); placeNames widens the
+  white at top and bottom by that much, taken from the dark band (which may thin to 1.25 ft for this), so the
+  frame stays symmetric and the names keep their size (13" iPad sideways: 2.96 ft vs 3.1). iPhones unchanged.
+- Stats on big screens (≥ 900 × 700): sideways — the right column is the live-entry column: game box on top,
+  then the pad filling the rest (five as big tiles, button rows sharing the height, max 180 pt); the left
+  column is the bench. Upright — pad full width (≤ 960) at the bottom with 120-pt buttons; bench in 4 columns.
+- Tests pass.

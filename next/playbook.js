@@ -22,12 +22,14 @@ const THEMES = {
 
 const DEFAULT_WIDTH = 0.35;      // marker thickness for new lines, in feet on the court
 const MIN_WIDTH = 0.08, MAX_WIDTH = 1.2;   // range of the Line slider in the ••• menu
-const APP_VERSION = '54 preview';   // the preview copy (next/) — see BUILD-LOG.md
+const APP_VERSION = '55 preview';   // the preview copy (next/) — see BUILD-LOG.md
 const DB_NAME = 'penguins-playbook-preview';   // preview keeps its own plays, separate from the live app           // shown in the ••• menu; bump with each update
 const ZOOM_MAX = 6;              // how far you can zoom in (6× the fitted size)
 const ERASER_RADIUS_PX = 14;     // how close the eraser must come to a line, in screen points
 const APRON = 2;                 // dark-purple out-of-bounds strip around the court (feet; purple board only)
 const NAME_GAP = 0.4;
+const APRON_MIN_FOR_NAMES = 1.25;   // the dark band may thin to this to keep the names out of the status-bar fade
+const STATUS_FADE = 16;          // points below the status bar that iPadOS 26 softens; names stay clear of it
 const WHITE_SHARE = 0.5;         // share of the white border kept beside the names; the dark band takes the rest            // space kept between that strip and PENGUINS / BURNS PARK (feet)
 const PLAIN_BAND = 0.75;         // minimum border (feet) around the court: thin, but not zero
 const MIN_BORDER_LETTERS = 1.25;   // letter size (feet) needed to write PENGUINS in the border;
@@ -258,6 +260,18 @@ function placeNames(L, theme) {
     else { whiteX = Math.max(need, bandX * WHITE_SHARE); L.apronX = APRON + bandX - whiteX; }
   }
   L.nameY = whiteY / 2; L.nameX = whiteX / 2;   // centered in the white that's left
+  L.nameYTop = L.nameY;
+  // Names clear of the status-bar fade: widen the white at top AND bottom by the fade's height
+  // (taken from the dark band, which never goes below APRON), so the frame stays symmetric and
+  // the names keep their size; only if there's no band left to take from do they shrink.
+  const clear = L.topClear || 0;
+  if (L.letters === 'ends' && clear > 0 && apron) {
+    const take = Math.min(clear, Math.max(0, L.apronY - APRON_MIN_FOR_NAMES));
+    whiteY += take; L.apronY -= take;
+    const room = whiteY - clear, fitSize = (room - 0.5) / 0.85;
+    if (fitSize < L.letterSize) L.letterSize = Math.max(MIN_BORDER_LETTERS * 0.8, fitSize);
+    L.nameY = L.nameYTop = clear + Math.max(room, 0) / 2;   // the bottom name mirrors it
+  }
   L.namesFor = theme;
 }
 
@@ -367,6 +381,10 @@ function fitView() {
   view.fitK = view.k = layout.scale;
   view.tx = left + (w - layout.W * view.k) / 2;
   view.ty = top + (h - layout.H * view.k) / 2;
+  // iPadOS 26 draws a soft fade under the status bar; keep the top name below it (owner: "blurry
+  // BURNS PARK"). How much of the board's top lies within the status bar + that fade, in feet:
+  // (Only where the status bar is thin, like the iPad; iPhones with a notch use the scrim instead.)
+  layout.topClear = safeInsets().top < 40 ? Math.max(0, (safeInsets().top + STATUS_FADE - view.ty) / view.k) : 0;
   requestRender();
 }
 
@@ -412,7 +430,7 @@ function render() {
   ctx.setTransform(d * view.k, 0, 0, d * view.k, d * view.tx, d * view.ty);
   placeNames(L, state.theme);
   if (L.letters === 'ends') {
-    drawTeamName(ctx, L.W / 2, L.nameY, 0, t.lettering, L.letterSize, SCHOOL_NAME);
+    drawTeamName(ctx, L.W / 2, L.nameYTop ?? L.nameY, 0, t.lettering, L.letterSize, SCHOOL_NAME);
     drawTeamName(ctx, L.W / 2, L.H - L.nameY, 0, t.lettering, L.letterSize, TEAM_NAME);
   } else if (L.letters === 'sides') {
     drawTeamName(ctx, L.nameX, L.H / 2, -Math.PI / 2, t.lettering, L.letterSize, TEAM_NAME);
@@ -838,7 +856,9 @@ async function save() {
 async function saveAsNew() {
   const name = await ask({
     title: state.playId ? 'Save as new play' : 'Save play',
-    message: 'Give this play a name.',
+    message: lastPointer.type === 'pen'
+      ? 'Write the name with your Pencil right in the box — or tap the box with a finger to type.'
+      : 'Give this play a name.',
     input: state.playId ? `${state.name} copy` : '',
     placeholder: 'e.g. Box inbound',
     okText: 'Save',
@@ -1044,6 +1064,10 @@ function toast(msg) {
 }
 
 /** One pop-up for everything. Resolves to: the typed text (if input), true (OK), or null (Cancel). */
+/** What the last tap was made with ('touch', 'pen', 'mouse') — see ask(). */
+const lastPointer = { type: 'touch' };
+document.addEventListener('pointerdown', e => { lastPointer.type = e.pointerType || 'touch'; }, true);
+
 function ask({ title, message = '', input, placeholder = '', okText = 'OK', danger = false, noCancel = false }) {
   const dlg = $('modal'), inp = $('modalInput'), okBtn = $('modalOk'), cancelBtn = $('modalCancel');
   $('modalTitle').textContent = title;
@@ -1064,7 +1088,10 @@ function ask({ title, message = '', input, placeholder = '', okText = 'OK', dang
     cancelBtn.onclick = () => finish(null);
     dlg.oncancel = e => { e.preventDefault(); finish(null); };
     dlg.showModal();
-    if (!inp.hidden) { inp.focus(); inp.select(); }
+    // With the Apple Pencil, iPadOS answers a focused box with Scribble (handwriting) and no keyboard —
+    // confusing if you expected to type. So after a Pencil tap the box waits: write in it with the
+    // Pencil, or tap it with a finger and the keyboard comes up. After a finger tap it's ready to type.
+    if (!inp.hidden && lastPointer.type !== 'pen') { inp.focus(); inp.select(); }
   });
 }
 
