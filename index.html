@@ -209,6 +209,27 @@
 </section>
 
 <!-- ===================== SEASON VIEW (Stage 5) ===================== -->
+<!-- Season stats: totals, averages, per-10-minute rates and trends (seasonstats.js) -->
+<section id="seasonStatsSheet" class="sheet light" hidden>
+  <header>
+    <h1>Season stats</h1>
+    <button class="pill-btn" id="btnCloseSeasonStats" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </header>
+  <div class="scrollable team-scroll">
+    <p class="season-title" id="ssTitle"></p>
+    <p class="note" id="ssSummary"></p>
+    <h2 class="card-title" id="ssTeamCardTitle">Points, game by game</h2>
+    <section class="card ss-chart" id="ssTeamCard"><div id="ssTeamChart"></div></section>
+    <h2 class="card-title">Players <span>tap a column to sort</span></h2>
+    <section class="card box-card"><div class="box-scroll"><table class="box-table ss-table" id="ssTable"></table></div></section>
+    <p class="note">Averages count only games that recorded that kind of data. P/10 = points per 10 minutes, from games with both stats and minutes. The arrow compares her last 3 games with her earlier ones.</p>
+    <div class="box-actions">
+      <button class="pill-btn primary-btn" id="ssPng">Send picture</button>
+      <button class="pill-btn" id="ssPdf">Send PDF</button>
+    </div>
+  </div>
+</section>
+
 <section id="seasonSheet" class="sheet light" hidden>
   <header>
     <h1>Season</h1>
@@ -218,6 +239,7 @@
     <p class="season-title" id="seasonTitle"></p>
     <p class="note" id="seasonSummary"></p>
     <section class="card season-card"><div id="seasonTable"></div></section>
+    <button class="pill-btn primary-btn" id="seasonToStats">Season stats</button>
     <h2 class="card-title">Games</h2>
     <section class="card"><ul id="seasonGames" class="team-list"></ul></section>
   </div>
@@ -274,6 +296,7 @@
   <h2>Stats</h2>
   <div class="menu-list">
     <button class="menu-btn" id="smBox">Box score</button>
+    <button class="menu-btn" id="smSeason">Season stats</button>
     <button class="menu-btn" id="smOpponent">Opponent</button>
     <button class="menu-btn" id="smSettings">Stats settings</button>
     <button class="menu-btn" id="smNew">Start a new game</button>
@@ -345,6 +368,7 @@
 <script src="minutes.js"></script>
 <script src="stats.js"></script>
 <script src="boxscore.js"></script>
+<script src="seasonstats.js"></script>
 <script src="shell.js"></script>
 </body>
 </html>

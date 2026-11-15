@@ -127,5 +127,6 @@ async function openPastGame(id, roster) {
 }
 
 $('btnSeason').onclick = openSeason;
+$('seasonToStats').onclick = () => openSeasonStats();
 $('btnCloseSeason').onclick = () => { $('seasonSheet').hidden = true; };
 $('btnClosePast').onclick = () => { $('pastSheet').hidden = true; M.tlSheet = false; };

@@ -795,3 +795,17 @@ Owner, from the iPad: no keyboard when naming a play; BURNS PARK blurry at the t
   then the pad filling the rest (five as big tiles, button rows sharing the height, max 180 pt); the left
   column is the bench. Upright — pad full width (≤ 960) at the bottom with 120-pt buttons; bench in 4 columns.
 - Tests pass.
+
+## Stats stage S2b — season stats, live version 56 (2026-11-15)
+Owner: season stats, with trends/development and per-minute rates; records will be incomplete (mid-season start).
+- New `seasonstats.js`; open from Stats ••• → Season stats, or Minutes → Season → Season stats.
+- Rule: every number counts only games that recorded that kind of data — per-game stats from games with stats
+  in which she appeared; minutes from games with minutes; P/10 (points per 10 minutes) from games with both.
+  "Appeared": minutes > 0, or any stat, or (stats-only game) available. Record from games with a typed/live
+  opponent score.
+- Sheet: summary (games, with stats, with minutes, record); team chart — our points vs theirs, game by game;
+  player table (sortable by tapping a column; default PPG): GP, MIN, PTS, PPG, P/10, RPG, APG, PF, and Trend
+  beside the name — a sparkline of points by game, and form (▲/▼ last 3 games vs earlier, from 5+ stats games).
+- Send picture / Send PDF reuse the box-score drawing (now with a "big figure" = record, custom legend and file name).
+- Verified by hand on a mixed 6-game test season (1 minutes-only, 1 stats-only, 4 both): Willa 20 pts in 5
+  stats games = 4.0 PPG; P/10 = 18 pts / 24 min = 7.5; form +1.7; record 1–3–1.

@@ -103,10 +103,11 @@ function drawBoxScore(d) {
   x.font = font(600, 26); x.fillStyle = 'rgba(255,255,255,.85)';
   x.fillText((d.opponent ? `vs ${d.opponent} · ` : '') + d.date, pad, 192);
   // Score on the right
-  if (d.us != null || d.them != null) {
+  const big = d.big ?? (d.us != null || d.them != null ? `${d.us ?? '–'}–${d.them ?? '–'}` : null);
+  if (big) {
     x.textAlign = 'right'; x.fillStyle = '#fff'; x.font = font(900, 84);
-    x.fillText(`${d.us ?? '–'}–${d.them ?? '–'}`, W - pad, 150);
-    x.font = font(800, 20); x.fillStyle = 'rgba(255,255,255,.8)'; x.fillText('FINAL', W - pad, 190); x.textAlign = 'left';
+    x.fillText(big, W - pad, 150);
+    x.font = font(800, 20); x.fillStyle = 'rgba(255,255,255,.8)'; x.fillText(d.bigLabel || 'FINAL', W - pad, 190); x.textAlign = 'left';
   }
   // Table
   const nameW = 300, numW = 70, colW = Math.min(110, (W - pad * 2 - nameW - numW) / Math.max(1, d.cols.length));
@@ -129,7 +130,7 @@ function drawBoxScore(d) {
   });
   // Footer
   x.font = font(600, 20); x.fillStyle = 'rgba(43,21,80,.66)';
-  const foot = [d.season, d.haveMin ? 'MIN = minutes played' : '', 'OR / DR = offensive / defensive rebounds', 'PF = fouls'].filter(Boolean).join('  ·  ');
+  const foot = d.legend || [d.season, d.haveMin ? 'MIN = minutes played' : '', 'OR / DR = offensive / defensive rebounds', 'PF = fouls'].filter(Boolean).join('  ·  ');
   x.fillText(foot, pad, H - 40);
   return c;
 }
@@ -163,7 +164,7 @@ async function makeBoxFiles(d) {
   const jpgBlob = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.92));
   const jpeg = new Uint8Array(await jpgBlob.arrayBuffer());
   const pdf = new Blob([pdfFromJpeg(jpeg, c.width, c.height)], { type: 'application/pdf' });
-  const base = `Penguins box score ${d.opponent ? 'vs ' + d.opponent + ' ' : ''}${new Date().toISOString().slice(0, 10)}`.replace(/[\\/:*?"<>|]/g, '');
+  const base = (d.fileName || `Penguins box score ${d.opponent ? 'vs ' + d.opponent + ' ' : ''}${new Date().toISOString().slice(0, 10)}`).replace(/[\\/:*?"<>|]/g, '');
   return { png: new File([png], base + '.png', { type: 'image/png' }), pdf: new File([pdf], base + '.pdf', { type: 'application/pdf' }) };
 }
 

@@ -242,6 +242,7 @@ function openStatsMenu() {
   };
   d.querySelector('#smSettings').onclick = () => { d.close(); openStatSheet(); };
   d.querySelector('#smBox').onclick = () => { d.close(); openBoxScore(M.game); };
+  d.querySelector('#smSeason').onclick = () => { d.close(); openSeasonStats(); };
   d.querySelector('#smNew').onclick = async () => { d.close(); S.sel = null; await startNewGame(); };
   d.querySelector('#smClose').onclick = () => d.close();
   d.showModal();

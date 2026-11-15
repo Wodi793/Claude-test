@@ -1838,3 +1838,26 @@ html[data-layout="compact"][data-orient="port"][data-live="yes"]:not([data-subbi
   html[data-tab="stats"] #statPad .pad-grid { flex: none; height: 120px; }
   html[data-tab="stats"] .pad-court .ctile { min-height: 150px !important; }
 }
+
+/* ----- Season stats ----- */
+.ss-chart { padding: 12px 12px 6px !important; }
+.team-chart { width: 100%; height: 170px; display: block; }
+.team-chart text { font-size: 11px; fill: var(--ios-secondary); font-family: -apple-system, system-ui, sans-serif; }
+.chart-key { margin: 4px 2px 2px; font-size: 12px; color: var(--ios-secondary); display: flex; align-items: center; gap: 6px; }
+.chart-key i { display: inline-block; width: 14px; height: 4px; border-radius: 2px; }
+.chart-key i.us { background: var(--pink); }
+.chart-key i.them { background: var(--border-purple); margin-left: 10px; }
+.ss-table th[data-sort] { cursor: pointer; }
+.ss-table th.sorted { color: var(--pink); }
+.ss-table td.trend { min-width: 120px; display: flex; align-items: center; gap: 6px; justify-content: center; }
+.spark { display: block; }
+.form { font-size: 12px; font-weight: 900; white-space: nowrap; }
+.form.up { color: #12865a; }
+.form.down { color: #d62839; }
+.form.flat { color: var(--ios-secondary); }
+#seasonToStats { width: 100%; min-height: 48px; margin: 0 0 14px; }
+.team-chart { height: auto !important; }
+.ss-table td.trend { min-width: 0; display: table-cell; white-space: nowrap; }
+.ss-table td.trend .spark { display: inline-block; vertical-align: middle; }
+.ss-table td.trend .form { display: inline-block; vertical-align: middle; margin-left: 4px; font-size: 11px; }
+.team-chart { max-height: 240px; }
