@@ -809,3 +809,11 @@ Owner: season stats, with trends/development and per-minute rates; records will 
 - Send picture / Send PDF reuse the box-score drawing (now with a "big figure" = record, custom legend and file name).
 - Verified by hand on a mixed 6-game test season (1 minutes-only, 1 stats-only, 4 both): Willa 20 pts in 5
   stats games = 4.0 PPG; P/10 = 18 pts / 24 min = 7.5; form +1.7; record 1–3–1.
+
+## Repository rename to `penguins` (2026-11-18, owner: "rename it to penguins")
+- New address: https://wodi793.github.io/penguins/ (preview: /penguins/next/). The app has no hard-coded
+  repository name (all paths relative), so no code change was needed.
+- The rename itself is done by the owner in GitHub → Settings → General → Repository name (no tool here can
+  rename a repository). GitHub Pages does not redirect the old /Claude-test/ address.
+- Each iPhone/iPad home-screen app keeps its own storage, so the new icon starts empty: Export backup from the
+  old icon first, Import it in the new one.

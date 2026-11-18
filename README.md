@@ -5,6 +5,8 @@ The Burns Park Penguins team app for iPhone and iPad. Three tabs:
 playing time, the league minimum rule, season totals) and **Stats** (points, rebounds, assists, fouls… per player). Works offline once installed on the
 home screen. No accounts, no server: everything is stored on the device.
 
+**Address:** https://wodi793.github.io/penguins/ (renamed from `Claude-test` on 2026-11-18).
+
 ## Files
 
 | File | What it does |
@@ -23,7 +25,7 @@ home screen. No accounts, no server: everything is stored on the device.
 | `sw.js` | Service worker — keeps a copy of the app on the device for offline use |
 | `icon.svg` | The icon artwork (basketball + penguin). The center-court logo copies its coordinates |
 | `icon-180.png`, `icon-512.png` | App icons, made from `icon.svg` |
-| `next/` | **Preview** copy for trying changes before they go live (wodi793.github.io/Claude-test/next/), with its own database. Split into `index.html` (structure), `styles.css`, `playbook.js`, `sports.js`, `data.js`, `settings.js`, `gamelog.js`, `readouts.js`, `minutes.js`, `shell.js` — see BUILD-LOG.md |
+| `next/` | **Preview** copy for trying changes before they go live (wodi793.github.io/penguins/next/), with its own database. Split into `index.html` (structure), `styles.css`, `playbook.js`, `sports.js`, `data.js`, `settings.js`, `gamelog.js`, `readouts.js`, `minutes.js`, `shell.js` — see BUILD-LOG.md |
 | `BUILD-LOG.md` | Record of every stage of the team-app build, decisions, and the Playbook baseline checklist |
 
 ## Using it
